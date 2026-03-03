@@ -1,5 +1,6 @@
 using ProjectZ.Meta;
 using ProjectZ.Run;
+using ProjectZ.Combat;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -60,6 +61,7 @@ namespace ProjectZ.Core
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
             CurrentState = StateFromScene(scene.name);
+            EnsureSceneControllersForCurrentState();
 
             if (CurrentState == GameFlowState.Loading)
             {
@@ -74,6 +76,36 @@ namespace ProjectZ.Core
             {
                 LoadingProgress = 0f;
             }
+        }
+
+        private void EnsureSceneControllersForCurrentState()
+        {
+            switch (CurrentState)
+            {
+                case GameFlowState.Loading:
+                    EnsureController<LoadingSceneController>("LoadingSceneController");
+                    break;
+                case GameFlowState.Board:
+                    EnsureController<BoardSceneController>("BoardSceneController");
+                    break;
+                case GameFlowState.Fight:
+                    EnsureController<FightMockController>("FightMockController");
+                    break;
+                case GameFlowState.Result:
+                    EnsureController<ResultSceneController>("ResultSceneController");
+                    break;
+            }
+        }
+
+        private static void EnsureController<T>(string objectName) where T : Component
+        {
+            if (FindFirstObjectByType<T>() != null)
+            {
+                return;
+            }
+
+            var go = new GameObject(objectName);
+            go.AddComponent<T>();
         }
 
         public void GoToHome()
