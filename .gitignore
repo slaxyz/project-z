@@ -9,3 +9,14 @@ MemoryCaptures/
 Recordings/
 .DS_Store
 .vscode/
+*.csproj
+*.sln
+*.slnx
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
