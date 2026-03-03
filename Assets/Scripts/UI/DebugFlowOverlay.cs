@@ -87,8 +87,7 @@ namespace ProjectZ.UI
             GUILayout.Label("Run Results");
             if (manager.CurrentState == GameFlowState.Fight)
             {
-                if (GUILayout.Button("Show Victory")) manager.ShowResult(true);
-                if (GUILayout.Button("Show Defeat")) manager.ShowResult(false);
+                GUILayout.Label("Fight in progress: use Fight UI actions.");
             }
             else if (manager.CurrentState == GameFlowState.Result)
             {
