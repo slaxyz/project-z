@@ -148,11 +148,23 @@ namespace ProjectZ.Core
 
         public void StartFight()
         {
+            if (!CanStartFight())
+            {
+                Debug.LogWarning("StartFight blocked: must be in Board during an active run.");
+                return;
+            }
+
             LoadScene(GameScenes.Fight);
         }
 
         public void ShowResult(bool victory)
         {
+            if (!CanShowFightResult())
+            {
+                Debug.LogWarning("ShowResult blocked: results can only be shown from Fight during an active run.");
+                return;
+            }
+
             HasLastFightResult = true;
             LastFightWasVictory = victory;
 
@@ -170,17 +182,31 @@ namespace ProjectZ.Core
 
         public void NextBoardNode()
         {
+            if (!CanGoToNextBoardNode())
+            {
+                Debug.LogWarning("NextBoardNode blocked: only available after a victory result.");
+                return;
+            }
+
             CurrentRun.boardNodeIndex++;
+            HasLastFightResult = false;
             LoadScene(GameScenes.Board);
         }
 
         public void EndRun(int pointsEarned)
         {
+            if (!CanEndRun())
+            {
+                Debug.LogWarning("EndRun blocked: only available on Result screen after a fight result.");
+                return;
+            }
+
             MetaProgression.progressionPoints += pointsEarned;
             SaveMeta();
 
             CurrentRun.Reset();
             HasLastFightResult = false;
+            LastFightWasVictory = false;
             LoadScene(GameScenes.Home);
         }
 
@@ -192,6 +218,26 @@ namespace ProjectZ.Core
         private static void LoadScene(string sceneName)
         {
             SceneManager.LoadScene(sceneName);
+        }
+
+        public bool CanStartFight()
+        {
+            return CurrentRun.isActive && CurrentState == GameFlowState.Board;
+        }
+
+        public bool CanShowFightResult()
+        {
+            return CurrentRun.isActive && CurrentState == GameFlowState.Fight;
+        }
+
+        public bool CanGoToNextBoardNode()
+        {
+            return CurrentRun.isActive && CurrentState == GameFlowState.Result && HasLastFightResult && LastFightWasVictory;
+        }
+
+        public bool CanEndRun()
+        {
+            return CurrentRun.isActive && CurrentState == GameFlowState.Result && HasLastFightResult;
         }
 
         private System.Collections.IEnumerator LoadNextSceneAfterLoading()

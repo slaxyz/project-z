@@ -42,16 +42,6 @@ namespace ProjectZ.Run
                 manager.StartFight();
             }
 
-            if (GUILayout.Button("Skip To Next Node"))
-            {
-                manager.NextBoardNode();
-            }
-
-            if (GUILayout.Button("End Run (+10)"))
-            {
-                manager.EndRun(10);
-            }
-
             GUILayout.EndArea();
         }
     }

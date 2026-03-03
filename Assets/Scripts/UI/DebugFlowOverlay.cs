@@ -85,10 +85,15 @@ namespace ProjectZ.UI
 
             GUILayout.Space(10f);
             GUILayout.Label("Run Results");
-            if (GUILayout.Button("Show Victory")) manager.ShowResult(true);
-            if (GUILayout.Button("Show Defeat")) manager.ShowResult(false);
-            if (GUILayout.Button("Next Board Node")) manager.NextBoardNode();
-            if (GUILayout.Button("End Run (+10 points)")) manager.EndRun(10);
+            if (manager.CurrentState == GameFlowState.Fight)
+            {
+                if (GUILayout.Button("Show Victory")) manager.ShowResult(true);
+                if (GUILayout.Button("Show Defeat")) manager.ShowResult(false);
+            }
+            else
+            {
+                GUILayout.Label("Result actions available only in Fight.");
+            }
 
             GUILayout.Space(10f);
             GUILayout.Label("F1: hide/show this debug panel");

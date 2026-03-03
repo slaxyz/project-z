@@ -35,6 +35,23 @@ namespace ProjectZ.Run
                 return;
             }
 
+            if (!manager.HasLastFightResult)
+            {
+                GUILayout.BeginArea(new Rect((Screen.width - 460f) * 0.5f, 40f, 460f, 220f), GUI.skin.box);
+                GUILayout.Label("Run Result");
+                GUILayout.Space(6f);
+                GUILayout.Label("No fight result available yet.");
+                GUILayout.Label("Finish a fight first before using Result actions.");
+                GUILayout.Space(12f);
+                if (GUILayout.Button("Back Home"))
+                {
+                    manager.GoToHome();
+                }
+
+                GUILayout.EndArea();
+                return;
+            }
+
             var wasVictory = manager.HasLastFightResult && manager.LastFightWasVictory;
             var title = wasVictory ? "Victory" : "Defeat";
             var color = wasVictory ? new Color(0.3f, 0.9f, 0.4f) : new Color(0.95f, 0.35f, 0.35f);
@@ -71,11 +88,6 @@ namespace ProjectZ.Run
                 if (GUILayout.Button("End Run (+" + defeatEndRunReward + " points)"))
                 {
                     manager.EndRun(defeatEndRunReward);
-                }
-
-                if (GUILayout.Button("Return To Board Anyway (debug)"))
-                {
-                    manager.NextBoardNode();
                 }
             }
 
