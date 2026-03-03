@@ -14,6 +14,7 @@ namespace ProjectZ.Core
         public RunData CurrentRun { get; private set; }
         public MetaData MetaProgression { get; private set; }
         public GameFlowState CurrentState { get; private set; }
+        public string NextSceneAfterLoading { get; private set; } = GameScenes.Board;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void EnsureInstance()
@@ -83,6 +84,7 @@ namespace ProjectZ.Core
             CurrentRun.Reset();
             CurrentRun.SetTeam(teamSnapshot);
             CurrentRun.isActive = true;
+            NextSceneAfterLoading = GameScenes.Board;
             LoadScene(GameScenes.Loading);
         }
 
