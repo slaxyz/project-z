@@ -1,5 +1,8 @@
 using ProjectZ.Core;
 using UnityEngine;
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+#endif
 
 namespace ProjectZ.UI
 {
@@ -24,10 +27,19 @@ namespace ProjectZ.UI
 
         private void Update()
         {
-            if (Input.GetKeyDown(KeyCode.F1))
+            if (IsTogglePressed())
             {
                 _isVisible = !_isVisible;
             }
+        }
+
+        private static bool IsTogglePressed()
+        {
+#if ENABLE_INPUT_SYSTEM
+            return Keyboard.current != null && Keyboard.current.f1Key.wasPressedThisFrame;
+#else
+            return Input.GetKeyDown(KeyCode.F1);
+#endif
         }
 
         private void OnGUI()
