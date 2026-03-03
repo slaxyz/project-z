@@ -52,14 +52,9 @@ namespace ProjectZ.Run
                 return;
             }
 
-            var wasVictory = manager.HasLastFightResult && manager.LastFightWasVictory;
+            var wasVictory = manager.LastFightWasVictory;
             var title = wasVictory ? "Victory" : "Defeat";
-            var color = wasVictory ? new Color(0.3f, 0.9f, 0.4f) : new Color(0.95f, 0.35f, 0.35f);
-
-            var originalColor = GUI.color;
-            GUI.color = color;
-            GUILayout.BeginArea(new Rect((Screen.width - 460f) * 0.5f, 40f, 460f, 330f), GUI.skin.box);
-            GUI.color = originalColor;
+            GUILayout.BeginArea(new Rect((Screen.width - 500f) * 0.5f, 40f, 500f, 420f), GUI.skin.box);
 
             GUILayout.Label("Run Result");
             GUILayout.Space(4f);
@@ -71,24 +66,25 @@ namespace ProjectZ.Run
             GUILayout.Space(14f);
             GUILayout.Label("Actions");
 
-            if (wasVictory)
+            if (manager.CanGoToNextBoardNode())
             {
                 if (GUILayout.Button("Next Node (continue run)"))
                 {
                     manager.NextBoardNode();
                 }
+            }
 
-                if (GUILayout.Button("End Run (+" + victoryEndRunReward + " points)"))
+            if (manager.CanEndRun())
+            {
+                var reward = wasVictory ? victoryEndRunReward : defeatEndRunReward;
+                if (GUILayout.Button("End Run (+" + reward + " points)"))
                 {
-                    manager.EndRun(victoryEndRunReward);
+                    manager.EndRun(reward);
                 }
             }
             else
             {
-                if (GUILayout.Button("End Run (+" + defeatEndRunReward + " points)"))
-                {
-                    manager.EndRun(defeatEndRunReward);
-                }
+                GUILayout.Label("End Run unavailable: result state is not valid yet.");
             }
 
             if (GUILayout.Button("Back Home (no reward)"))

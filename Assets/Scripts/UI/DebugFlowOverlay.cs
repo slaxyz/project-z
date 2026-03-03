@@ -90,6 +90,19 @@ namespace ProjectZ.UI
                 if (GUILayout.Button("Show Victory")) manager.ShowResult(true);
                 if (GUILayout.Button("Show Defeat")) manager.ShowResult(false);
             }
+            else if (manager.CurrentState == GameFlowState.Result)
+            {
+                GUILayout.Label("Result actions");
+                if (manager.CanGoToNextBoardNode())
+                {
+                    if (GUILayout.Button("Next Node")) manager.NextBoardNode();
+                }
+                if (manager.CanEndRun())
+                {
+                    var reward = manager.LastFightWasVictory ? 15 : 5;
+                    if (GUILayout.Button("End Run (+" + reward + ")")) manager.EndRun(reward);
+                }
+            }
             else
             {
                 GUILayout.Label("Result actions available only in Fight.");
