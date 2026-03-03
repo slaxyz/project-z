@@ -16,6 +16,8 @@ namespace ProjectZ.Core
         public GameFlowState CurrentState { get; private set; }
         public string NextSceneAfterLoading { get; private set; } = GameScenes.Board;
         public float LoadingProgress { get; private set; }
+        public bool HasLastFightResult { get; private set; }
+        public bool LastFightWasVictory { get; private set; }
 
         [SerializeField] private float minLoadingDuration = 0.7f;
         private Coroutine _loadingCoroutine;
@@ -102,6 +104,7 @@ namespace ProjectZ.Core
             CurrentRun.Reset();
             CurrentRun.SetTeam(teamSnapshot);
             CurrentRun.isActive = true;
+            HasLastFightResult = false;
             NextSceneAfterLoading = GameScenes.Board;
             LoadScene(GameScenes.Loading);
         }
@@ -150,6 +153,9 @@ namespace ProjectZ.Core
 
         public void ShowResult(bool victory)
         {
+            HasLastFightResult = true;
+            LastFightWasVictory = victory;
+
             if (victory)
             {
                 CurrentRun.wins++;
@@ -174,6 +180,7 @@ namespace ProjectZ.Core
             SaveMeta();
 
             CurrentRun.Reset();
+            HasLastFightResult = false;
             LoadScene(GameScenes.Home);
         }
 
