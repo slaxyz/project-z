@@ -15,6 +15,10 @@ namespace ProjectZ.Core
         public MetaData MetaProgression { get; private set; }
         public GameFlowState CurrentState { get; private set; }
         public string NextSceneAfterLoading { get; private set; } = GameScenes.Board;
+        public float LoadingProgress { get; private set; }
+
+        [SerializeField] private float minLoadingDuration = 0.7f;
+        private Coroutine _loadingCoroutine;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void EnsureInstance()
@@ -54,6 +58,20 @@ namespace ProjectZ.Core
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
             CurrentState = StateFromScene(scene.name);
+
+            if (CurrentState == GameFlowState.Loading)
+            {
+                if (_loadingCoroutine != null)
+                {
+                    StopCoroutine(_loadingCoroutine);
+                }
+
+                _loadingCoroutine = StartCoroutine(LoadNextSceneAfterLoading());
+            }
+            else
+            {
+                LoadingProgress = 0f;
+            }
         }
 
         public void GoToHome()
@@ -167,6 +185,38 @@ namespace ProjectZ.Core
         private static void LoadScene(string sceneName)
         {
             SceneManager.LoadScene(sceneName);
+        }
+
+        private System.Collections.IEnumerator LoadNextSceneAfterLoading()
+        {
+            var op = SceneManager.LoadSceneAsync(NextSceneAfterLoading);
+            if (op == null)
+            {
+                yield break;
+            }
+
+            op.allowSceneActivation = false;
+            var elapsed = 0f;
+
+            while (true)
+            {
+                elapsed += Time.deltaTime;
+                LoadingProgress = Mathf.Clamp01(op.progress / 0.9f);
+
+                var doneLoading = op.progress >= 0.9f;
+                var minimumTimeReached = elapsed >= minLoadingDuration;
+
+                if (doneLoading && minimumTimeReached)
+                {
+                    break;
+                }
+
+                yield return null;
+            }
+
+            LoadingProgress = 1f;
+            op.allowSceneActivation = true;
+            _loadingCoroutine = null;
         }
 
         private static GameFlowState StateFromScene(string sceneName)
