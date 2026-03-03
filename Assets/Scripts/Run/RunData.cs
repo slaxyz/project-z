@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 
 namespace ProjectZ.Run
 {
@@ -12,6 +13,11 @@ namespace ProjectZ.Run
         public int losses;
         public bool isActive;
 
+        public bool HasValidTeam()
+        {
+            return selectedChampionIds.Count == 3 && selectedChampionIds.Distinct().Count() == 3;
+        }
+
         public void Reset()
         {
             selectedChampionIds.Clear();
@@ -20,6 +26,12 @@ namespace ProjectZ.Run
             wins = 0;
             losses = 0;
             isActive = false;
+        }
+
+        public void SetTeam(IEnumerable<string> championIds)
+        {
+            selectedChampionIds.Clear();
+            selectedChampionIds.AddRange(championIds.Distinct().Take(3));
         }
     }
 }

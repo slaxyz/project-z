@@ -1,5 +1,7 @@
 using ProjectZ.Meta;
 using ProjectZ.Run;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -71,9 +73,49 @@ namespace ProjectZ.Core
 
         public void StartRun()
         {
+            if (!CurrentRun.HasValidTeam())
+            {
+                Debug.LogWarning("StartRun blocked: select exactly 3 unique champions first.");
+                return;
+            }
+
+            var teamSnapshot = CurrentRun.selectedChampionIds.ToList();
             CurrentRun.Reset();
+            CurrentRun.SetTeam(teamSnapshot);
             CurrentRun.isActive = true;
             LoadScene(GameScenes.Loading);
+        }
+
+        public bool ToggleChampionSelection(string championId)
+        {
+            if (CurrentRun.selectedChampionIds.Contains(championId))
+            {
+                CurrentRun.selectedChampionIds.Remove(championId);
+                return true;
+            }
+
+            if (CurrentRun.selectedChampionIds.Count >= 3)
+            {
+                return false;
+            }
+
+            CurrentRun.selectedChampionIds.Add(championId);
+            return true;
+        }
+
+        public bool IsChampionSelected(string championId)
+        {
+            return CurrentRun.selectedChampionIds.Contains(championId);
+        }
+
+        public int SelectedChampionCount()
+        {
+            return CurrentRun.selectedChampionIds.Count;
+        }
+
+        public IReadOnlyList<string> SelectedChampionIds()
+        {
+            return CurrentRun.selectedChampionIds;
         }
 
         public void OpenBoard()

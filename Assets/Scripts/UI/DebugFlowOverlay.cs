@@ -1,4 +1,5 @@
 using ProjectZ.Core;
+using ProjectZ.Run;
 using UnityEngine;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
@@ -9,7 +10,7 @@ namespace ProjectZ.UI
     public class DebugFlowOverlay : MonoBehaviour
     {
         private bool _isVisible = true;
-        private readonly Rect _panelRect = new Rect(12f, 12f, 360f, 520f);
+        private readonly Rect _panelRect = new Rect(12f, 12f, 380f, 640f);
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void EnsureInstance()
@@ -70,9 +71,17 @@ namespace ProjectZ.UI
             if (GUILayout.Button("Home")) manager.GoToHome();
             if (GUILayout.Button("Collection")) manager.GoToCollection();
             if (GUILayout.Button("Team Select")) manager.GoToTeamSelect();
-            if (GUILayout.Button("Start Run (go Loading)")) manager.StartRun();
             if (GUILayout.Button("Open Board")) manager.OpenBoard();
             if (GUILayout.Button("Start Fight")) manager.StartFight();
+
+            GUILayout.Space(10f);
+            if (manager.CurrentState == GameFlowState.TeamSelect)
+            {
+                DrawTeamSelect(manager);
+                GUILayout.Space(10f);
+            }
+
+            if (GUILayout.Button("Start Run (requires 3 selected)")) manager.StartRun();
 
             GUILayout.Space(10f);
             GUILayout.Label("Run Results");
@@ -84,6 +93,22 @@ namespace ProjectZ.UI
             GUILayout.Space(10f);
             GUILayout.Label("F1: hide/show this debug panel");
             GUILayout.EndArea();
+        }
+
+        private static void DrawTeamSelect(GameFlowManager manager)
+        {
+            GUILayout.Label("Team Selection (pick 3 champions)");
+            GUILayout.Label("Selected: " + manager.SelectedChampionCount() + "/3");
+
+            foreach (var champion in ChampionCatalog.All)
+            {
+                var selected = manager.IsChampionSelected(champion.Id);
+                var label = (selected ? "[x] " : "[ ] ") + champion.DisplayName + " - " + champion.Role;
+                if (GUILayout.Button(label))
+                {
+                    manager.ToggleChampionSelection(champion.Id);
+                }
+            }
         }
     }
 }
