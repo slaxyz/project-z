@@ -239,8 +239,12 @@ namespace ProjectZ.Combat
             }
 
             var active = _champions[_activeChampionIndex];
+            const float panelWidth = 610f;
+            const float panelHeight = 540f;
+            var panelX = Screen.width - panelWidth - 18f;
+            var panelY = 18f;
 
-            GUILayout.BeginArea(new Rect(18f, 18f, 610f, 540f), GUI.skin.box);
+            GUILayout.BeginArea(new Rect(panelX, panelY, panelWidth, panelHeight), GUI.skin.box);
             GUILayout.Label("Fight - Prototype (Step 1)");
             GUILayout.Label("Turn: " + _turn + " | Rerolls left: " + _rerollsRemaining + " / " + MaxRerollsPerTurn);
             GUILayout.Label("Last action: " + _lastAction);
