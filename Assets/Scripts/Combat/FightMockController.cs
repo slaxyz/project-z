@@ -1,4 +1,5 @@
 using ProjectZ.Core;
+using ProjectZ.Run;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -66,7 +67,7 @@ namespace ProjectZ.Combat
 
         private static string DisplayNameFor(string championId)
         {
-            var match = Run.ChampionCatalog.All.FirstOrDefault(c => c.Id == championId);
+            var match = ChampionCatalog.All.FirstOrDefault(c => c.Id == championId);
             return string.IsNullOrEmpty(match.DisplayName) ? championId : match.DisplayName;
         }
 
