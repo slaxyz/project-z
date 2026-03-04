@@ -1,0 +1,56 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3f155e4e07d7c9646b055f58c65352d2, type: 3}
+  m_Name: EnemyCatalog
+  m_EditorClassIdentifier: Assembly-CSharp::ProjectZ.Combat.EnemyCatalogAsset
+  enemies:
+  - enemyId: glass_shifter
+    displayName: Silica Mirage
+    maxHp: 45
+    intents:
+    - spellId: refracted_ray
+      intentLabelOverride: 
+    - spellId: heat_veil
+      intentLabelOverride: 
+    - spellId: blinding_glare
+      intentLabelOverride: 
+  - enemyId: quicksand_naga
+    displayName: Siltis the Buried
+    maxHp: 80
+    intents:
+    - spellId: gritty_embrace
+      intentLabelOverride: 
+    - spellId: quicksand_sink
+      intentLabelOverride: 
+    - spellId: sandstorm_burst
+      intentLabelOverride: 
+  - enemyId: solar_moloch
+    displayName: Magma Scout
+    maxHp: 120
+    intents:
+    - spellId: searing_blood_jet
+      intentLabelOverride: 
+    - spellId: solar_intake
+      intentLabelOverride: 
+    - spellId: spike_eruption
+      intentLabelOverride: 
+  - enemyId: static_skink
+    displayName: Bolt Runner
+    maxHp: 35
+    intents:
+    - spellId: static_discharge
+      intentLabelOverride: 
+    - spellId: overload
+      intentLabelOverride: 
+    - spellId: sand_bolt
+      intentLabelOverride: 
+

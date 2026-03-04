@@ -12,11 +12,14 @@ namespace ProjectZ.Combat
         private const int GemsPerTurn = 5;
         private const int MaxRerollsPerTurn = 2;
         private const int CombatLogMaxEntries = 8;
+        private const string SpellLibraryResourcePath = "Combat/SpellLibrary";
+        private const string EnemyCatalogResourcePath = "Combat/EnemyCatalog";
 
         private readonly System.Random _rng = new System.Random();
         private readonly List<GemSlot> _gems = new List<GemSlot>();
         private readonly List<GemSlot> _enemyGems = new List<GemSlot>();
         private readonly List<ChampionCombatState> _champions = new List<ChampionCombatState>();
+        private readonly List<EnemyDefinition> _availableEnemies = new List<EnemyDefinition>();
         private readonly List<string> _combatLog = new List<string>();
         private readonly HashSet<CardDefinition> _playedCardsThisTurn = new HashSet<CardDefinition>();
         private readonly HashSet<EnemyIntentDefinition> _enemyUsedIntentsThisTurn = new HashSet<EnemyIntentDefinition>();
@@ -52,6 +55,7 @@ namespace ProjectZ.Combat
         private void Start()
         {
             BuildChampionStates();
+            BuildEnemyDefinitions();
             _enemy = new EnemyCombatState(SelectEnemyDefinition());
             _fightResolved = false;
             StartTurn();
@@ -64,11 +68,49 @@ namespace ProjectZ.Combat
 
         private EnemyDefinition SelectEnemyDefinition()
         {
-            var all = BuildEnemyCatalog();
-            return all[_rng.Next(0, all.Count)];
+            if (_availableEnemies.Count == 0)
+            {
+                BuildEnemyDefinitions();
+            }
+
+            return _availableEnemies[_rng.Next(0, _availableEnemies.Count)];
         }
 
-        private List<EnemyDefinition> BuildEnemyCatalog()
+        private void BuildEnemyDefinitions()
+        {
+            _availableEnemies.Clear();
+
+            var spellLibrary = Resources.Load<CombatSpellLibraryAsset>(SpellLibraryResourcePath);
+            if (spellLibrary == null)
+            {
+                Debug.LogWarning("SpellLibrary missing at Resources/Combat/SpellLibrary");
+            }
+
+            var spellIndex = spellLibrary != null
+                ? spellLibrary.BuildIndexById()
+                : new Dictionary<string, CombatSpellAsset>();
+
+            var asset = Resources.Load<EnemyCatalogAsset>(EnemyCatalogResourcePath);
+            if (asset != null)
+            {
+                var fromAsset = asset.BuildRuntimeDefinitions(spellIndex);
+                if (fromAsset.Count > 0)
+                {
+                    _availableEnemies.AddRange(fromAsset);
+                }
+            }
+            else
+            {
+                Debug.LogWarning("EnemyCatalog missing at Resources/Combat/EnemyCatalog");
+            }
+
+            if (_availableEnemies.Count == 0)
+            {
+                _availableEnemies.AddRange(BuildFallbackEnemyCatalog());
+            }
+        }
+
+        private static List<EnemyDefinition> BuildFallbackEnemyCatalog()
         {
             return new List<EnemyDefinition>
             {
