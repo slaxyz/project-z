@@ -1,6 +1,7 @@
 using ProjectZ.Meta;
 using ProjectZ.Run;
 using ProjectZ.Combat;
+using ProjectZ.UI;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -48,6 +49,8 @@ namespace ProjectZ.Core
             DontDestroyOnLoad(gameObject);
 
             MetaProgression = MetaSaveService.Load();
+            MetaProgression.EnsureCollections();
+            EnsureDefaultUnlockedChampions();
             CurrentRun = new RunData();
 
             SceneManager.sceneLoaded += OnSceneLoaded;
@@ -82,6 +85,9 @@ namespace ProjectZ.Core
         {
             switch (CurrentState)
             {
+                case GameFlowState.Collection:
+                    EnsureController<CollectionSceneController>("CollectionSceneController");
+                    break;
                 case GameFlowState.Loading:
                     EnsureController<LoadingSceneController>("LoadingSceneController");
                     break;
@@ -168,6 +174,86 @@ namespace ProjectZ.Core
             return CurrentRun.selectedChampionIds.Count;
         }
 
+        public IReadOnlyList<ChampionDefinitionAsset> GetChampionCatalog()
+        {
+            return ChampionCatalog.AllAssets;
+        }
+
+        public bool IsChampionUnlocked(string championId)
+        {
+            return MetaProgression.IsChampionUnlocked(championId);
+        }
+
+        public int GetPlayerCoins()
+        {
+            return MetaProgression.progressionPoints;
+        }
+
+        public string GetDefaultSelectedChampionIdForCollection()
+        {
+            var catalog = ChampionCatalog.AllAssets;
+            if (catalog == null || catalog.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            var first = catalog[0];
+            if (first != null && !string.IsNullOrWhiteSpace(first.Id) && IsChampionUnlocked(first.Id))
+            {
+                return first.Id;
+            }
+
+            foreach (var champion in catalog)
+            {
+                if (champion == null || string.IsNullOrWhiteSpace(champion.Id))
+                {
+                    continue;
+                }
+
+                if (IsChampionUnlocked(champion.Id))
+                {
+                    return champion.Id;
+                }
+            }
+
+            return first != null ? first.Id : string.Empty;
+        }
+
+        public bool TryUnlockChampion(string championId, out string reason)
+        {
+            if (string.IsNullOrWhiteSpace(championId))
+            {
+                reason = "Invalid champion id.";
+                return false;
+            }
+
+            var champion = ChampionCatalog.FindById(championId);
+            if (champion == null)
+            {
+                reason = "Champion not found.";
+                return false;
+            }
+
+            if (MetaProgression.IsChampionUnlocked(championId))
+            {
+                reason = "Already unlocked.";
+                return false;
+            }
+
+            var cost = Mathf.Max(0, champion.UnlockCost);
+            if (MetaProgression.progressionPoints < cost)
+            {
+                reason = "Not enough coins.";
+                return false;
+            }
+
+            MetaProgression.progressionPoints -= cost;
+            MetaProgression.UnlockChampion(championId);
+            SaveMeta();
+            reason = "Champion unlocked.";
+            return true;
+        }
+
         public IReadOnlyList<string> SelectedChampionIds()
         {
             return CurrentRun.selectedChampionIds;
@@ -245,6 +331,15 @@ namespace ProjectZ.Core
         public void SaveMeta()
         {
             MetaSaveService.Save(MetaProgression);
+        }
+
+        private void EnsureDefaultUnlockedChampions()
+        {
+            var changed = MetaProgression.EnsureDefaultUnlockedChampions(ChampionCatalog.GetDefaultUnlockedChampionIds(3));
+            if (changed)
+            {
+                SaveMeta();
+            }
         }
 
         private static void LoadScene(string sceneName)

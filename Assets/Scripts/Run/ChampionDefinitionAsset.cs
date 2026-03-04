@@ -1,0 +1,81 @@
+using UnityEngine;
+
+namespace ProjectZ.Run
+{
+    [System.Serializable]
+    public class ChampionDefinitionAsset
+    {
+        [SerializeField] private string id;
+        [SerializeField] private string displayName;
+        [SerializeField] private string role;
+        [SerializeField] private int unlockCost;
+        [SerializeField] private Sprite splashSprite;
+        [SerializeField] private string shortLore;
+        [SerializeField] private int baseHp = 100;
+        [SerializeField] private int baseAttack = 10;
+
+        public ChampionDefinitionAsset()
+        {
+        }
+
+        public ChampionDefinitionAsset(
+            string id,
+            string displayName,
+            string role,
+            int unlockCost,
+            string shortLore,
+            int baseHp,
+            int baseAttack,
+            Sprite splashSprite = null)
+        {
+            this.id = id;
+            this.displayName = displayName;
+            this.role = role;
+            this.unlockCost = unlockCost;
+            this.shortLore = shortLore;
+            this.baseHp = baseHp;
+            this.baseAttack = baseAttack;
+            this.splashSprite = splashSprite;
+        }
+
+        public string Id
+        {
+            get { return id; }
+        }
+
+        public string DisplayName
+        {
+            get { return displayName; }
+        }
+
+        public string Role
+        {
+            get { return role; }
+        }
+
+        public int UnlockCost
+        {
+            get { return unlockCost; }
+        }
+
+        public Sprite SplashSprite
+        {
+            get { return splashSprite; }
+        }
+
+        public string ShortLore
+        {
+            get { return shortLore; }
+        }
+
+        public int BaseHp
+        {
+            get { return baseHp; }
+        }
+
+        public int BaseAttack
+        {
+            get { return baseAttack; }
+        }
+    }
+}
