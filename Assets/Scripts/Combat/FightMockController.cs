@@ -11,11 +11,13 @@ namespace ProjectZ.Combat
     {
         private const int GemsPerTurn = 5;
         private const int MaxRerollsPerTurn = 2;
+        private const int CombatLogMaxEntries = 8;
 
         private readonly System.Random _rng = new System.Random();
         private readonly List<GemSlot> _gems = new List<GemSlot>();
         private readonly List<GemSlot> _enemyGems = new List<GemSlot>();
         private readonly List<ChampionCombatState> _champions = new List<ChampionCombatState>();
+        private readonly List<string> _combatLog = new List<string>();
         private readonly HashSet<CardDefinition> _playedCardsThisTurn = new HashSet<CardDefinition>();
         private readonly HashSet<EnemyIntentDefinition> _enemyUsedIntentsThisTurn = new HashSet<EnemyIntentDefinition>();
 
@@ -26,6 +28,8 @@ namespace ProjectZ.Combat
         private EnemyCombatState _enemy;
         private bool _fightResolved;
         private string _lastAction = "Fight started";
+        private string _lastLoggedMarker;
+        private Vector2 _combatLogScroll;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void EnsureInstanceOnFightScene()
@@ -51,6 +55,11 @@ namespace ProjectZ.Combat
             _enemy = new EnemyCombatState(SelectEnemyDefinition());
             _fightResolved = false;
             StartTurn();
+        }
+
+        private void Update()
+        {
+            TrackCombatLog();
         }
 
         private EnemyDefinition SelectEnemyDefinition()
@@ -292,6 +301,7 @@ namespace ProjectZ.Combat
         {
             if (_fightResolved)
             {
+                _lastAction = "Cannot reroll: fight is already resolved";
                 return;
             }
 
@@ -310,6 +320,7 @@ namespace ProjectZ.Combat
         {
             if (_fightResolved)
             {
+                _lastAction = "Cannot end turn: fight is already resolved";
                 return;
             }
 
@@ -327,6 +338,7 @@ namespace ProjectZ.Combat
         {
             if (_fightResolved)
             {
+                _lastAction = "Cannot switch champion: fight is already resolved";
                 return;
             }
 
@@ -349,6 +361,7 @@ namespace ProjectZ.Combat
         {
             if (_fightResolved)
             {
+                _lastAction = "Cannot play cards: fight is already resolved";
                 return;
             }
 
@@ -719,6 +732,27 @@ namespace ProjectZ.Combat
             manager.ShowResult(victory);
         }
 
+        private void TrackCombatLog()
+        {
+            if (string.IsNullOrEmpty(_lastAction))
+            {
+                return;
+            }
+
+            var marker = _turn + "|" + _lastAction;
+            if (_lastLoggedMarker == marker)
+            {
+                return;
+            }
+
+            _lastLoggedMarker = marker;
+            _combatLog.Insert(0, "T" + _turn + " - " + _lastAction);
+            if (_combatLog.Count > CombatLogMaxEntries)
+            {
+                _combatLog.RemoveAt(_combatLog.Count - 1);
+            }
+        }
+
         private void OnGUI()
         {
             var manager = GameFlowManager.Instance;
@@ -817,6 +851,20 @@ namespace ProjectZ.Combat
                 GUI.enabled = true;
                 GUILayout.EndHorizontal();
             }
+            GUILayout.EndArea();
+
+            const float logWidth = 610f;
+            const float logHeight = 210f;
+            var logX = Screen.width - logWidth - 18f;
+            var logY = Screen.height - logHeight - 18f;
+            GUILayout.BeginArea(new Rect(logX, logY, logWidth, logHeight), GUI.skin.box);
+            GUILayout.Label("Fight Log (latest first)");
+            _combatLogScroll = GUILayout.BeginScrollView(_combatLogScroll, GUILayout.Height(170f));
+            foreach (var line in _combatLog)
+            {
+                GUILayout.Label("- " + line);
+            }
+            GUILayout.EndScrollView();
             GUILayout.EndArea();
         }
 
