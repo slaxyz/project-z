@@ -9,7 +9,18 @@ namespace ProjectZ.Combat
     {
         [SerializeField] private List<BiomeSpawnRulesEntry> biomeRules = new List<BiomeSpawnRulesEntry>();
 
-        public bool TryGetTierWeights(EnemyBiome biome, int boardNodeIndex, out List<EnemyTierWeightEntry> weights)
+        public int GetCombatsPerZone(EnemyBiome biome, int fallbackValue = 8)
+        {
+            var biomeEntry = biomeRules.FirstOrDefault(entry => entry != null && entry.biome == biome);
+            if (biomeEntry == null || biomeEntry.combatsPerZone <= 0)
+            {
+                return fallbackValue;
+            }
+
+            return biomeEntry.combatsPerZone;
+        }
+
+        public bool TryGetTierWeights(EnemyBiome biome, int zoneCombatIndex, out List<EnemyTierWeightEntry> weights)
         {
             weights = null;
 
@@ -21,8 +32,8 @@ namespace ProjectZ.Combat
 
             var nodeEntry = biomeEntry.nodeRules.FirstOrDefault(rule =>
                 rule != null
-                && boardNodeIndex >= rule.minNodeIndex
-                && boardNodeIndex <= rule.maxNodeIndex
+                && zoneCombatIndex >= rule.minNodeIndex
+                && zoneCombatIndex <= rule.maxNodeIndex
                 && rule.tierWeights != null
                 && rule.tierWeights.Any(weight => weight != null && weight.weight > 0));
 
@@ -43,6 +54,7 @@ namespace ProjectZ.Combat
     public class BiomeSpawnRulesEntry
     {
         public EnemyBiome biome = EnemyBiome.Zone1;
+        public int combatsPerZone = 8;
         public List<NodeTierRuleEntry> nodeRules = new List<NodeTierRuleEntry>();
     }
 

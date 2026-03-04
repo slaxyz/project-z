@@ -9,22 +9,22 @@ Move enemy spawn selection to data-driven rules (biome/tier/progression), withou
   - [x] Rules by biome (`Zone1`, `Zone2`)
   - [x] Rules by progression window (example: `boardNodeIndex` ranges)
   - [x] Tier weights (`Minion`, `Elite`, `Champion`, `Boss`, `Apex`)
-- [ ] Load `CombatSpawnRulesAsset` from `Resources/Combat/SpawnRules`.
-- [ ] Replace hardcoded biome/tier selection in `FightMockController` with asset rules.
-- [ ] Keep a robust fallback when asset is missing/invalid.
-- [ ] Keep existing biome/tier debug overrides.
-- [ ] Add explicit logs for rules errors.
+- [x] Load `CombatSpawnRulesAsset` from `Resources/Combat/SpawnRules`.
+- [x] Replace hardcoded biome/tier selection in `FightMockController` with asset rules.
+- [x] Keep a robust fallback when asset is missing/invalid.
+- [x] Keep existing biome/tier debug overrides.
+- [x] Add explicit logs for rules errors.
 
 ## Test checklist
 - [x] `SpawnRules.asset` exists and is editable in Inspector.
 - [ ] `SpawnRules.asset` present + valid: spawn follows expected biome/tier behavior.
 - [ ] `SpawnRules.asset` missing: no crash, fallback active.
 - [ ] Invalid rule data: clear warning in Console + combat continues.
-- [ ] Debug overrides for `Biome/Tier` still work.
+- [x] Debug overrides for `Biome/Tier` still work.
 - [ ] No red errors in Unity Console.
 
 ## Done criteria
-- [ ] No hardcoded spawn decision (biome/tier/progression) left in `FightMockController`.
+- [x] No hardcoded spawn decision (biome/tier/progression) left in `FightMockController`.
 - [ ] Spawn rates can be tuned from Inspector only (no code edit required).
 - [ ] Fallback behavior validated.
 - [ ] Manual tests validated across multiple runs.

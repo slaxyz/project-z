@@ -12,8 +12,10 @@ namespace ProjectZ.Combat
         private const int GemsPerTurn = 5;
         private const int MaxRerollsPerTurn = 2;
         private const int CombatLogMaxEntries = 8;
+        private const int DefaultCombatsPerZone = 8;
         private const string SpellLibraryResourcePath = "Combat/SpellLibrary";
         private const string EnemyCatalogResourcePath = "Combat/EnemyCatalog";
+        private const string SpawnRulesResourcePath = "Combat/SpawnRules";
 
         private readonly System.Random _rng = new System.Random();
         private readonly List<GemSlot> _gems = new List<GemSlot>();
@@ -29,6 +31,7 @@ namespace ProjectZ.Combat
         private int _rerollsRemaining;
         private int _enemyRerollsRemaining;
         private EnemyCombatState _enemy;
+        private CombatSpawnRulesAsset _spawnRules;
         private bool _fightResolved;
         private string _lastAction = "Fight started";
         private string _lastLoggedMarker;
@@ -75,8 +78,8 @@ namespace ProjectZ.Combat
                 BuildEnemyDefinitions();
             }
 
-            var targetBiome = ResolveTargetBiome();
-            var targetTier = ResolveTargetTier();
+            ResolveSpawnContext(out var targetBiome, out var zoneCombatIndex, out var isBossFight);
+            var targetTier = ResolveTargetTier(targetBiome, zoneCombatIndex, isBossFight);
 
             var exactMatch = _availableEnemies
                 .Where(enemy => enemy.Biome == targetBiome && enemy.Tier == targetTier)
@@ -110,6 +113,12 @@ namespace ProjectZ.Combat
             var spellIndex = spellLibrary != null
                 ? spellLibrary.BuildIndexById()
                 : new Dictionary<string, CombatSpellAsset>();
+
+            _spawnRules = Resources.Load<CombatSpawnRulesAsset>(SpawnRulesResourcePath);
+            if (_spawnRules == null)
+            {
+                Debug.LogWarning("SpawnRules missing at Resources/Combat/SpawnRules");
+            }
 
             var asset = Resources.Load<EnemyCatalogAsset>(EnemyCatalogResourcePath);
             if (asset != null)
@@ -833,23 +842,94 @@ namespace ProjectZ.Combat
 
             var manager = GameFlowManager.Instance;
             var nodeIndex = manager != null ? manager.CurrentRun.boardNodeIndex : 0;
-            return nodeIndex >= 3 ? EnemyBiome.Zone2 : EnemyBiome.Zone1;
+            var zone1Combats = _spawnRules != null
+                ? _spawnRules.GetCombatsPerZone(EnemyBiome.Zone1, DefaultCombatsPerZone)
+                : DefaultCombatsPerZone;
+            return nodeIndex < zone1Combats ? EnemyBiome.Zone1 : EnemyBiome.Zone2;
         }
 
-        private EnemyTier ResolveTargetTier()
+        private int ResolveZoneCombatIndex(EnemyBiome biome)
+        {
+            var manager = GameFlowManager.Instance;
+            var globalNodeIndex = manager != null ? manager.CurrentRun.boardNodeIndex : 0;
+
+            var zone1Combats = _spawnRules != null
+                ? _spawnRules.GetCombatsPerZone(EnemyBiome.Zone1, DefaultCombatsPerZone)
+                : DefaultCombatsPerZone;
+
+            if (biome == EnemyBiome.Zone1)
+            {
+                return globalNodeIndex < 0 ? 0 : globalNodeIndex;
+            }
+
+            var zone2Index = globalNodeIndex - zone1Combats;
+            return zone2Index < 0 ? 0 : zone2Index;
+        }
+
+        private bool IsBossFight(EnemyBiome biome, int zoneCombatIndex)
+        {
+            var combatsPerZone = _spawnRules != null
+                ? _spawnRules.GetCombatsPerZone(biome, DefaultCombatsPerZone)
+                : DefaultCombatsPerZone;
+            return zoneCombatIndex >= combatsPerZone - 1;
+        }
+
+        private void ResolveSpawnContext(out EnemyBiome biome, out int zoneCombatIndex, out bool isBossFight)
+        {
+            biome = ResolveTargetBiome();
+            zoneCombatIndex = ResolveZoneCombatIndex(biome);
+            isBossFight = IsBossFight(biome, zoneCombatIndex);
+        }
+
+        private EnemyTier ResolveTargetTier(EnemyBiome biome, int zoneCombatIndex, bool isBossFight)
         {
             if (_debugTierOverride.HasValue)
             {
                 return _debugTierOverride.Value;
             }
 
-            var manager = GameFlowManager.Instance;
-            var nodeIndex = manager != null ? manager.CurrentRun.boardNodeIndex : 0;
-            if (nodeIndex <= 0) return EnemyTier.Minion;
-            if (nodeIndex == 1) return EnemyTier.Elite;
-            if (nodeIndex == 2) return EnemyTier.Champion;
-            if (nodeIndex == 3) return EnemyTier.Boss;
-            return EnemyTier.Apex;
+            if (isBossFight)
+            {
+                return EnemyTier.Boss;
+            }
+
+            if (_spawnRules != null && _spawnRules.TryGetTierWeights(biome, zoneCombatIndex, out var weights))
+            {
+                return RollTierByWeights(weights);
+            }
+
+            Debug.LogWarning("No valid spawn tier rule for biome " + biome + " at zone index " + zoneCombatIndex + ". Using fallback tier.");
+            return biome == EnemyBiome.Zone1 ? EnemyTier.Minion : EnemyTier.Champion;
+        }
+
+        private EnemyTier RollTierByWeights(List<EnemyTierWeightEntry> weights)
+        {
+            var filtered = weights
+                .Where(entry => entry != null && entry.weight > 0 && entry.tier != EnemyTier.Apex)
+                .ToList();
+            if (filtered.Count == 0)
+            {
+                return EnemyTier.Minion;
+            }
+
+            var total = filtered.Sum(entry => entry.weight);
+            if (total <= 0)
+            {
+                return EnemyTier.Minion;
+            }
+
+            var roll = _rng.Next(1, total + 1);
+            var cumulative = 0;
+            foreach (var entry in filtered)
+            {
+                cumulative += entry.weight;
+                if (roll <= cumulative)
+                {
+                    return entry.tier;
+                }
+            }
+
+            return filtered[filtered.Count - 1].tier;
         }
 
         private void CycleBiomeOverride()
@@ -930,24 +1010,9 @@ namespace ProjectZ.Combat
             var panelY = 18f;
 
             GUILayout.BeginArea(new Rect(panelX, panelY, panelWidth, panelHeight), GUI.skin.box);
-            GUILayout.Label("Fight - Step 2");
+            GUILayout.Label("Fight");
             GUILayout.Label("Turn: " + _turn + " | Rerolls left: " + _rerollsRemaining + " / " + MaxRerollsPerTurn);
             GUILayout.Label("Enemy: " + _enemy.Definition.DisplayName + " | HP: " + _enemy.CurrentHp + " / " + _enemy.MaxHp + " | Block: " + _enemy.Block);
-            GUILayout.Label("Enemy Biome/Tier: " + _enemy.Definition.Biome + " / " + _enemy.Definition.Tier);
-            GUILayout.Label("Enemy Rerolls: " + _enemyRerollsRemaining + " / " + MaxRerollsPerTurn);
-            GUILayout.Label("Enemy Best Next Action: " + FormatEnemyPreview());
-            GUILayout.Label("Last action: " + _lastAction);
-            GUILayout.Label("Spawn Target (next fight): " + ResolveTargetBiome() + " / " + ResolveTargetTier());
-            GUILayout.BeginHorizontal();
-            if (GUILayout.Button("Biome Override: " + (_debugBiomeOverride.HasValue ? _debugBiomeOverride.Value.ToString() : "Auto")))
-            {
-                CycleBiomeOverride();
-            }
-            if (GUILayout.Button("Tier Override: " + (_debugTierOverride.HasValue ? _debugTierOverride.Value.ToString() : "Auto")))
-            {
-                CycleTierOverride();
-            }
-            GUILayout.EndHorizontal();
 
             GUILayout.Space(8f);
             GUILayout.Label("Champions");
@@ -973,7 +1038,6 @@ namespace ProjectZ.Combat
             GUILayout.Label(string.Join(" | ", _gems.Select(FormatGemSlot)));
             GUILayout.Label("Available: " + FormatGemCounts(CountAvailableGems()));
             GUILayout.Label("Unavailable: " + FormatGemCounts(CountUnavailableGems()));
-            GUILayout.Label("Enemy Gems: " + string.Join(" | ", _enemyGems.Select(FormatGemSlot)));
 
             GUILayout.BeginHorizontal();
             GUI.enabled = !_fightResolved;
