@@ -22,7 +22,10 @@ This project now uses data-driven enemy spells.
 ## Link a spell to an enemy
 1. Open `EnemyCatalog.asset`.
 2. Find your enemy in `enemies`.
-3. Add an entry in `intents`:
+3. Set enemy context:
+- `biome`: `Zone1` or `Zone2`
+- `tier`: `Minion`, `Elite`, `Champion`, `Boss`, `Apex`
+4. Add an entry in `intents`:
 - `spellId`: same id as in spell asset
 - `intentLabelOverride`: optional custom label in combat UI
 

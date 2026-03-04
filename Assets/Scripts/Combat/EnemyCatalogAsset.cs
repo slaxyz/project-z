@@ -25,6 +25,8 @@ namespace ProjectZ.Combat
         [SerializeField] private string enemyId = "enemy_id";
         [SerializeField] private string displayName = "Enemy";
         [SerializeField] private int maxHp = 40;
+        [SerializeField] private EnemyBiome biome = EnemyBiome.Zone1;
+        [SerializeField] private EnemyTier tier = EnemyTier.Minion;
         [SerializeField] private List<EnemyIntentAssetEntry> intents = new List<EnemyIntentAssetEntry>();
 
         public bool IsValid()
@@ -54,6 +56,8 @@ namespace ProjectZ.Combat
                 enemyId,
                 displayName,
                 maxHp,
+                biome,
+                tier,
                 runtimeIntents);
         }
     }

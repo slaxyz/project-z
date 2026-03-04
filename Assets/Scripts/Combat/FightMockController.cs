@@ -33,6 +33,8 @@ namespace ProjectZ.Combat
         private string _lastAction = "Fight started";
         private string _lastLoggedMarker;
         private Vector2 _combatLogScroll;
+        private EnemyBiome? _debugBiomeOverride;
+        private EnemyTier? _debugTierOverride;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void EnsureInstanceOnFightScene()
@@ -71,6 +73,25 @@ namespace ProjectZ.Combat
             if (_availableEnemies.Count == 0)
             {
                 BuildEnemyDefinitions();
+            }
+
+            var targetBiome = ResolveTargetBiome();
+            var targetTier = ResolveTargetTier();
+
+            var exactMatch = _availableEnemies
+                .Where(enemy => enemy.Biome == targetBiome && enemy.Tier == targetTier)
+                .ToList();
+            if (exactMatch.Count > 0)
+            {
+                return exactMatch[_rng.Next(0, exactMatch.Count)];
+            }
+
+            var biomeMatch = _availableEnemies
+                .Where(enemy => enemy.Biome == targetBiome)
+                .ToList();
+            if (biomeMatch.Count > 0)
+            {
+                return biomeMatch[_rng.Next(0, biomeMatch.Count)];
             }
 
             return _availableEnemies[_rng.Next(0, _availableEnemies.Count)];
@@ -118,6 +139,8 @@ namespace ProjectZ.Combat
                     "glass_shifter",
                     "Silica Mirage",
                     45,
+                    EnemyBiome.Zone1,
+                    EnemyTier.Minion,
                     new List<EnemyIntentDefinition>
                     {
                         new EnemyIntentDefinition("Refracted Ray", Cost(ElementType.Fire, 1, ElementType.Earth, 1), new CardEffect(CardEffectType.Damage, 9)),
@@ -128,6 +151,8 @@ namespace ProjectZ.Combat
                     "quicksand_naga",
                     "Siltis the Buried",
                     80,
+                    EnemyBiome.Zone2,
+                    EnemyTier.Champion,
                     new List<EnemyIntentDefinition>
                     {
                         new EnemyIntentDefinition("Gritty Embrace", Cost(ElementType.Earth, 2), new CardEffect(CardEffectType.Damage, 12)),
@@ -138,6 +163,8 @@ namespace ProjectZ.Combat
                     "solar_moloch",
                     "Magma Scout",
                     120,
+                    EnemyBiome.Zone2,
+                    EnemyTier.Boss,
                     new List<EnemyIntentDefinition>
                     {
                         new EnemyIntentDefinition("Searing Blood Jet", Cost(ElementType.Fire, 3), new CardEffect(CardEffectType.Damage, 14)),
@@ -148,6 +175,8 @@ namespace ProjectZ.Combat
                     "static_skink",
                     "Bolt Runner",
                     35,
+                    EnemyBiome.Zone1,
+                    EnemyTier.Elite,
                     new List<EnemyIntentDefinition>
                     {
                         new EnemyIntentDefinition("Static Discharge", Cost(ElementType.Fire, 1), new CardEffect(CardEffectType.Damage, 7)),
@@ -795,6 +824,79 @@ namespace ProjectZ.Combat
             }
         }
 
+        private EnemyBiome ResolveTargetBiome()
+        {
+            if (_debugBiomeOverride.HasValue)
+            {
+                return _debugBiomeOverride.Value;
+            }
+
+            var manager = GameFlowManager.Instance;
+            var nodeIndex = manager != null ? manager.CurrentRun.boardNodeIndex : 0;
+            return nodeIndex >= 3 ? EnemyBiome.Zone2 : EnemyBiome.Zone1;
+        }
+
+        private EnemyTier ResolveTargetTier()
+        {
+            if (_debugTierOverride.HasValue)
+            {
+                return _debugTierOverride.Value;
+            }
+
+            var manager = GameFlowManager.Instance;
+            var nodeIndex = manager != null ? manager.CurrentRun.boardNodeIndex : 0;
+            if (nodeIndex <= 0) return EnemyTier.Minion;
+            if (nodeIndex == 1) return EnemyTier.Elite;
+            if (nodeIndex == 2) return EnemyTier.Champion;
+            if (nodeIndex == 3) return EnemyTier.Boss;
+            return EnemyTier.Apex;
+        }
+
+        private void CycleBiomeOverride()
+        {
+            if (!_debugBiomeOverride.HasValue)
+            {
+                _debugBiomeOverride = EnemyBiome.Zone1;
+                return;
+            }
+
+            if (_debugBiomeOverride.Value == EnemyBiome.Zone1)
+            {
+                _debugBiomeOverride = EnemyBiome.Zone2;
+                return;
+            }
+
+            _debugBiomeOverride = null;
+        }
+
+        private void CycleTierOverride()
+        {
+            if (!_debugTierOverride.HasValue)
+            {
+                _debugTierOverride = EnemyTier.Minion;
+                return;
+            }
+
+            switch (_debugTierOverride.Value)
+            {
+                case EnemyTier.Minion:
+                    _debugTierOverride = EnemyTier.Elite;
+                    return;
+                case EnemyTier.Elite:
+                    _debugTierOverride = EnemyTier.Champion;
+                    return;
+                case EnemyTier.Champion:
+                    _debugTierOverride = EnemyTier.Boss;
+                    return;
+                case EnemyTier.Boss:
+                    _debugTierOverride = EnemyTier.Apex;
+                    return;
+                default:
+                    _debugTierOverride = null;
+                    return;
+            }
+        }
+
         private void OnGUI()
         {
             var manager = GameFlowManager.Instance;
@@ -831,9 +933,21 @@ namespace ProjectZ.Combat
             GUILayout.Label("Fight - Step 2");
             GUILayout.Label("Turn: " + _turn + " | Rerolls left: " + _rerollsRemaining + " / " + MaxRerollsPerTurn);
             GUILayout.Label("Enemy: " + _enemy.Definition.DisplayName + " | HP: " + _enemy.CurrentHp + " / " + _enemy.MaxHp + " | Block: " + _enemy.Block);
+            GUILayout.Label("Enemy Biome/Tier: " + _enemy.Definition.Biome + " / " + _enemy.Definition.Tier);
             GUILayout.Label("Enemy Rerolls: " + _enemyRerollsRemaining + " / " + MaxRerollsPerTurn);
             GUILayout.Label("Enemy Best Next Action: " + FormatEnemyPreview());
             GUILayout.Label("Last action: " + _lastAction);
+            GUILayout.Label("Spawn Target (next fight): " + ResolveTargetBiome() + " / " + ResolveTargetTier());
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button("Biome Override: " + (_debugBiomeOverride.HasValue ? _debugBiomeOverride.Value.ToString() : "Auto")))
+            {
+                CycleBiomeOverride();
+            }
+            if (GUILayout.Button("Tier Override: " + (_debugTierOverride.HasValue ? _debugTierOverride.Value.ToString() : "Auto")))
+            {
+                CycleTierOverride();
+            }
+            GUILayout.EndHorizontal();
 
             GUILayout.Space(8f);
             GUILayout.Label("Champions");

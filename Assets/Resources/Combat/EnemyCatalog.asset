@@ -16,6 +16,8 @@ MonoBehaviour:
   - enemyId: glass_shifter
     displayName: Silica Mirage
     maxHp: 45
+    biome: 0
+    tier: 0
     intents:
     - spellId: refracted_ray
       intentLabelOverride: 
@@ -26,6 +28,8 @@ MonoBehaviour:
   - enemyId: quicksand_naga
     displayName: Siltis the Buried
     maxHp: 80
+    biome: 1
+    tier: 2
     intents:
     - spellId: gritty_embrace
       intentLabelOverride: 
@@ -36,6 +40,8 @@ MonoBehaviour:
   - enemyId: solar_moloch
     displayName: Magma Scout
     maxHp: 120
+    biome: 1
+    tier: 3
     intents:
     - spellId: searing_blood_jet
       intentLabelOverride: 
@@ -46,6 +52,8 @@ MonoBehaviour:
   - enemyId: static_skink
     displayName: Bolt Runner
     maxHp: 35
+    biome: 0
+    tier: 1
     intents:
     - spellId: static_discharge
       intentLabelOverride: 
@@ -53,4 +61,3 @@ MonoBehaviour:
       intentLabelOverride: 
     - spellId: sand_bolt
       intentLabelOverride: 
-
