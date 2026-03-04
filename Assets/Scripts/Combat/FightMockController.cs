@@ -11,19 +11,19 @@ namespace ProjectZ.Combat
     {
         private const int GemsPerTurn = 5;
         private const int MaxRerollsPerTurn = 2;
-        private const int EnemyMaxHp = 70;
-        private const int EnemyAttackIntent = 8;
 
         private readonly System.Random _rng = new System.Random();
         private readonly List<GemSlot> _gems = new List<GemSlot>();
+        private readonly List<GemSlot> _enemyGems = new List<GemSlot>();
         private readonly List<ChampionCombatState> _champions = new List<ChampionCombatState>();
         private readonly HashSet<CardDefinition> _playedCardsThisTurn = new HashSet<CardDefinition>();
+        private readonly HashSet<EnemyIntentDefinition> _enemyUsedIntentsThisTurn = new HashSet<EnemyIntentDefinition>();
 
         private int _activeChampionIndex;
         private int _turn = 1;
         private int _rerollsRemaining;
-        private int _enemyHp = EnemyMaxHp;
-        private int _enemyBlock;
+        private int _enemyRerollsRemaining;
+        private EnemyCombatState _enemy;
         private bool _fightResolved;
         private string _lastAction = "Fight started";
 
@@ -48,10 +48,62 @@ namespace ProjectZ.Combat
         private void Start()
         {
             BuildChampionStates();
-            _enemyHp = EnemyMaxHp;
-            _enemyBlock = 0;
+            _enemy = new EnemyCombatState(SelectEnemyDefinition());
             _fightResolved = false;
             StartTurn();
+        }
+
+        private EnemyDefinition SelectEnemyDefinition()
+        {
+            var all = BuildEnemyCatalog();
+            return all[_rng.Next(0, all.Count)];
+        }
+
+        private List<EnemyDefinition> BuildEnemyCatalog()
+        {
+            return new List<EnemyDefinition>
+            {
+                new EnemyDefinition(
+                    "glass_shifter",
+                    "Silica Mirage",
+                    45,
+                    new List<EnemyIntentDefinition>
+                    {
+                        new EnemyIntentDefinition("Refracted Ray", Cost(ElementType.Fire, 1, ElementType.Earth, 1), new CardEffect(CardEffectType.Damage, 9)),
+                        new EnemyIntentDefinition("Heat Veil", Cost(ElementType.Earth, 2), new CardEffect(CardEffectType.Shield, 8)),
+                        new EnemyIntentDefinition("Blinding Glare", Cost(ElementType.Fire, 1), new CardEffect(CardEffectType.Damage, 5))
+                    }),
+                new EnemyDefinition(
+                    "quicksand_naga",
+                    "Siltis the Buried",
+                    80,
+                    new List<EnemyIntentDefinition>
+                    {
+                        new EnemyIntentDefinition("Gritty Embrace", Cost(ElementType.Earth, 2), new CardEffect(CardEffectType.Damage, 12)),
+                        new EnemyIntentDefinition("Quicksand Sink", Cost(ElementType.Earth, 3), new CardEffect(CardEffectType.Damage, 15)),
+                        new EnemyIntentDefinition("Sandstorm Burst", Cost(ElementType.Earth, 2, ElementType.Fire, 1), new CardEffect(CardEffectType.Damage, 18))
+                    }),
+                new EnemyDefinition(
+                    "solar_moloch",
+                    "Magma Scout",
+                    120,
+                    new List<EnemyIntentDefinition>
+                    {
+                        new EnemyIntentDefinition("Searing Blood Jet", Cost(ElementType.Fire, 3), new CardEffect(CardEffectType.Damage, 14)),
+                        new EnemyIntentDefinition("Solar Intake", Cost(ElementType.Fire, 2, ElementType.Earth, 1), new CardEffect(CardEffectType.Shield, 12)),
+                        new EnemyIntentDefinition("Spike Eruption", Cost(ElementType.Fire, 2, ElementType.Earth, 2), new CardEffect(CardEffectType.Damage, 22))
+                    }),
+                new EnemyDefinition(
+                    "static_skink",
+                    "Bolt Runner",
+                    35,
+                    new List<EnemyIntentDefinition>
+                    {
+                        new EnemyIntentDefinition("Static Discharge", Cost(ElementType.Fire, 1), new CardEffect(CardEffectType.Damage, 7)),
+                        new EnemyIntentDefinition("Overload", Cost(ElementType.Fire, 2), new CardEffect(CardEffectType.Damage, 6)),
+                        new EnemyIntentDefinition("Sand Bolt", Cost(ElementType.Fire, 3, ElementType.Earth, 1), new CardEffect(CardEffectType.Damage, 25))
+                    })
+            };
         }
 
         private void BuildChampionStates()
@@ -131,11 +183,14 @@ namespace ProjectZ.Combat
         {
             _rerollsRemaining = MaxRerollsPerTurn;
             _playedCardsThisTurn.Clear();
+            _enemyRerollsRemaining = MaxRerollsPerTurn;
+            _enemyUsedIntentsThisTurn.Clear();
             foreach (var champion in _champions)
             {
                 champion.ResetBlock();
             }
             RollAllGems();
+            RollEnemyGems();
             _lastAction = "New turn started";
         }
 
@@ -203,6 +258,36 @@ namespace ProjectZ.Combat
             return result;
         }
 
+        private void RollEnemyGems()
+        {
+            _enemyGems.Clear();
+            for (var i = 0; i < GemsPerTurn; i++)
+            {
+                _enemyGems.Add(new GemSlot((ElementType)_rng.Next(0, 4)));
+            }
+        }
+
+        private Dictionary<ElementType, int> CountEnemyAvailableGems()
+        {
+            var result = new Dictionary<ElementType, int>
+            {
+                { ElementType.Fire, 0 },
+                { ElementType.Water, 0 },
+                { ElementType.Earth, 0 },
+                { ElementType.Air, 0 }
+            };
+
+            foreach (var gem in _enemyGems)
+            {
+                if (gem.IsAvailable)
+                {
+                    result[gem.Element]++;
+                }
+            }
+
+            return result;
+        }
+
         private void RerollGems()
         {
             if (_fightResolved)
@@ -228,7 +313,7 @@ namespace ProjectZ.Combat
                 return;
             }
 
-            ResolveEnemyIntent();
+            ExecuteEnemyTurn();
             if (TryResolveFight())
             {
                 return;
@@ -319,32 +404,12 @@ namespace ProjectZ.Combat
 
         private int DealDamageToEnemy(int rawDamage)
         {
-            if (rawDamage <= 0 || _enemyHp <= 0)
+            if (_enemy == null)
             {
                 return 0;
             }
 
-            var damageAfterBlock = rawDamage;
-            if (_enemyBlock > 0)
-            {
-                var absorbed = rawDamage < _enemyBlock ? rawDamage : _enemyBlock;
-                _enemyBlock -= absorbed;
-                damageAfterBlock -= absorbed;
-            }
-
-            if (damageAfterBlock <= 0)
-            {
-                return 0;
-            }
-
-            var previousHp = _enemyHp;
-            _enemyHp -= damageAfterBlock;
-            if (_enemyHp < 0)
-            {
-                _enemyHp = 0;
-            }
-
-            return previousHp - _enemyHp;
+            return _enemy.TakeDamage(rawDamage);
         }
 
         private void ConsumeGems(CardCost cost)
@@ -366,37 +431,243 @@ namespace ProjectZ.Combat
             }
         }
 
-        private void ResolveEnemyIntent()
+        private void ConsumeEnemyGems(CardCost cost)
         {
-            var target = SelectEnemyTarget();
-            if (target == null)
+            foreach (var requirement in cost.Requirements)
+            {
+                var toConsume = requirement.Value;
+                for (var i = 0; i < _enemyGems.Count && toConsume > 0; i++)
+                {
+                    var gem = _enemyGems[i];
+                    if (gem.Element != requirement.Key || !gem.IsAvailable)
+                    {
+                        continue;
+                    }
+
+                    gem.IsAvailable = false;
+                    toConsume--;
+                }
+            }
+        }
+
+        private void ExecuteEnemyTurn()
+        {
+            if (_enemy == null || !_enemy.IsAlive)
             {
                 return;
             }
 
-            var dealt = target.TakeDamage(EnemyAttackIntent);
-            _lastAction = "Enemy intent hits " + target.DisplayName + " for " + dealt;
+            _enemy.ResetBlock();
+            var actions = new List<string>();
+            var maxActions = _enemy.Definition.Intents.Count;
 
-            if (!target.IsAlive)
+            for (var actionIndex = 0; actionIndex < maxActions; actionIndex++)
             {
-                _lastAction += " and knocks them out";
-                TrySelectNextAliveChampion();
+                if (_champions.All(champion => !champion.IsAlive))
+                {
+                    break;
+                }
+
+                if (!TryChooseEnemyAction(out var chosenIntent, out var chosenTarget))
+                {
+                    if (_enemyRerollsRemaining > 0)
+                    {
+                        _enemyRerollsRemaining--;
+                        RollEnemyGems();
+                        actions.Add(_enemy.Definition.DisplayName + " rerolls gems (" + _enemyRerollsRemaining + " left)");
+                        continue;
+                    }
+
+                    actions.Add(_enemy.Definition.DisplayName + " cannot afford more intents");
+                    break;
+                }
+
+                ConsumeEnemyGems(chosenIntent.Cost);
+                _enemyUsedIntentsThisTurn.Add(chosenIntent);
+
+                switch (chosenIntent.Effect.Type)
+                {
+                    case CardEffectType.Damage:
+                        if (chosenTarget == null)
+                        {
+                            actions.Add(_enemy.Definition.DisplayName + " fails to find a target for " + chosenIntent.Name);
+                            break;
+                        }
+
+                        var dealt = chosenTarget.TakeDamage(chosenIntent.Effect.Amount);
+                        var damageLine = _enemy.Definition.DisplayName + " uses " + chosenIntent.Name + " on " + chosenTarget.DisplayName + " for " + dealt;
+                        if (!chosenTarget.IsAlive)
+                        {
+                            damageLine += " (KO)";
+                            TrySelectNextAliveChampion();
+                        }
+
+                        actions.Add(damageLine);
+                        break;
+                    case CardEffectType.Shield:
+                        _enemy.AddBlock(chosenIntent.Effect.Amount);
+                        actions.Add(_enemy.Definition.DisplayName + " uses " + chosenIntent.Name + " and gains " + chosenIntent.Effect.Amount + " block");
+                        break;
+                    case CardEffectType.Heal:
+                        var healed = _enemy.Heal(chosenIntent.Effect.Amount);
+                        actions.Add(_enemy.Definition.DisplayName + " uses " + chosenIntent.Name + " and heals " + healed);
+                        break;
+                }
+            }
+
+            _lastAction = actions.Count > 0
+                ? string.Join(" | ", actions)
+                : _enemy.Definition.DisplayName + " skips turn";
+        }
+
+        private bool TryChooseEnemyAction(out EnemyIntentDefinition bestIntent, out ChampionCombatState bestTarget)
+        {
+            bestIntent = null;
+            bestTarget = null;
+
+            var playable = GetPlayableEnemyIntents();
+            if (playable.Count == 0)
+            {
+                return false;
+            }
+
+            var bestScore = float.MinValue;
+            foreach (var intent in playable)
+            {
+                ChampionCombatState target = null;
+                var score = ScoreEnemyIntent(intent, out target);
+                if (score <= bestScore)
+                {
+                    continue;
+                }
+
+                bestScore = score;
+                bestIntent = intent;
+                bestTarget = target;
+            }
+
+            return bestIntent != null;
+        }
+
+        private List<EnemyIntentDefinition> GetPlayableEnemyIntents()
+        {
+            if (_enemy == null || !_enemy.IsAlive)
+            {
+                return new List<EnemyIntentDefinition>();
+            }
+
+            var available = CountEnemyAvailableGems();
+            return _enemy.Definition.Intents
+                .Where(intent => !_enemyUsedIntentsThisTurn.Contains(intent) && intent.Cost.CanAfford(available))
+                .ToList();
+        }
+
+        private float ScoreEnemyIntent(EnemyIntentDefinition intent, out ChampionCombatState target)
+        {
+            target = null;
+
+            switch (intent.Effect.Type)
+            {
+                case CardEffectType.Damage:
+                    target = SelectBestDamageTarget(intent.Effect.Amount);
+                    if (target == null)
+                    {
+                        return -1000f;
+                    }
+
+                    var expectedDamage = EstimateDamageOnChampion(target, intent.Effect.Amount);
+                    var killBonus = expectedDamage >= target.CurrentHp ? 40f : 0f;
+                    var focusBonus = target == GetActiveAliveChampion() ? 5f : 0f;
+                    return 30f + (expectedDamage * 2f) + killBonus + focusBonus;
+                case CardEffectType.Shield:
+                    var hpRatio = _enemy.MaxHp > 0 ? (float)_enemy.CurrentHp / _enemy.MaxHp : 1f;
+                    var missingRatio = 1f - hpRatio;
+                    var lowBlockBonus = _enemy.Block <= 4 ? 8f : 0f;
+                    return 10f + intent.Effect.Amount + (missingRatio * 35f) + lowBlockBonus;
+                case CardEffectType.Heal:
+                    var missingHp = _enemy.MaxHp - _enemy.CurrentHp;
+                    var effectiveHeal = missingHp > 0 ? Mathf.Min(intent.Effect.Amount, missingHp) : 0;
+                    var emergencyBonus = _enemy.CurrentHp <= (_enemy.MaxHp * 0.35f) ? 20f : 0f;
+                    return 12f + (effectiveHeal * 3f) + emergencyBonus;
+                default:
+                    return 0f;
             }
         }
 
-        private ChampionCombatState SelectEnemyTarget()
+        private ChampionCombatState SelectBestDamageTarget(int damageAmount)
         {
-            if (_champions.Count == 0)
+            var alive = _champions.Where(champion => champion.IsAlive).ToList();
+            if (alive.Count == 0)
             {
                 return null;
             }
 
-            if (_activeChampionIndex >= 0 && _activeChampionIndex < _champions.Count && _champions[_activeChampionIndex].IsAlive)
+            ChampionCombatState killTarget = null;
+            var killTargetHp = int.MaxValue;
+            foreach (var champion in alive)
             {
-                return _champions[_activeChampionIndex];
+                var expectedDamage = EstimateDamageOnChampion(champion, damageAmount);
+                if (expectedDamage < champion.CurrentHp)
+                {
+                    continue;
+                }
+
+                if (champion.CurrentHp >= killTargetHp)
+                {
+                    continue;
+                }
+
+                killTarget = champion;
+                killTargetHp = champion.CurrentHp;
             }
 
-            return _champions.FirstOrDefault(champion => champion.IsAlive);
+            if (killTarget != null)
+            {
+                return killTarget;
+            }
+
+            ChampionCombatState best = null;
+            var bestEffectiveHp = int.MaxValue;
+            foreach (var champion in alive)
+            {
+                var effectiveHp = champion.CurrentHp + champion.Block;
+                if (effectiveHp > bestEffectiveHp)
+                {
+                    continue;
+                }
+
+                if (effectiveHp == bestEffectiveHp && champion != GetActiveAliveChampion())
+                {
+                    continue;
+                }
+
+                bestEffectiveHp = effectiveHp;
+                best = champion;
+            }
+
+            return best;
+        }
+
+        private int EstimateDamageOnChampion(ChampionCombatState champion, int rawDamage)
+        {
+            if (champion == null || !champion.IsAlive || rawDamage <= 0)
+            {
+                return 0;
+            }
+
+            var blocked = champion.Block < rawDamage ? champion.Block : rawDamage;
+            return rawDamage - blocked;
+        }
+
+        private ChampionCombatState GetActiveAliveChampion()
+        {
+            if (_activeChampionIndex < 0 || _activeChampionIndex >= _champions.Count)
+            {
+                return null;
+            }
+
+            var active = _champions[_activeChampionIndex];
+            return active.IsAlive ? active : null;
         }
 
         private void TrySelectNextAliveChampion()
@@ -415,7 +686,7 @@ namespace ProjectZ.Combat
                 return true;
             }
 
-            if (_enemyHp <= 0)
+            if (_enemy == null || !_enemy.IsAlive)
             {
                 ResolveFight(true);
                 return true;
@@ -469,6 +740,11 @@ namespace ProjectZ.Combat
                 return;
             }
 
+            if (_enemy == null)
+            {
+                return;
+            }
+
             var active = _champions[_activeChampionIndex];
             const float panelWidth = 610f;
             const float panelHeight = 620f;
@@ -478,8 +754,9 @@ namespace ProjectZ.Combat
             GUILayout.BeginArea(new Rect(panelX, panelY, panelWidth, panelHeight), GUI.skin.box);
             GUILayout.Label("Fight - Step 2");
             GUILayout.Label("Turn: " + _turn + " | Rerolls left: " + _rerollsRemaining + " / " + MaxRerollsPerTurn);
-            GUILayout.Label("Enemy HP: " + _enemyHp + " / " + EnemyMaxHp + " | Enemy Block: " + _enemyBlock);
-            GUILayout.Label("Enemy Intent: Attack " + EnemyAttackIntent + " on End Turn");
+            GUILayout.Label("Enemy: " + _enemy.Definition.DisplayName + " | HP: " + _enemy.CurrentHp + " / " + _enemy.MaxHp + " | Block: " + _enemy.Block);
+            GUILayout.Label("Enemy Rerolls: " + _enemyRerollsRemaining + " / " + MaxRerollsPerTurn);
+            GUILayout.Label("Enemy Best Next Action: " + FormatEnemyPreview());
             GUILayout.Label("Last action: " + _lastAction);
 
             GUILayout.Space(8f);
@@ -506,6 +783,7 @@ namespace ProjectZ.Combat
             GUILayout.Label(string.Join(" | ", _gems.Select(FormatGemSlot)));
             GUILayout.Label("Available: " + FormatGemCounts(CountAvailableGems()));
             GUILayout.Label("Unavailable: " + FormatGemCounts(CountUnavailableGems()));
+            GUILayout.Label("Enemy Gems: " + string.Join(" | ", _enemyGems.Select(FormatGemSlot)));
 
             GUILayout.BeginHorizontal();
             GUI.enabled = !_fightResolved;
@@ -574,6 +852,17 @@ namespace ProjectZ.Combat
         private static string FormatEffect(CardEffect effect)
         {
             return effect.Type + " " + effect.Amount;
+        }
+
+        private string FormatEnemyPreview()
+        {
+            if (!TryChooseEnemyAction(out var intent, out var target))
+            {
+                return "No playable intent";
+            }
+
+            var targetPart = target != null ? " | Target: " + target.DisplayName : string.Empty;
+            return intent.Name + " | Cost: " + intent.Cost.ToDisplayString() + " | Effect: " + FormatEffect(intent.Effect) + targetPart;
         }
 
         private class GemSlot
