@@ -41,6 +41,7 @@ namespace ProjectZ.Combat
         private Vector2 _combatLogScroll;
         private EnemyBiome? _debugBiomeOverride;
         private EnemyTier? _debugTierOverride;
+        private string _debugEnemyIdOverride;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void EnsureInstanceOnFightScene()
@@ -88,6 +89,12 @@ namespace ProjectZ.Combat
                 CycleTierOverride();
                 _lastAction = "Tier override: " + (_debugTierOverride.HasValue ? _debugTierOverride.Value.ToString() : "Auto");
             }
+
+            if (IsDebugEnemyTogglePressed())
+            {
+                CycleEnemyOverride();
+                _lastAction = "Enemy override: " + (string.IsNullOrEmpty(_debugEnemyIdOverride) ? "Auto" : _debugEnemyIdOverride);
+            }
         }
 
         private static bool IsDebugBiomeTogglePressed()
@@ -108,6 +115,15 @@ namespace ProjectZ.Combat
 #endif
         }
 
+        private static bool IsDebugEnemyTogglePressed()
+        {
+#if ENABLE_INPUT_SYSTEM
+            return Keyboard.current != null && Keyboard.current.f8Key.wasPressedThisFrame;
+#else
+            return Input.GetKeyDown(KeyCode.F8);
+#endif
+        }
+
         private EnemyDefinition SelectEnemyDefinition()
         {
             if (_availableEnemies.Count == 0)
@@ -117,6 +133,17 @@ namespace ProjectZ.Combat
 
             ResolveSpawnContext(out var targetBiome, out var zoneCombatIndex, out var isBossFight);
             var targetTier = ResolveTargetTier(targetBiome, zoneCombatIndex, isBossFight);
+
+            if (!string.IsNullOrEmpty(_debugEnemyIdOverride))
+            {
+                var forced = _availableEnemies.FirstOrDefault(enemy => enemy.Id == _debugEnemyIdOverride && enemy.Biome == targetBiome && enemy.Tier == targetTier)
+                    ?? _availableEnemies.FirstOrDefault(enemy => enemy.Id == _debugEnemyIdOverride && enemy.Biome == targetBiome)
+                    ?? _availableEnemies.FirstOrDefault(enemy => enemy.Id == _debugEnemyIdOverride);
+                if (forced != null)
+                {
+                    return forced;
+                }
+            }
 
             var exactMatch = _availableEnemies
                 .Where(enemy => enemy.Biome == targetBiome && enemy.Tier == targetTier)
@@ -1014,6 +1041,77 @@ namespace ProjectZ.Combat
             }
         }
 
+        private void CycleEnemyOverride()
+        {
+            if (_availableEnemies.Count == 0)
+            {
+                BuildEnemyDefinitions();
+            }
+
+            var ids = _availableEnemies.Select(enemy => enemy.Id).Distinct().OrderBy(id => id).ToList();
+            if (ids.Count == 0)
+            {
+                _debugEnemyIdOverride = null;
+                return;
+            }
+
+            if (string.IsNullOrEmpty(_debugEnemyIdOverride))
+            {
+                _debugEnemyIdOverride = ids[0];
+                return;
+            }
+
+            var index = ids.IndexOf(_debugEnemyIdOverride);
+            if (index < 0 || index >= ids.Count - 1)
+            {
+                _debugEnemyIdOverride = null;
+                return;
+            }
+
+            _debugEnemyIdOverride = ids[index + 1];
+        }
+
+        public string DebugBiomeOverrideLabel()
+        {
+            return _debugBiomeOverride.HasValue ? _debugBiomeOverride.Value.ToString() : "Auto";
+        }
+
+        public string DebugTierOverrideLabel()
+        {
+            return _debugTierOverride.HasValue ? _debugTierOverride.Value.ToString() : "Auto";
+        }
+
+        public string DebugEnemyOverrideLabel()
+        {
+            return string.IsNullOrEmpty(_debugEnemyIdOverride) ? "Auto" : _debugEnemyIdOverride;
+        }
+
+        public void DebugCycleBiomeOverride()
+        {
+            CycleBiomeOverride();
+        }
+
+        public void DebugCycleTierOverride()
+        {
+            CycleTierOverride();
+        }
+
+        public void DebugCycleEnemyOverride()
+        {
+            CycleEnemyOverride();
+        }
+
+        public void DebugRespawnEnemyNow()
+        {
+            _fightResolved = false;
+            _enemy = new EnemyCombatState(SelectEnemyDefinition());
+            _turn = 1;
+            _combatLog.Clear();
+            _lastLoggedMarker = null;
+            StartTurn();
+            _lastAction = "Debug respawn enemy: " + _enemy.Definition.DisplayName;
+        }
+
         private void OnGUI()
         {
             var manager = GameFlowManager.Instance;
@@ -1048,14 +1146,15 @@ namespace ProjectZ.Combat
 
             GUILayout.BeginArea(new Rect(panelX, panelY, panelWidth, panelHeight), GUI.skin.box);
             GUILayout.Label("Fight");
-            GUILayout.Label("Debug keys: F6 biome override | F7 tier override");
+            GUILayout.Label("Debug keys: F6 biome | F7 tier | F8 enemy");
             GUILayout.Label("Turn: " + _turn + " | Rerolls left: " + _rerollsRemaining + " / " + MaxRerollsPerTurn);
             GUILayout.Label("Enemy: " + _enemy.Definition.DisplayName + " | HP: " + _enemy.CurrentHp + " / " + _enemy.MaxHp + " | Block: " + _enemy.Block);
-            if (_debugBiomeOverride.HasValue || _debugTierOverride.HasValue)
+            if (_debugBiomeOverride.HasValue || _debugTierOverride.HasValue || !string.IsNullOrEmpty(_debugEnemyIdOverride))
             {
                 var biomeOverrideText = _debugBiomeOverride.HasValue ? _debugBiomeOverride.Value.ToString() : "Auto";
                 var tierOverrideText = _debugTierOverride.HasValue ? _debugTierOverride.Value.ToString() : "Auto";
-                GUILayout.Label("Overrides: Biome=" + biomeOverrideText + " | Tier=" + tierOverrideText + " (F6/F7)");
+                var enemyOverrideText = string.IsNullOrEmpty(_debugEnemyIdOverride) ? "Auto" : _debugEnemyIdOverride;
+                GUILayout.Label("Overrides: Biome=" + biomeOverrideText + " | Tier=" + tierOverrideText + " | Enemy=" + enemyOverrideText + " (F6/F7/F8)");
             }
 
             GUILayout.Space(8f);

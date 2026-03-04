@@ -1,4 +1,5 @@
 using ProjectZ.Core;
+using ProjectZ.Combat;
 using ProjectZ.Run;
 using UnityEngine;
 #if ENABLE_INPUT_SYSTEM
@@ -88,6 +89,7 @@ namespace ProjectZ.UI
             if (manager.CurrentState == GameFlowState.Fight)
             {
                 GUILayout.Label("Fight in progress: use Fight UI actions.");
+                DrawFightSpawnDebug();
             }
             else if (manager.CurrentState == GameFlowState.Result)
             {
@@ -110,6 +112,42 @@ namespace ProjectZ.UI
             GUILayout.Space(10f);
             GUILayout.Label("F1: hide/show this debug panel");
             GUILayout.EndArea();
+        }
+
+        private static void DrawFightSpawnDebug()
+        {
+            var fight = FindFirstObjectByType<FightMockController>();
+            if (fight == null)
+            {
+                GUILayout.Label("Fight controller not found.");
+                return;
+            }
+
+            GUILayout.Space(8f);
+            GUILayout.Label("Fight Spawn Debug");
+            GUILayout.Label("Biome Filter: " + fight.DebugBiomeOverrideLabel());
+            GUILayout.Label("Tier Filter: " + fight.DebugTierOverrideLabel());
+            GUILayout.Label("Enemy Filter: " + fight.DebugEnemyOverrideLabel());
+
+            if (GUILayout.Button("Cycle Biome Filter"))
+            {
+                fight.DebugCycleBiomeOverride();
+            }
+
+            if (GUILayout.Button("Cycle Tier Filter"))
+            {
+                fight.DebugCycleTierOverride();
+            }
+
+            if (GUILayout.Button("Cycle Enemy Filter"))
+            {
+                fight.DebugCycleEnemyOverride();
+            }
+
+            if (GUILayout.Button("Respawn Enemy Now"))
+            {
+                fight.DebugRespawnEnemyNow();
+            }
         }
 
         private static void DrawTeamSelect(GameFlowManager manager)
