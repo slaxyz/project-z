@@ -17,14 +17,14 @@ Move enemy spawn selection to data-driven rules (biome/tier/progression), withou
 
 ## Test checklist
 - [x] `SpawnRules.asset` exists and is editable in Inspector.
-- [ ] `SpawnRules.asset` present + valid: spawn follows expected biome/tier behavior.
-- [ ] `SpawnRules.asset` missing: no crash, fallback active.
-- [ ] Invalid rule data: clear warning in Console + combat continues.
+- [x] `SpawnRules.asset` present + valid: spawn follows expected biome/tier behavior.
+- [x] `SpawnRules.asset` missing: no crash, fallback active.
+- [x] Invalid rule data: clear warning in Console + combat continues.
 - [x] Debug overrides for `Biome/Tier` still work.
-- [ ] No red errors in Unity Console.
+- [x] No red errors in Unity Console.
 
 ## Done criteria
 - [x] No hardcoded spawn decision (biome/tier/progression) left in `FightMockController`.
-- [ ] Spawn rates can be tuned from Inspector only (no code edit required).
-- [ ] Fallback behavior validated.
-- [ ] Manual tests validated across multiple runs.
+- [x] Spawn rates can be tuned from Inspector only (no code edit required).
+- [x] Fallback behavior validated.
+- [x] Manual tests validated across multiple runs.

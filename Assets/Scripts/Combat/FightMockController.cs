@@ -4,6 +4,9 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+#endif
 
 namespace ProjectZ.Combat
 {
@@ -69,6 +72,40 @@ namespace ProjectZ.Combat
         private void Update()
         {
             TrackCombatLog();
+            HandleDebugOverrideHotkeys();
+        }
+
+        private void HandleDebugOverrideHotkeys()
+        {
+            if (IsDebugBiomeTogglePressed())
+            {
+                CycleBiomeOverride();
+                _lastAction = "Biome override: " + (_debugBiomeOverride.HasValue ? _debugBiomeOverride.Value.ToString() : "Auto");
+            }
+
+            if (IsDebugTierTogglePressed())
+            {
+                CycleTierOverride();
+                _lastAction = "Tier override: " + (_debugTierOverride.HasValue ? _debugTierOverride.Value.ToString() : "Auto");
+            }
+        }
+
+        private static bool IsDebugBiomeTogglePressed()
+        {
+#if ENABLE_INPUT_SYSTEM
+            return Keyboard.current != null && Keyboard.current.f6Key.wasPressedThisFrame;
+#else
+            return Input.GetKeyDown(KeyCode.F6);
+#endif
+        }
+
+        private static bool IsDebugTierTogglePressed()
+        {
+#if ENABLE_INPUT_SYSTEM
+            return Keyboard.current != null && Keyboard.current.f7Key.wasPressedThisFrame;
+#else
+            return Input.GetKeyDown(KeyCode.F7);
+#endif
         }
 
         private EnemyDefinition SelectEnemyDefinition()
@@ -1011,8 +1048,15 @@ namespace ProjectZ.Combat
 
             GUILayout.BeginArea(new Rect(panelX, panelY, panelWidth, panelHeight), GUI.skin.box);
             GUILayout.Label("Fight");
+            GUILayout.Label("Debug keys: F6 biome override | F7 tier override");
             GUILayout.Label("Turn: " + _turn + " | Rerolls left: " + _rerollsRemaining + " / " + MaxRerollsPerTurn);
             GUILayout.Label("Enemy: " + _enemy.Definition.DisplayName + " | HP: " + _enemy.CurrentHp + " / " + _enemy.MaxHp + " | Block: " + _enemy.Block);
+            if (_debugBiomeOverride.HasValue || _debugTierOverride.HasValue)
+            {
+                var biomeOverrideText = _debugBiomeOverride.HasValue ? _debugBiomeOverride.Value.ToString() : "Auto";
+                var tierOverrideText = _debugTierOverride.HasValue ? _debugTierOverride.Value.ToString() : "Auto";
+                GUILayout.Label("Overrides: Biome=" + biomeOverrideText + " | Tier=" + tierOverrideText + " (F6/F7)");
+            }
 
             GUILayout.Space(8f);
             GUILayout.Label("Champions");
