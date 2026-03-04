@@ -11,13 +11,13 @@ namespace ProjectZ.Combat
     {
         private const int GemsPerTurn = 5;
         private const int MaxRerollsPerTurn = 2;
-        [SerializeField] private bool consumeGemsOnPlay;
         private const int EnemyMaxHp = 70;
         private const int EnemyAttackIntent = 8;
 
         private readonly System.Random _rng = new System.Random();
-        private readonly List<ElementType> _gems = new List<ElementType>();
+        private readonly List<GemSlot> _gems = new List<GemSlot>();
         private readonly List<ChampionCombatState> _champions = new List<ChampionCombatState>();
+        private readonly HashSet<CardDefinition> _playedCardsThisTurn = new HashSet<CardDefinition>();
 
         private int _activeChampionIndex;
         private int _turn = 1;
@@ -130,6 +130,7 @@ namespace ProjectZ.Combat
         private void StartTurn()
         {
             _rerollsRemaining = MaxRerollsPerTurn;
+            _playedCardsThisTurn.Clear();
             foreach (var champion in _champions)
             {
                 champion.ResetBlock();
@@ -143,7 +144,7 @@ namespace ProjectZ.Combat
             _gems.Clear();
             for (var i = 0; i < GemsPerTurn; i++)
             {
-                _gems.Add((ElementType)_rng.Next(0, 4));
+                _gems.Add(new GemSlot((ElementType)_rng.Next(0, 4)));
             }
         }
 
@@ -155,10 +156,12 @@ namespace ProjectZ.Combat
             }
 
             var active = _champions[_activeChampionIndex];
-            return active.IsAlive && card.Cost.CanAfford(CountGems());
+            return active.IsAlive
+                && !_playedCardsThisTurn.Contains(card)
+                && card.Cost.CanAfford(CountAvailableGems());
         }
 
-        private Dictionary<ElementType, int> CountGems()
+        private Dictionary<ElementType, int> CountAvailableGems()
         {
             var result = new Dictionary<ElementType, int>
             {
@@ -170,7 +173,31 @@ namespace ProjectZ.Combat
 
             foreach (var gem in _gems)
             {
-                result[gem]++;
+                if (gem.IsAvailable)
+                {
+                    result[gem.Element]++;
+                }
+            }
+
+            return result;
+        }
+
+        private Dictionary<ElementType, int> CountUnavailableGems()
+        {
+            var result = new Dictionary<ElementType, int>
+            {
+                { ElementType.Fire, 0 },
+                { ElementType.Water, 0 },
+                { ElementType.Earth, 0 },
+                { ElementType.Air, 0 }
+            };
+
+            foreach (var gem in _gems)
+            {
+                if (!gem.IsAvailable)
+                {
+                    result[gem.Element]++;
+                }
             }
 
             return result;
@@ -249,16 +276,21 @@ namespace ProjectZ.Combat
 
             if (!CanPlay(card))
             {
-                _lastAction = "Cannot play " + card.Name + " (missing gems)";
+                if (_playedCardsThisTurn.Contains(card))
+                {
+                    _lastAction = card.Name + " is already used this turn";
+                }
+                else
+                {
+                    _lastAction = "Cannot play " + card.Name + " (missing gems)";
+                }
                 return;
             }
 
             ApplyCardEffect(active, card);
+            _playedCardsThisTurn.Add(card);
 
-            if (consumeGemsOnPlay)
-            {
-                ConsumeGems(card.Cost);
-            }
+            ConsumeGems(card.Cost);
 
             if (TryResolveFight())
             {
@@ -320,14 +352,15 @@ namespace ProjectZ.Combat
             foreach (var requirement in cost.Requirements)
             {
                 var toConsume = requirement.Value;
-                for (var i = _gems.Count - 1; i >= 0 && toConsume > 0; i--)
+                for (var i = 0; i < _gems.Count && toConsume > 0; i++)
                 {
-                    if (_gems[i] != requirement.Key)
+                    var gem = _gems[i];
+                    if (gem.Element != requirement.Key || !gem.IsAvailable)
                     {
                         continue;
                     }
 
-                    _gems.RemoveAt(i);
+                    gem.IsAvailable = false;
                     toConsume--;
                 }
             }
@@ -469,9 +502,10 @@ namespace ProjectZ.Combat
             GUILayout.EndHorizontal();
 
             GUILayout.Space(10f);
-            GUILayout.Label("Gem Pool (" + (consumeGemsOnPlay ? "consumed on play" : "not consumed on play") + ")");
-            GUILayout.Label(string.Join(" | ", _gems.Select(FormatElement)));
-            GUILayout.Label("Counts: " + FormatGemCounts(CountGems()));
+            GUILayout.Label("Gem Pool (used gems become inactive until reroll/new turn)");
+            GUILayout.Label(string.Join(" | ", _gems.Select(FormatGemSlot)));
+            GUILayout.Label("Available: " + FormatGemCounts(CountAvailableGems()));
+            GUILayout.Label("Unavailable: " + FormatGemCounts(CountUnavailableGems()));
 
             GUILayout.BeginHorizontal();
             GUI.enabled = !_fightResolved;
@@ -493,7 +527,8 @@ namespace ProjectZ.Combat
             foreach (var card in active.Hand)
             {
                 GUILayout.BeginHorizontal(GUI.skin.box);
-                GUILayout.Label(card.Name + " | Cost: " + card.Cost.ToDisplayString() + " | Effect: " + FormatEffect(card.Effect), GUILayout.Width(460f));
+                var cardState = _playedCardsThisTurn.Contains(card) ? "USED" : "READY";
+                GUILayout.Label(card.Name + " | Cost: " + card.Cost.ToDisplayString() + " | Effect: " + FormatEffect(card.Effect) + " | " + cardState, GUILayout.Width(460f));
 
                 GUI.enabled = CanPlay(card);
                 if (GUILayout.Button("Play", GUILayout.Width(120f)))
@@ -531,9 +566,26 @@ namespace ProjectZ.Combat
                     .Select(p => p.Value + " " + FormatElement(p.Key)));
         }
 
+        private static string FormatGemSlot(GemSlot gem)
+        {
+            return FormatElement(gem.Element) + (gem.IsAvailable ? " [Ready]" : " [Used]");
+        }
+
         private static string FormatEffect(CardEffect effect)
         {
             return effect.Type + " " + effect.Amount;
+        }
+
+        private class GemSlot
+        {
+            public GemSlot(ElementType element)
+            {
+                Element = element;
+                IsAvailable = true;
+            }
+
+            public ElementType Element { get; }
+            public bool IsAvailable { get; set; }
         }
     }
 }
