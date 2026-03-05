@@ -91,6 +91,9 @@ namespace ProjectZ.Core
                 case GameFlowState.Home:
                     EnsureController<LobbySceneController>("LobbySceneController");
                     break;
+                case GameFlowState.TeamSelect:
+                    EnsureController<TeamSelectSceneController>("TeamSelectSceneController");
+                    break;
                 case GameFlowState.Loading:
                     EnsureController<LoadingSceneController>("LoadingSceneController");
                     break;
