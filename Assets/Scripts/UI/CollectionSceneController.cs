@@ -574,7 +574,6 @@ namespace ProjectZ.UI
             const float controlPaddingX = 16f;
             const float controlSpacing = 8f;
             const float controlButtonWidth = 120f;
-            const float sortPopupWidth = 180f;
             const float filterPopupWidth = 220f;
             const float filterPopupHeight = 188f;
             var popupImage = CreatePanel("FilterPopup", parent, new Color(0.07f, 0.07f, 0.1f, 0.96f));
