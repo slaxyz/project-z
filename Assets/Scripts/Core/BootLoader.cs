@@ -15,7 +15,7 @@ namespace ProjectZ.Core
 
             if (GameFlowManager.Instance != null)
             {
-                GameFlowManager.Instance.GoToHome();
+                GameFlowManager.Instance.BootToLobby();
             }
             else
             {

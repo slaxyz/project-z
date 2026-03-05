@@ -88,6 +88,9 @@ namespace ProjectZ.Core
                 case GameFlowState.Collection:
                     EnsureController<CollectionSceneController>("CollectionSceneController");
                     break;
+                case GameFlowState.Home:
+                    EnsureController<LobbySceneController>("LobbySceneController");
+                    break;
                 case GameFlowState.Loading:
                     EnsureController<LoadingSceneController>("LoadingSceneController");
                     break;
@@ -128,6 +131,12 @@ namespace ProjectZ.Core
         public void GoToTeamSelect()
         {
             LoadScene(GameScenes.TeamSelect);
+        }
+
+        public void BootToLobby()
+        {
+            NextSceneAfterLoading = GameScenes.Home;
+            LoadScene(GameScenes.Loading);
         }
 
         public void StartRun()
