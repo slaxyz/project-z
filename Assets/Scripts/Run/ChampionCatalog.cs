@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using ProjectZ.Combat;
 
 namespace ProjectZ.Run
 {
@@ -106,6 +107,9 @@ namespace ProjectZ.Run
                     c.Id,
                     c.DisplayName,
                     c.Role,
+                    3,
+                    ElementType.Fire,
+                    ChampionClassType.Vanguard,
                     25,
                     "Fallback champion entry.",
                     100,

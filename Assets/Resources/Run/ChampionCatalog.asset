@@ -16,6 +16,9 @@ MonoBehaviour:
   - id: warden
     displayName: Warden
     role: Frontline tank
+    tierStars: 3
+    element: 2
+    championClass: 0
     unlockCost: 0
     splashSprite: {fileID: 0}
     shortLore: Shield expert and defensive anchor.
@@ -24,6 +27,9 @@ MonoBehaviour:
   - id: arcanist
     displayName: Arcanist
     role: Spell burst
+    tierStars: 4
+    element: 0
+    championClass: 2
     unlockCost: 0
     splashSprite: {fileID: 0}
     shortLore: Arcane prodigy specialized in burst spells.
@@ -32,6 +38,9 @@ MonoBehaviour:
   - id: ranger
     displayName: Ranger
     role: Ranged DPS
+    tierStars: 3
+    element: 3
+    championClass: 1
     unlockCost: 0
     splashSprite: {fileID: 0}
     shortLore: Precise ranged hunter with steady damage.
@@ -40,6 +49,9 @@ MonoBehaviour:
   - id: shade
     displayName: Shade
     role: Assassin
+    tierStars: 5
+    element: 1
+    championClass: 1
     unlockCost: 40
     splashSprite: {fileID: 0}
     shortLore: Fast finisher who strikes from shadows.
@@ -48,6 +60,9 @@ MonoBehaviour:
   - id: oracle
     displayName: Oracle
     role: Support control
+    tierStars: 4
+    element: 1
+    championClass: 3
     unlockCost: 45
     splashSprite: {fileID: 0}
     shortLore: Tactical support with crowd-control tools.

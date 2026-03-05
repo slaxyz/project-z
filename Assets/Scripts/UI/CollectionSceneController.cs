@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using ProjectZ.Combat;
 using ProjectZ.Core;
 using ProjectZ.Run;
 using UnityEngine;
@@ -15,14 +16,17 @@ namespace ProjectZ.UI
     public enum ChampionSortMode
     {
         CatalogOrder = 0,
-        NameAsc = 1,
-        CostAsc = 2
+        TierAsc = 1,
+        TierDesc = 2,
+        PackByElement = 3
     }
 
     public struct ChampionFilter
     {
-        public string role;
-        public bool unlockedOnly;
+        public int minTier;
+        public int maxTier;
+        public ElementType? element;
+        public ChampionClassType? championClass;
     }
 
     public class CollectionSceneController : MonoBehaviour
@@ -68,6 +72,14 @@ namespace ProjectZ.UI
         private Text _coinsText;
         private Text _detailText;
         private Text _filterSortPlaceholderText;
+        private Button _sortButton;
+        private Text _sortButtonText;
+        private Button _tierFilterButton;
+        private Text _tierFilterButtonText;
+        private Button _elementFilterButton;
+        private Text _elementFilterButtonText;
+        private Button _classFilterButton;
+        private Text _classFilterButtonText;
         private Image _splashImage;
         private Text _splashFallbackText;
         private Text _feedbackText;
@@ -98,6 +110,12 @@ namespace ProjectZ.UI
                 enabled = false;
                 return;
             }
+
+            _filter.minTier = 3;
+            _filter.maxTier = 6;
+            _filter.element = null;
+            _filter.championClass = null;
+
             EnsureEventSystem();
             BuildLayout();
             ApplySafeArea(true);
@@ -199,7 +217,11 @@ namespace ProjectZ.UI
         private void RefreshTopPanel()
         {
             _coinsText.text = "Coins: " + _manager.GetPlayerCoins();
-            _filterSortPlaceholderText.text = "Filters/Sort: coming soon";
+            _filterSortPlaceholderText.text = BuildFilterSummaryLabel();
+            _sortButtonText.text = "Sort: " + ToSortLabel(_sortMode);
+            _tierFilterButtonText.text = "Tier: " + _filter.minTier + "-" + _filter.maxTier + "★";
+            _elementFilterButtonText.text = "Element: " + ToElementLabel(_filter.element);
+            _classFilterButtonText.text = "Type: " + ToClassLabel(_filter.championClass);
 
             var selected = GetSelectedChampion();
             if (selected == null)
@@ -220,8 +242,9 @@ namespace ProjectZ.UI
 
             _detailText.text =
                 selected.DisplayName + "\n" +
-                selected.Role + "\n\n" +
+                selected.Role + " | " + selected.ChampionClass + " | " + selected.Element + "\n\n" +
                 "Lore: " + selected.ShortLore + "\n\n" +
+                "Tier: " + selected.TierStars + "★\n" +
                 "HP: " + selected.BaseHp + "\n" +
                 "ATK: " + selected.BaseAttack + "\n" +
                 "Cost: " + selected.UnlockCost + "\n" +
@@ -256,7 +279,7 @@ namespace ProjectZ.UI
                 var unlocked = _manager.IsChampionUnlocked(champion.Id);
                 var affordable = _manager.GetPlayerCoins() >= champion.UnlockCost;
 
-                item.label.text = champion.DisplayName + "\n" + champion.Role;
+                item.label.text = champion.DisplayName + "  " + champion.TierStars + "★\n" + champion.Element + " • " + champion.ChampionClass;
 
                 if (isSelected)
                 {
@@ -314,24 +337,20 @@ namespace ProjectZ.UI
         private IEnumerable<ChampionDefinitionAsset> ApplyFilterAndSort(IReadOnlyList<ChampionDefinitionAsset> source)
         {
             IEnumerable<ChampionDefinitionAsset> query = source.Where(c => c != null && !string.IsNullOrWhiteSpace(c.Id));
-
-            if (!string.IsNullOrWhiteSpace(_filter.role))
-            {
-                query = query.Where(c => c.Role == _filter.role);
-            }
-
-            if (_filter.unlockedOnly)
-            {
-                query = query.Where(c => _manager.IsChampionUnlocked(c.Id));
-            }
+            query = query.Where(c => c.TierStars >= _filter.minTier && c.TierStars <= _filter.maxTier);
+            if (_filter.element.HasValue) query = query.Where(c => c.Element == _filter.element.Value);
+            if (_filter.championClass.HasValue) query = query.Where(c => c.ChampionClass == _filter.championClass.Value);
 
             switch (_sortMode)
             {
-                case ChampionSortMode.NameAsc:
-                    query = query.OrderBy(c => c.DisplayName);
+                case ChampionSortMode.TierAsc:
+                    query = query.OrderBy(c => c.TierStars).ThenBy(c => c.DisplayName);
                     break;
-                case ChampionSortMode.CostAsc:
-                    query = query.OrderBy(c => c.UnlockCost);
+                case ChampionSortMode.TierDesc:
+                    query = query.OrderByDescending(c => c.TierStars).ThenBy(c => c.DisplayName);
+                    break;
+                case ChampionSortMode.PackByElement:
+                    query = query.OrderBy(c => c.Element).ThenByDescending(c => c.TierStars).ThenBy(c => c.DisplayName);
                     break;
                 default:
                     break;
@@ -393,9 +412,45 @@ namespace ProjectZ.UI
             _filterSortPlaceholderText.rectTransform.offsetMin = Vector2.zero;
             _filterSortPlaceholderText.rectTransform.offsetMax = Vector2.zero;
 
+            var sortButtonImage = CreatePanel("SortButton", modal.transform, new Color(0.22f, 0.22f, 0.26f, 0.95f));
+            sortButtonImage.rectTransform.anchorMin = new Vector2(0.04f, 0.74f);
+            sortButtonImage.rectTransform.anchorMax = new Vector2(0.96f, 0.82f);
+            _sortButton = sortButtonImage.gameObject.AddComponent<Button>();
+            _sortButton.targetGraphic = sortButtonImage;
+            _sortButton.onClick.AddListener(CycleSortMode);
+            _sortButtonText = CreateText("SortButtonText", sortButtonImage.transform, 13, TextAnchor.MiddleCenter, Color.white);
+            StretchToParent(_sortButtonText.rectTransform);
+
+            var tierFilterButtonImage = CreatePanel("TierFilterButton", modal.transform, new Color(0.2f, 0.2f, 0.24f, 0.95f));
+            tierFilterButtonImage.rectTransform.anchorMin = new Vector2(0.04f, 0.66f);
+            tierFilterButtonImage.rectTransform.anchorMax = new Vector2(0.96f, 0.74f);
+            _tierFilterButton = tierFilterButtonImage.gameObject.AddComponent<Button>();
+            _tierFilterButton.targetGraphic = tierFilterButtonImage;
+            _tierFilterButton.onClick.AddListener(CycleTierFilter);
+            _tierFilterButtonText = CreateText("TierFilterButtonText", tierFilterButtonImage.transform, 13, TextAnchor.MiddleCenter, Color.white);
+            StretchToParent(_tierFilterButtonText.rectTransform);
+
+            var elementFilterButtonImage = CreatePanel("ElementFilterButton", modal.transform, new Color(0.2f, 0.2f, 0.24f, 0.95f));
+            elementFilterButtonImage.rectTransform.anchorMin = new Vector2(0.04f, 0.58f);
+            elementFilterButtonImage.rectTransform.anchorMax = new Vector2(0.96f, 0.66f);
+            _elementFilterButton = elementFilterButtonImage.gameObject.AddComponent<Button>();
+            _elementFilterButton.targetGraphic = elementFilterButtonImage;
+            _elementFilterButton.onClick.AddListener(CycleElementFilter);
+            _elementFilterButtonText = CreateText("ElementFilterButtonText", elementFilterButtonImage.transform, 13, TextAnchor.MiddleCenter, Color.white);
+            StretchToParent(_elementFilterButtonText.rectTransform);
+
+            var classFilterButtonImage = CreatePanel("ClassFilterButton", modal.transform, new Color(0.2f, 0.2f, 0.24f, 0.95f));
+            classFilterButtonImage.rectTransform.anchorMin = new Vector2(0.04f, 0.5f);
+            classFilterButtonImage.rectTransform.anchorMax = new Vector2(0.96f, 0.58f);
+            _classFilterButton = classFilterButtonImage.gameObject.AddComponent<Button>();
+            _classFilterButton.targetGraphic = classFilterButtonImage;
+            _classFilterButton.onClick.AddListener(CycleClassFilter);
+            _classFilterButtonText = CreateText("ClassFilterButtonText", classFilterButtonImage.transform, 13, TextAnchor.MiddleCenter, Color.white);
+            StretchToParent(_classFilterButtonText.rectTransform);
+
             _detailText = CreateText("DetailText", modal.transform, 15, TextAnchor.UpperLeft, Color.white);
-            _detailText.rectTransform.anchorMin = new Vector2(0.05f, 0.24f);
-            _detailText.rectTransform.anchorMax = new Vector2(0.95f, 0.76f);
+            _detailText.rectTransform.anchorMin = new Vector2(0.05f, 0.18f);
+            _detailText.rectTransform.anchorMax = new Vector2(0.95f, 0.48f);
             _detailText.rectTransform.offsetMin = Vector2.zero;
             _detailText.rectTransform.offsetMax = Vector2.zero;
             _detailText.horizontalOverflow = HorizontalWrapMode.Wrap;
@@ -520,6 +575,92 @@ namespace ProjectZ.UI
 #else
             eventSystemGo.AddComponent<StandaloneInputModule>();
 #endif
+        }
+
+        private void CycleSortMode()
+        {
+            _sortMode = (ChampionSortMode)(((int)_sortMode + 1) % 4);
+            RefreshAndRender();
+        }
+
+        private void CycleTierFilter()
+        {
+            if (_filter.minTier == 3 && _filter.maxTier == 6)
+            {
+                _filter.minTier = 3;
+                _filter.maxTier = 3;
+            }
+            else if (_filter.minTier == 3 && _filter.maxTier == 3)
+            {
+                _filter.minTier = 4;
+                _filter.maxTier = 4;
+            }
+            else if (_filter.minTier == 4 && _filter.maxTier == 4)
+            {
+                _filter.minTier = 5;
+                _filter.maxTier = 5;
+            }
+            else if (_filter.minTier == 5 && _filter.maxTier == 5)
+            {
+                _filter.minTier = 6;
+                _filter.maxTier = 6;
+            }
+            else
+            {
+                _filter.minTier = 3;
+                _filter.maxTier = 6;
+            }
+
+            RefreshAndRender();
+        }
+
+        private void CycleElementFilter()
+        {
+            if (!_filter.element.HasValue) _filter.element = ElementType.Fire;
+            else if (_filter.element.Value == ElementType.Fire) _filter.element = ElementType.Water;
+            else if (_filter.element.Value == ElementType.Water) _filter.element = ElementType.Earth;
+            else if (_filter.element.Value == ElementType.Earth) _filter.element = ElementType.Air;
+            else _filter.element = null;
+
+            RefreshAndRender();
+        }
+
+        private void CycleClassFilter()
+        {
+            if (!_filter.championClass.HasValue) _filter.championClass = ChampionClassType.Vanguard;
+            else if (_filter.championClass.Value == ChampionClassType.Vanguard) _filter.championClass = ChampionClassType.Striker;
+            else if (_filter.championClass.Value == ChampionClassType.Striker) _filter.championClass = ChampionClassType.Controller;
+            else if (_filter.championClass.Value == ChampionClassType.Controller) _filter.championClass = ChampionClassType.Support;
+            else _filter.championClass = null;
+
+            RefreshAndRender();
+        }
+
+        private static string ToSortLabel(ChampionSortMode mode)
+        {
+            switch (mode)
+            {
+                case ChampionSortMode.TierAsc: return "Tier Asc";
+                case ChampionSortMode.TierDesc: return "Tier Desc";
+                case ChampionSortMode.PackByElement: return "Pack Element";
+                default: return "Catalog";
+            }
+        }
+
+        private static string ToElementLabel(ElementType? element)
+        {
+            return element.HasValue ? element.Value.ToString() : "All";
+        }
+
+        private static string ToClassLabel(ChampionClassType? championClass)
+        {
+            return championClass.HasValue ? championClass.Value.ToString() : "All";
+        }
+
+        private string BuildFilterSummaryLabel()
+        {
+            var tierPart = _filter.minTier + "-" + _filter.maxTier + "★";
+            return "Tier " + tierPart + " | Elem " + ToElementLabel(_filter.element) + " | Type " + ToClassLabel(_filter.championClass);
         }
 
         private void ApplySafeArea(bool force)
