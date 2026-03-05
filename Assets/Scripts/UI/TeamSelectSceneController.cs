@@ -21,6 +21,7 @@ namespace ProjectZ.UI
             public Image portrait;
             public Text nameText;
             public Button button;
+            public bool hasSplash;
         }
 
         private sealed class SlotView
@@ -169,30 +170,30 @@ namespace ProjectZ.UI
             mainRowRect.anchorMin = new Vector2(0f, 0f);
             mainRowRect.anchorMax = new Vector2(1f, 1f);
             mainRowRect.offsetMin = new Vector2(0f, 0f);
-            mainRowRect.offsetMax = new Vector2(0f, -96f);
+            mainRowRect.offsetMax = new Vector2(0f, -112f);
             var mainLayout = mainRow.AddComponent<HorizontalLayoutGroup>();
             mainLayout.spacing = 24f;
-            mainLayout.childControlWidth = false;
+            mainLayout.childControlWidth = true;
             mainLayout.childControlHeight = true;
-            mainLayout.childForceExpandWidth = false;
+            mainLayout.childForceExpandWidth = true;
             mainLayout.childForceExpandHeight = true;
             mainLayout.padding = new RectOffset(0, 0, 24, 0);
 
             var leftPanel = CreatePanel("LeftPanel", mainRow.transform, new Color(0f, 0f, 0f, 0.12f));
             var leftPanelLayout = leftPanel.gameObject.AddComponent<LayoutElement>();
-            leftPanelLayout.preferredWidth = 760f;
-            leftPanelLayout.flexibleWidth = 0f;
+            leftPanelLayout.minWidth = 320f;
+            leftPanelLayout.flexibleWidth = 1f;
             leftPanelLayout.flexibleHeight = 1f;
 
             BuildChampionGrid(leftPanel.transform);
 
             var rightPanel = CreateUIObject("RightPanel", mainRow.transform);
             var rightLayoutElement = rightPanel.AddComponent<LayoutElement>();
-            rightLayoutElement.flexibleWidth = 1f;
+            rightLayoutElement.flexibleWidth = 3f;
             rightLayoutElement.flexibleHeight = 1f;
             var rightLayout = rightPanel.AddComponent<VerticalLayoutGroup>();
             rightLayout.spacing = 16f;
-            rightLayout.padding = new RectOffset(0, 0, 24, 0);
+            rightLayout.padding = new RectOffset(0, 0, 0, 0);
             rightLayout.childControlWidth = true;
             rightLayout.childControlHeight = false;
             rightLayout.childForceExpandWidth = true;
@@ -205,11 +206,11 @@ namespace ProjectZ.UI
             var slotRowLayout = slotRow.AddComponent<HorizontalLayoutGroup>();
             slotRowLayout.spacing = 16f;
             slotRowLayout.padding = new RectOffset(0, 0, 0, 0);
-            slotRowLayout.childAlignment = TextAnchor.MiddleLeft;
-            slotRowLayout.childControlWidth = false;
-            slotRowLayout.childControlHeight = false;
-            slotRowLayout.childForceExpandWidth = false;
-            slotRowLayout.childForceExpandHeight = false;
+            slotRowLayout.childAlignment = TextAnchor.MiddleCenter;
+            slotRowLayout.childControlWidth = true;
+            slotRowLayout.childControlHeight = true;
+            slotRowLayout.childForceExpandWidth = true;
+            slotRowLayout.childForceExpandHeight = true;
 
             for (var i = 0; i < _slotViews.Length; i++)
             {
@@ -221,24 +222,12 @@ namespace ProjectZ.UI
             var helperLayout = _helperText.gameObject.AddComponent<LayoutElement>();
             helperLayout.preferredHeight = 36f;
 
-            var playRow = CreateUIObject("PlayRow", rightPanel.transform);
-            var playRowLayoutElement = playRow.AddComponent<LayoutElement>();
-            playRowLayoutElement.preferredHeight = 92f;
-            var playRowLayout = playRow.AddComponent<HorizontalLayoutGroup>();
-            playRowLayout.spacing = 0f;
-            playRowLayout.childControlWidth = false;
-            playRowLayout.childControlHeight = true;
-            playRowLayout.childForceExpandWidth = false;
-            playRowLayout.childForceExpandHeight = false;
-
-            var spacer = CreateUIObject("PlaySpacer", playRow.transform);
-            var spacerLayout = spacer.AddComponent<LayoutElement>();
-            spacerLayout.flexibleWidth = 1f;
-
-            _playButtonImage = CreatePanel("PlayButton", playRow.transform, _playDisabledColor);
-            var playLayout = _playButtonImage.gameObject.AddComponent<LayoutElement>();
-            playLayout.preferredWidth = 380f;
-            playLayout.preferredHeight = 84f;
+            _playButtonImage = CreatePanel("PlayButton", contentRoot.transform, _playDisabledColor);
+            _playButtonImage.rectTransform.anchorMin = new Vector2(1f, 0f);
+            _playButtonImage.rectTransform.anchorMax = new Vector2(1f, 0f);
+            _playButtonImage.rectTransform.pivot = new Vector2(1f, 0f);
+            _playButtonImage.rectTransform.anchoredPosition = Vector2.zero;
+            _playButtonImage.rectTransform.sizeDelta = new Vector2(380f, 84f);
             _playButton = _playButtonImage.gameObject.AddComponent<Button>();
             _playButton.targetGraphic = _playButtonImage;
             _playButton.onClick.AddListener(() => _manager.StartRun());
@@ -306,6 +295,9 @@ namespace ProjectZ.UI
             portrait.rectTransform.offsetMax = Vector2.zero;
             portrait.preserveAspect = true;
             portrait.sprite = champion.SplashSprite;
+            portrait.color = champion.SplashSprite != null
+                ? Color.white
+                : new Color(0.14f, 0.14f, 0.14f, 1f);
 
             var nameText = CreateText("Name", root.transform, 18, TextAnchor.MiddleCenter, Color.white);
             nameText.text = champion.DisplayName;
@@ -320,7 +312,8 @@ namespace ProjectZ.UI
                 background = bg,
                 portrait = portrait,
                 nameText = nameText,
-                button = button
+                button = button,
+                hasSplash = champion.SplashSprite != null
             };
         }
 
@@ -328,8 +321,9 @@ namespace ProjectZ.UI
         {
             var root = CreateUIObject("Slot_" + (slotIndex + 1), parent);
             var layout = root.AddComponent<LayoutElement>();
-            layout.preferredWidth = 256f;
-            layout.preferredHeight = 380f;
+            layout.minWidth = 220f;
+            layout.flexibleWidth = 1f;
+            layout.flexibleHeight = 1f;
 
             var bg = root.AddComponent<Image>();
             bg.color = _slotIdleColor;
@@ -467,7 +461,16 @@ namespace ProjectZ.UI
                 item.background.color = !unlocked
                     ? _tileLockedColor
                     : (selected ? _tileSelectedColor : _tileIdleColor);
-                item.portrait.color = unlocked ? Color.white : new Color(0.55f, 0.55f, 0.55f, 1f);
+                if (!item.hasSplash)
+                {
+                    item.portrait.color = unlocked
+                        ? new Color(0.14f, 0.14f, 0.14f, 1f)
+                        : new Color(0.2f, 0.2f, 0.2f, 1f);
+                }
+                else
+                {
+                    item.portrait.color = unlocked ? Color.white : new Color(0.55f, 0.55f, 0.55f, 1f);
+                }
                 item.nameText.color = unlocked ? Color.white : new Color(0.82f, 0.82f, 0.82f, 1f);
             }
         }
