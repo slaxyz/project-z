@@ -182,6 +182,15 @@ namespace ProjectZ.UI
 
         private static void DrawTeamSelect(GameFlowManager manager)
         {
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button("← Back", GUILayout.Width(120f), GUILayout.Height(30f)))
+            {
+                manager.GoToHome();
+            }
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+            GUILayout.Space(6f);
+
             GUILayout.Label("Team Selection (pick 3 champions)");
             GUILayout.Label("Selected: " + manager.SelectedChampionCount() + "/3");
 

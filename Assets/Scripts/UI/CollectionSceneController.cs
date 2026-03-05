@@ -490,6 +490,19 @@ namespace ProjectZ.UI
             _feedbackText.rectTransform.offsetMax = Vector2.zero;
 
             BuildCarousel(bottomPanel.transform);
+
+            var backButtonImage = CreatePanel("BackButton", safeAreaGo.transform, new Color(0.2f, 0.2f, 0.24f, 0.95f));
+            backButtonImage.rectTransform.anchorMin = new Vector2(0f, 1f);
+            backButtonImage.rectTransform.anchorMax = new Vector2(0f, 1f);
+            backButtonImage.rectTransform.pivot = new Vector2(0f, 1f);
+            backButtonImage.rectTransform.anchoredPosition = new Vector2(16f, -16f);
+            backButtonImage.rectTransform.sizeDelta = new Vector2(148f, 44f);
+            var backButton = backButtonImage.gameObject.AddComponent<Button>();
+            backButton.targetGraphic = backButtonImage;
+            backButton.onClick.AddListener(() => _manager.GoToHome());
+            var backButtonText = CreateText("BackButtonText", backButtonImage.transform, 14, TextAnchor.MiddleCenter, Color.white);
+            backButtonText.text = "← Back";
+            StretchToParent(backButtonText.rectTransform);
         }
 
         private void BuildCarousel(Transform parent)
