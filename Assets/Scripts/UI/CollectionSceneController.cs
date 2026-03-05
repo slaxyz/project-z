@@ -573,6 +573,9 @@ namespace ProjectZ.UI
         private Button CreatePopupOption(Transform parent, string label, UnityEngine.Events.UnityAction onClick)
         {
             var optionImage = CreatePanel("Option", parent, new Color(0.2f, 0.2f, 0.24f, 1f));
+            var optionLayout = optionImage.gameObject.AddComponent<LayoutElement>();
+            optionLayout.minHeight = 30f;
+            optionLayout.preferredHeight = 34f;
             var button = optionImage.gameObject.AddComponent<Button>();
             button.targetGraphic = optionImage;
             button.onClick.AddListener(onClick);
