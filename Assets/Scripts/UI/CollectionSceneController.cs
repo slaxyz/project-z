@@ -74,12 +74,13 @@ namespace ProjectZ.UI
         private Text _filterSortPlaceholderText;
         private Button _sortButton;
         private Text _sortButtonText;
-        private Button _tierFilterButton;
-        private Text _tierFilterButtonText;
-        private Button _elementFilterButton;
-        private Text _elementFilterButtonText;
-        private Button _classFilterButton;
-        private Text _classFilterButtonText;
+        private Button _filterButton;
+        private Text _filterButtonText;
+        private GameObject _sortPopup;
+        private GameObject _filterPopup;
+        private Text _tierFilterStatusText;
+        private Text _elementFilterStatusText;
+        private Text _classFilterStatusText;
         private Image _splashImage;
         private Text _splashFallbackText;
         private Text _feedbackText;
@@ -218,10 +219,11 @@ namespace ProjectZ.UI
         {
             _coinsText.text = "Coins: " + _manager.GetPlayerCoins();
             _filterSortPlaceholderText.text = BuildFilterSummaryLabel();
-            _sortButtonText.text = "Sort: " + ToSortLabel(_sortMode);
-            _tierFilterButtonText.text = "Tier: " + _filter.minTier + "-" + _filter.maxTier + "★";
-            _elementFilterButtonText.text = "Element: " + ToElementLabel(_filter.element);
-            _classFilterButtonText.text = "Type: " + ToClassLabel(_filter.championClass);
+            _sortButtonText.text = "Tri: " + ToSortLabel(_sortMode);
+            _filterButtonText.text = "Filtre";
+            _tierFilterStatusText.text = "Tier: " + _filter.minTier + "-" + _filter.maxTier + "★";
+            _elementFilterStatusText.text = "Element: " + ToElementLabel(_filter.element);
+            _classFilterStatusText.text = "Type: " + ToClassLabel(_filter.championClass);
 
             var selected = GetSelectedChampion();
             if (selected == null)
@@ -379,7 +381,7 @@ namespace ProjectZ.UI
             StretchToParent(_safeAreaRoot);
 
             var splashRoot = CreatePanel("SplashRoot", safeAreaGo.transform, new Color(0.07f, 0.08f, 0.1f, 1f));
-            splashRoot.rectTransform.anchorMin = new Vector2(0f, 0.27f);
+            splashRoot.rectTransform.anchorMin = new Vector2(0f, 0.29f);
             splashRoot.rectTransform.anchorMax = new Vector2(1f, 1f);
             splashRoot.rectTransform.offsetMin = Vector2.zero;
             splashRoot.rectTransform.offsetMax = Vector2.zero;
@@ -396,9 +398,15 @@ namespace ProjectZ.UI
 
             var bottomPanel = CreatePanel("BottomPanel", safeAreaGo.transform, new Color(0.12f, 0.13f, 0.16f, 0.98f));
             bottomPanel.rectTransform.anchorMin = new Vector2(0f, 0f);
-            bottomPanel.rectTransform.anchorMax = new Vector2(1f, 0.27f);
+            bottomPanel.rectTransform.anchorMax = new Vector2(1f, 0.21f);
             bottomPanel.rectTransform.offsetMin = Vector2.zero;
             bottomPanel.rectTransform.offsetMax = Vector2.zero;
+
+            var controlsPanel = CreatePanel("CollectionControls", safeAreaGo.transform, new Color(0.1f, 0.11f, 0.14f, 0.96f));
+            controlsPanel.rectTransform.anchorMin = new Vector2(0f, 0.21f);
+            controlsPanel.rectTransform.anchorMax = new Vector2(1f, 0.29f);
+            controlsPanel.rectTransform.offsetMin = Vector2.zero;
+            controlsPanel.rectTransform.offsetMax = Vector2.zero;
 
             _coinsText = CreateText("CoinsText", modal.transform, 17, TextAnchor.UpperLeft, Color.white);
             _coinsText.rectTransform.anchorMin = new Vector2(0.04f, 0.83f);
@@ -412,41 +420,26 @@ namespace ProjectZ.UI
             _filterSortPlaceholderText.rectTransform.offsetMin = Vector2.zero;
             _filterSortPlaceholderText.rectTransform.offsetMax = Vector2.zero;
 
-            var sortButtonImage = CreatePanel("SortButton", modal.transform, new Color(0.22f, 0.22f, 0.26f, 0.95f));
-            sortButtonImage.rectTransform.anchorMin = new Vector2(0.04f, 0.74f);
-            sortButtonImage.rectTransform.anchorMax = new Vector2(0.96f, 0.82f);
+            var sortButtonImage = CreatePanel("SortButton", controlsPanel.transform, new Color(0.22f, 0.22f, 0.26f, 0.95f));
+            sortButtonImage.rectTransform.anchorMin = new Vector2(0.02f, 0.18f);
+            sortButtonImage.rectTransform.anchorMax = new Vector2(0.14f, 0.82f);
             _sortButton = sortButtonImage.gameObject.AddComponent<Button>();
             _sortButton.targetGraphic = sortButtonImage;
-            _sortButton.onClick.AddListener(CycleSortMode);
+            _sortButton.onClick.AddListener(ToggleSortPopup);
             _sortButtonText = CreateText("SortButtonText", sortButtonImage.transform, 13, TextAnchor.MiddleCenter, Color.white);
             StretchToParent(_sortButtonText.rectTransform);
 
-            var tierFilterButtonImage = CreatePanel("TierFilterButton", modal.transform, new Color(0.2f, 0.2f, 0.24f, 0.95f));
-            tierFilterButtonImage.rectTransform.anchorMin = new Vector2(0.04f, 0.66f);
-            tierFilterButtonImage.rectTransform.anchorMax = new Vector2(0.96f, 0.74f);
-            _tierFilterButton = tierFilterButtonImage.gameObject.AddComponent<Button>();
-            _tierFilterButton.targetGraphic = tierFilterButtonImage;
-            _tierFilterButton.onClick.AddListener(CycleTierFilter);
-            _tierFilterButtonText = CreateText("TierFilterButtonText", tierFilterButtonImage.transform, 13, TextAnchor.MiddleCenter, Color.white);
-            StretchToParent(_tierFilterButtonText.rectTransform);
+            var filterButtonImage = CreatePanel("FilterButton", controlsPanel.transform, new Color(0.22f, 0.22f, 0.26f, 0.95f));
+            filterButtonImage.rectTransform.anchorMin = new Vector2(0.15f, 0.18f);
+            filterButtonImage.rectTransform.anchorMax = new Vector2(0.27f, 0.82f);
+            _filterButton = filterButtonImage.gameObject.AddComponent<Button>();
+            _filterButton.targetGraphic = filterButtonImage;
+            _filterButton.onClick.AddListener(ToggleFilterPopup);
+            _filterButtonText = CreateText("FilterButtonText", filterButtonImage.transform, 13, TextAnchor.MiddleCenter, Color.white);
+            StretchToParent(_filterButtonText.rectTransform);
 
-            var elementFilterButtonImage = CreatePanel("ElementFilterButton", modal.transform, new Color(0.2f, 0.2f, 0.24f, 0.95f));
-            elementFilterButtonImage.rectTransform.anchorMin = new Vector2(0.04f, 0.58f);
-            elementFilterButtonImage.rectTransform.anchorMax = new Vector2(0.96f, 0.66f);
-            _elementFilterButton = elementFilterButtonImage.gameObject.AddComponent<Button>();
-            _elementFilterButton.targetGraphic = elementFilterButtonImage;
-            _elementFilterButton.onClick.AddListener(CycleElementFilter);
-            _elementFilterButtonText = CreateText("ElementFilterButtonText", elementFilterButtonImage.transform, 13, TextAnchor.MiddleCenter, Color.white);
-            StretchToParent(_elementFilterButtonText.rectTransform);
-
-            var classFilterButtonImage = CreatePanel("ClassFilterButton", modal.transform, new Color(0.2f, 0.2f, 0.24f, 0.95f));
-            classFilterButtonImage.rectTransform.anchorMin = new Vector2(0.04f, 0.5f);
-            classFilterButtonImage.rectTransform.anchorMax = new Vector2(0.96f, 0.58f);
-            _classFilterButton = classFilterButtonImage.gameObject.AddComponent<Button>();
-            _classFilterButton.targetGraphic = classFilterButtonImage;
-            _classFilterButton.onClick.AddListener(CycleClassFilter);
-            _classFilterButtonText = CreateText("ClassFilterButtonText", classFilterButtonImage.transform, 13, TextAnchor.MiddleCenter, Color.white);
-            StretchToParent(_classFilterButtonText.rectTransform);
+            BuildSortPopup(safeAreaGo.transform);
+            BuildFilterPopup(safeAreaGo.transform);
 
             _detailText = CreateText("DetailText", modal.transform, 15, TextAnchor.UpperLeft, Color.white);
             _detailText.rectTransform.anchorMin = new Vector2(0.05f, 0.18f);
@@ -525,6 +518,70 @@ namespace ProjectZ.UI
             scrollRect.movementType = ScrollRect.MovementType.Clamped;
         }
 
+        private void BuildSortPopup(Transform parent)
+        {
+            var popupImage = CreatePanel("SortPopup", parent, new Color(0.07f, 0.07f, 0.1f, 0.96f));
+            var popupRect = popupImage.rectTransform;
+            popupRect.anchorMin = new Vector2(0.02f, 0.04f);
+            popupRect.anchorMax = new Vector2(0.24f, 0.205f);
+            popupRect.offsetMin = Vector2.zero;
+            popupRect.offsetMax = Vector2.zero;
+            _sortPopup = popupImage.gameObject;
+            _sortPopup.SetActive(false);
+
+            var sortLayout = _sortPopup.AddComponent<VerticalLayoutGroup>();
+            sortLayout.spacing = 8f;
+            sortLayout.padding = new RectOffset(8, 8, 8, 8);
+            sortLayout.childControlHeight = true;
+            sortLayout.childControlWidth = true;
+            sortLayout.childForceExpandHeight = false;
+            sortLayout.childForceExpandWidth = true;
+
+            CreatePopupOption(_sortPopup.transform, "Tier Asc", () => SelectSortMode(ChampionSortMode.TierAsc));
+            CreatePopupOption(_sortPopup.transform, "Tier Desc", () => SelectSortMode(ChampionSortMode.TierDesc));
+            CreatePopupOption(_sortPopup.transform, "Pack Element", () => SelectSortMode(ChampionSortMode.PackByElement));
+        }
+
+        private void BuildFilterPopup(Transform parent)
+        {
+            var popupImage = CreatePanel("FilterPopup", parent, new Color(0.07f, 0.07f, 0.1f, 0.96f));
+            var popupRect = popupImage.rectTransform;
+            popupRect.anchorMin = new Vector2(0.25f, 0.04f);
+            popupRect.anchorMax = new Vector2(0.53f, 0.205f);
+            popupRect.offsetMin = Vector2.zero;
+            popupRect.offsetMax = Vector2.zero;
+            _filterPopup = popupImage.gameObject;
+            _filterPopup.SetActive(false);
+
+            var filterLayout = _filterPopup.AddComponent<VerticalLayoutGroup>();
+            filterLayout.spacing = 8f;
+            filterLayout.padding = new RectOffset(8, 8, 8, 8);
+            filterLayout.childControlHeight = true;
+            filterLayout.childControlWidth = true;
+            filterLayout.childForceExpandHeight = false;
+            filterLayout.childForceExpandWidth = true;
+
+            var tierBtn = CreatePopupOption(_filterPopup.transform, string.Empty, CycleTierFilter);
+            _tierFilterStatusText = tierBtn.GetComponentInChildren<Text>();
+            var elementBtn = CreatePopupOption(_filterPopup.transform, string.Empty, CycleElementFilter);
+            _elementFilterStatusText = elementBtn.GetComponentInChildren<Text>();
+            var classBtn = CreatePopupOption(_filterPopup.transform, string.Empty, CycleClassFilter);
+            _classFilterStatusText = classBtn.GetComponentInChildren<Text>();
+            CreatePopupOption(_filterPopup.transform, "Reset Filters", ResetFilters);
+        }
+
+        private Button CreatePopupOption(Transform parent, string label, UnityEngine.Events.UnityAction onClick)
+        {
+            var optionImage = CreatePanel("Option", parent, new Color(0.2f, 0.2f, 0.24f, 1f));
+            var button = optionImage.gameObject.AddComponent<Button>();
+            button.targetGraphic = optionImage;
+            button.onClick.AddListener(onClick);
+            var text = CreateText("OptionText", optionImage.transform, 13, TextAnchor.MiddleCenter, Color.white);
+            text.text = label;
+            StretchToParent(text.rectTransform);
+            return button;
+        }
+
         private static GameObject CreateUIObject(string name, Transform parent)
         {
             var go = new GameObject(name, typeof(RectTransform));
@@ -577,9 +634,33 @@ namespace ProjectZ.UI
 #endif
         }
 
-        private void CycleSortMode()
+        private void ToggleSortPopup()
         {
-            _sortMode = (ChampionSortMode)(((int)_sortMode + 1) % 4);
+            var shouldShow = _sortPopup != null && !_sortPopup.activeSelf;
+            if (_sortPopup != null) _sortPopup.SetActive(shouldShow);
+            if (_filterPopup != null) _filterPopup.SetActive(false);
+        }
+
+        private void ToggleFilterPopup()
+        {
+            var shouldShow = _filterPopup != null && !_filterPopup.activeSelf;
+            if (_filterPopup != null) _filterPopup.SetActive(shouldShow);
+            if (_sortPopup != null) _sortPopup.SetActive(false);
+        }
+
+        private void SelectSortMode(ChampionSortMode mode)
+        {
+            _sortMode = mode;
+            if (_sortPopup != null) _sortPopup.SetActive(false);
+            RefreshAndRender();
+        }
+
+        private void ResetFilters()
+        {
+            _filter.minTier = 3;
+            _filter.maxTier = 6;
+            _filter.element = null;
+            _filter.championClass = null;
             RefreshAndRender();
         }
 
