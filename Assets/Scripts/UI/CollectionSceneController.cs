@@ -458,8 +458,8 @@ namespace ProjectZ.UI
             _filterButtonText = CreateText("FilterButtonText", filterButtonImage.transform, 13, TextAnchor.MiddleCenter, Color.white);
             StretchToParent(_filterButtonText.rectTransform);
 
-            BuildSortPopup(safeAreaGo.transform);
-            BuildFilterPopup(safeAreaGo.transform);
+            BuildSortPopup(controlsPanel.transform);
+            BuildFilterPopup(controlsPanel.transform);
 
             _detailText = CreateText("DetailText", modal.transform, 15, TextAnchor.UpperLeft, Color.white);
             _detailText.rectTransform.anchorMin = new Vector2(0.05f, 0.18f);
@@ -540,16 +540,15 @@ namespace ProjectZ.UI
 
         private void BuildSortPopup(Transform parent)
         {
-            const float popupPaddingX = 16f;
-            const float popupSpacing = 8f;
+            const float controlPaddingX = 16f;
             const float sortPopupWidth = 180f;
             const float sortPopupHeight = 156f;
             var popupImage = CreatePanel("SortPopup", parent, new Color(0.07f, 0.07f, 0.1f, 0.96f));
             var popupRect = popupImage.rectTransform;
             popupRect.anchorMin = new Vector2(0f, 0f);
             popupRect.anchorMax = new Vector2(0f, 0f);
-            popupRect.pivot = new Vector2(0f, 0f);
-            popupRect.anchoredPosition = new Vector2(popupPaddingX, 6f);
+            popupRect.pivot = new Vector2(0f, 1f);
+            popupRect.anchoredPosition = new Vector2(controlPaddingX, -4f);
             popupRect.sizeDelta = new Vector2(sortPopupWidth, sortPopupHeight);
             _sortPopup = popupImage.gameObject;
             _sortPopup.SetActive(false);
@@ -569,8 +568,9 @@ namespace ProjectZ.UI
 
         private void BuildFilterPopup(Transform parent)
         {
-            const float popupPaddingX = 16f;
-            const float popupSpacing = 8f;
+            const float controlPaddingX = 16f;
+            const float controlSpacing = 8f;
+            const float controlButtonWidth = 120f;
             const float sortPopupWidth = 180f;
             const float filterPopupWidth = 220f;
             const float filterPopupHeight = 188f;
@@ -578,8 +578,8 @@ namespace ProjectZ.UI
             var popupRect = popupImage.rectTransform;
             popupRect.anchorMin = new Vector2(0f, 0f);
             popupRect.anchorMax = new Vector2(0f, 0f);
-            popupRect.pivot = new Vector2(0f, 0f);
-            popupRect.anchoredPosition = new Vector2(popupPaddingX + sortPopupWidth + popupSpacing, 6f);
+            popupRect.pivot = new Vector2(0f, 1f);
+            popupRect.anchoredPosition = new Vector2(controlPaddingX + controlButtonWidth + controlSpacing, -4f);
             popupRect.sizeDelta = new Vector2(filterPopupWidth, filterPopupHeight);
             _filterPopup = popupImage.gameObject;
             _filterPopup.SetActive(false);
