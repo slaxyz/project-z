@@ -8,6 +8,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 #if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.UI;
 #endif
 
@@ -826,6 +827,23 @@ namespace ProjectZ.UI
 
         private static bool TryGetPointerDownPosition(out Vector2 pointerPosition)
         {
+#if ENABLE_INPUT_SYSTEM
+            if (Touchscreen.current != null)
+            {
+                var touch = Touchscreen.current.primaryTouch;
+                if (touch.press.wasPressedThisFrame)
+                {
+                    pointerPosition = touch.position.ReadValue();
+                    return true;
+                }
+            }
+
+            if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame)
+            {
+                pointerPosition = Mouse.current.position.ReadValue();
+                return true;
+            }
+#else
             if (Input.touchCount > 0)
             {
                 var touch = Input.GetTouch(0);
@@ -841,6 +859,7 @@ namespace ProjectZ.UI
                 pointerPosition = Input.mousePosition;
                 return true;
             }
+#endif
 
             pointerPosition = Vector2.zero;
             return false;
