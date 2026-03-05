@@ -290,27 +290,28 @@ namespace ProjectZ.UI
                 var unlocked = _manager.IsChampionUnlocked(champion.Id);
                 var affordable = _manager.GetPlayerCoins() >= champion.UnlockCost;
 
-                item.label.text = champion.DisplayName + "  " + champion.TierStars + "★\n" + champion.Element + " • " + champion.ChampionClass;
+                item.label.text = champion.DisplayName + "  " + champion.TierStars + "★";
+                item.status.color = GetElementTagColor(champion.Element);
 
                 if (isSelected)
                 {
                     item.background.color = _selectedColor;
-                    item.status.text = "Selected";
+                    item.status.text = BuildChampionTagLine(champion) + "  |  Selected";
                 }
                 else if (unlocked)
                 {
                     item.background.color = _unlockedColor;
-                    item.status.text = "Unlocked";
+                    item.status.text = BuildChampionTagLine(champion) + "  |  Unlocked";
                 }
                 else if (affordable)
                 {
                     item.background.color = _lockedAffordableColor;
-                    item.status.text = "Locked - " + champion.UnlockCost;
+                    item.status.text = BuildChampionTagLine(champion) + "  |  Locked " + champion.UnlockCost;
                 }
                 else
                 {
                     item.background.color = _lockedColor;
-                    item.status.text = "Locked - " + champion.UnlockCost;
+                    item.status.text = BuildChampionTagLine(champion) + "  |  Locked " + champion.UnlockCost;
                 }
             }
         }
@@ -780,6 +781,28 @@ namespace ProjectZ.UI
         {
             var tierPart = _filter.minTier + "-" + _filter.maxTier + "★";
             return "Tri " + ToSortLabel(_sortMode) + " | T " + tierPart + " | E " + ToElementLabel(_filter.element) + " | Type " + ToClassLabel(_filter.championClass);
+        }
+
+        private static string BuildChampionTagLine(ChampionDefinitionAsset champion)
+        {
+            return champion.Element + " • " + champion.ChampionClass + " • " + champion.TierStars + "★";
+        }
+
+        private static Color GetElementTagColor(ElementType element)
+        {
+            switch (element)
+            {
+                case ElementType.Fire:
+                    return new Color(1f, 0.52f, 0.32f, 1f);
+                case ElementType.Water:
+                    return new Color(0.43f, 0.74f, 1f, 1f);
+                case ElementType.Earth:
+                    return new Color(0.58f, 0.86f, 0.45f, 1f);
+                case ElementType.Air:
+                    return new Color(0.83f, 0.83f, 1f, 1f);
+                default:
+                    return Color.white;
+            }
         }
 
         private int CountActiveFilters()

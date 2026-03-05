@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using ProjectZ.Combat;
+using System;
 
 namespace ProjectZ.Run
 {
@@ -84,7 +85,7 @@ namespace ProjectZ.Run
             }
 
             _cachedAssets = _loadedCatalog.Champions
-                .Where(c => c != null && !string.IsNullOrWhiteSpace(c.Id))
+                .Where(c => c != null)
                 .ToList();
 
             if (_cachedAssets.Count == 0)
@@ -94,9 +95,110 @@ namespace ProjectZ.Run
                 return;
             }
 
+            _cachedAssets = ValidateAndNormalizeChampionAssets(_cachedAssets);
+            if (_cachedAssets.Count == 0)
+            {
+                Debug.LogWarning("ChampionCatalog: all entries invalid after validation. Using fallback catalog.");
+                BuildFromFallback();
+                return;
+            }
+
             _cachedDefinitions = _cachedAssets
                 .Select(c => new ChampionDefinition(c.Id, c.DisplayName, c.Role))
                 .ToList();
+        }
+
+        private static List<ChampionDefinitionAsset> ValidateAndNormalizeChampionAssets(List<ChampionDefinitionAsset> source)
+        {
+            var result = new List<ChampionDefinitionAsset>();
+            var seenIds = new HashSet<string>();
+
+            foreach (var champion in source)
+            {
+                if (champion == null)
+                {
+                    continue;
+                }
+
+                var id = (champion.Id ?? string.Empty).Trim();
+                if (string.IsNullOrWhiteSpace(id))
+                {
+                    Debug.LogWarning("ChampionCatalog: skipped entry with missing id.");
+                    continue;
+                }
+
+                if (seenIds.Contains(id))
+                {
+                    Debug.LogWarning("ChampionCatalog: duplicate id '" + id + "' skipped.");
+                    continue;
+                }
+
+                seenIds.Add(id);
+
+                var displayName = string.IsNullOrWhiteSpace(champion.DisplayName) ? ToTitleFallback(id) : champion.DisplayName.Trim();
+                var role = string.IsNullOrWhiteSpace(champion.Role) ? "Unknown role" : champion.Role.Trim();
+                var pseudo = string.IsNullOrWhiteSpace(champion.Pseudo) ? displayName : champion.Pseudo.Trim();
+                var fullName = string.IsNullOrWhiteSpace(champion.FullName) ? pseudo : champion.FullName.Trim();
+                var shortLore = string.IsNullOrWhiteSpace(champion.ShortLore) ? "No lore yet." : champion.ShortLore.Trim();
+                var description = string.IsNullOrWhiteSpace(champion.Description) ? shortLore : champion.Description.Trim();
+
+                var tier = Mathf.Clamp(champion.TierStars, 3, 6);
+                if (tier != champion.TierStars)
+                {
+                    Debug.LogWarning("ChampionCatalog: champion '" + id + "' tier out of range, clamped to " + tier + ".");
+                }
+
+                var element = champion.Element;
+                if (!Enum.IsDefined(typeof(ElementType), element))
+                {
+                    Debug.LogWarning("ChampionCatalog: champion '" + id + "' has invalid element, defaulting to Fire.");
+                    element = ElementType.Fire;
+                }
+
+                var championClass = champion.ChampionClass;
+                if (!Enum.IsDefined(typeof(ChampionClassType), championClass))
+                {
+                    Debug.LogWarning("ChampionCatalog: champion '" + id + "' has invalid class, defaulting to Vanguard.");
+                    championClass = ChampionClassType.Vanguard;
+                }
+
+                var unlockCost = Mathf.Max(0, champion.UnlockCost);
+                var baseHp = Mathf.Max(1, champion.BaseHp);
+                var baseAttack = Mathf.Max(1, champion.BaseAttack);
+
+                result.Add(new ChampionDefinitionAsset(
+                    id,
+                    displayName,
+                    pseudo,
+                    fullName,
+                    description,
+                    role,
+                    tier,
+                    element,
+                    championClass,
+                    unlockCost,
+                    shortLore,
+                    baseHp,
+                    baseAttack,
+                    champion.SplashSprite));
+            }
+
+            return result;
+        }
+
+        private static string ToTitleFallback(string raw)
+        {
+            if (string.IsNullOrWhiteSpace(raw))
+            {
+                return "Unknown";
+            }
+
+            var normalized = raw.Replace("_", " ").Replace("-", " ").Trim();
+            if (normalized.Length == 0)
+            {
+                return "Unknown";
+            }
+            return char.ToUpperInvariant(normalized[0]) + normalized.Substring(1);
         }
 
         private static void BuildFromFallback()
