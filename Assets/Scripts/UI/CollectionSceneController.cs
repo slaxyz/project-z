@@ -415,6 +415,11 @@ namespace ProjectZ.UI
             controlsPanel.rectTransform.offsetMin = Vector2.zero;
             controlsPanel.rectTransform.offsetMax = Vector2.zero;
 
+            const float controlPaddingX = 16f;
+            const float controlSpacing = 8f;
+            const float controlButtonWidth = 120f;
+            const float controlButtonHeight = 42f;
+
             _coinsText = CreateText("CoinsText", modal.transform, 17, TextAnchor.UpperLeft, Color.white);
             _coinsText.rectTransform.anchorMin = new Vector2(0.04f, 0.83f);
             _coinsText.rectTransform.anchorMax = new Vector2(0.5f, 0.97f);
@@ -428,8 +433,11 @@ namespace ProjectZ.UI
             _filterSortPlaceholderText.rectTransform.offsetMax = Vector2.zero;
 
             var sortButtonImage = CreatePanel("SortButton", controlsPanel.transform, _controlButtonIdleColor);
-            sortButtonImage.rectTransform.anchorMin = new Vector2(0.02f, 0.18f);
-            sortButtonImage.rectTransform.anchorMax = new Vector2(0.14f, 0.82f);
+            sortButtonImage.rectTransform.anchorMin = new Vector2(0f, 0.5f);
+            sortButtonImage.rectTransform.anchorMax = new Vector2(0f, 0.5f);
+            sortButtonImage.rectTransform.pivot = new Vector2(0f, 0.5f);
+            sortButtonImage.rectTransform.anchoredPosition = new Vector2(controlPaddingX, 0f);
+            sortButtonImage.rectTransform.sizeDelta = new Vector2(controlButtonWidth, controlButtonHeight);
             _sortButtonImage = sortButtonImage;
             _sortButton = sortButtonImage.gameObject.AddComponent<Button>();
             _sortButton.targetGraphic = sortButtonImage;
@@ -438,8 +446,11 @@ namespace ProjectZ.UI
             StretchToParent(_sortButtonText.rectTransform);
 
             var filterButtonImage = CreatePanel("FilterButton", controlsPanel.transform, _controlButtonIdleColor);
-            filterButtonImage.rectTransform.anchorMin = new Vector2(0.15f, 0.18f);
-            filterButtonImage.rectTransform.anchorMax = new Vector2(0.27f, 0.82f);
+            filterButtonImage.rectTransform.anchorMin = new Vector2(0f, 0.5f);
+            filterButtonImage.rectTransform.anchorMax = new Vector2(0f, 0.5f);
+            filterButtonImage.rectTransform.pivot = new Vector2(0f, 0.5f);
+            filterButtonImage.rectTransform.anchoredPosition = new Vector2(controlPaddingX + controlButtonWidth + controlSpacing, 0f);
+            filterButtonImage.rectTransform.sizeDelta = new Vector2(controlButtonWidth, controlButtonHeight);
             _filterButtonImage = filterButtonImage;
             _filterButton = filterButtonImage.gameObject.AddComponent<Button>();
             _filterButton.targetGraphic = filterButtonImage;
@@ -529,18 +540,23 @@ namespace ProjectZ.UI
 
         private void BuildSortPopup(Transform parent)
         {
+            const float popupPaddingX = 16f;
+            const float popupSpacing = 8f;
+            const float sortPopupWidth = 180f;
+            const float sortPopupHeight = 156f;
             var popupImage = CreatePanel("SortPopup", parent, new Color(0.07f, 0.07f, 0.1f, 0.96f));
             var popupRect = popupImage.rectTransform;
-            popupRect.anchorMin = new Vector2(0.02f, 0.04f);
-            popupRect.anchorMax = new Vector2(0.24f, 0.205f);
-            popupRect.offsetMin = Vector2.zero;
-            popupRect.offsetMax = Vector2.zero;
+            popupRect.anchorMin = new Vector2(0f, 0f);
+            popupRect.anchorMax = new Vector2(0f, 0f);
+            popupRect.pivot = new Vector2(0f, 0f);
+            popupRect.anchoredPosition = new Vector2(popupPaddingX, 6f);
+            popupRect.sizeDelta = new Vector2(sortPopupWidth, sortPopupHeight);
             _sortPopup = popupImage.gameObject;
             _sortPopup.SetActive(false);
 
             var sortLayout = _sortPopup.AddComponent<VerticalLayoutGroup>();
             sortLayout.spacing = 8f;
-            sortLayout.padding = new RectOffset(8, 8, 8, 8);
+            sortLayout.padding = new RectOffset(16, 16, 8, 8);
             sortLayout.childControlHeight = true;
             sortLayout.childControlWidth = true;
             sortLayout.childForceExpandHeight = false;
@@ -553,18 +569,24 @@ namespace ProjectZ.UI
 
         private void BuildFilterPopup(Transform parent)
         {
+            const float popupPaddingX = 16f;
+            const float popupSpacing = 8f;
+            const float sortPopupWidth = 180f;
+            const float filterPopupWidth = 220f;
+            const float filterPopupHeight = 188f;
             var popupImage = CreatePanel("FilterPopup", parent, new Color(0.07f, 0.07f, 0.1f, 0.96f));
             var popupRect = popupImage.rectTransform;
-            popupRect.anchorMin = new Vector2(0.25f, 0.04f);
-            popupRect.anchorMax = new Vector2(0.53f, 0.205f);
-            popupRect.offsetMin = Vector2.zero;
-            popupRect.offsetMax = Vector2.zero;
+            popupRect.anchorMin = new Vector2(0f, 0f);
+            popupRect.anchorMax = new Vector2(0f, 0f);
+            popupRect.pivot = new Vector2(0f, 0f);
+            popupRect.anchoredPosition = new Vector2(popupPaddingX + sortPopupWidth + popupSpacing, 6f);
+            popupRect.sizeDelta = new Vector2(filterPopupWidth, filterPopupHeight);
             _filterPopup = popupImage.gameObject;
             _filterPopup.SetActive(false);
 
             var filterLayout = _filterPopup.AddComponent<VerticalLayoutGroup>();
             filterLayout.spacing = 8f;
-            filterLayout.padding = new RectOffset(8, 8, 8, 8);
+            filterLayout.padding = new RectOffset(16, 16, 8, 8);
             filterLayout.childControlHeight = true;
             filterLayout.childControlWidth = true;
             filterLayout.childForceExpandHeight = false;
