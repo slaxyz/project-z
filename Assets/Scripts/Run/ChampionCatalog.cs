@@ -106,6 +106,9 @@ namespace ProjectZ.Run
                 .Select(c => new ChampionDefinitionAsset(
                     c.Id,
                     c.DisplayName,
+                    c.DisplayName,
+                    c.DisplayName,
+                    "Fallback champion description.",
                     c.Role,
                     3,
                     ElementType.Fire,

@@ -15,6 +15,9 @@ MonoBehaviour:
   champions:
   - id: warden
     displayName: Warden
+    pseudo: Bulwark
+    fullName: Marcus Hale
+    description: Veteran defender who anchors the frontline and absorbs pressure for the team.
     role: Frontline tank
     tierStars: 3
     element: 2
@@ -26,6 +29,9 @@ MonoBehaviour:
     baseAttack: 12
   - id: arcanist
     displayName: Arcanist
+    pseudo: Nova
+    fullName: Elara Voss
+    description: Gifted spellcaster with explosive burst windows and high-risk combos.
     role: Spell burst
     tierStars: 4
     element: 0
@@ -37,6 +43,9 @@ MonoBehaviour:
     baseAttack: 22
   - id: ranger
     displayName: Ranger
+    pseudo: Hawkeye
+    fullName: Liam Cross
+    description: Precision striker specialized in sustained ranged pressure and target focus.
     role: Ranged DPS
     tierStars: 3
     element: 3
@@ -48,6 +57,9 @@ MonoBehaviour:
     baseAttack: 18
   - id: shade
     displayName: Shade
+    pseudo: Nightstep
+    fullName: Soren Vale
+    description: Stealth assassin built for fast eliminations and opportunistic engages.
     role: Assassin
     tierStars: 5
     element: 1
@@ -59,6 +71,9 @@ MonoBehaviour:
     baseAttack: 24
   - id: oracle
     displayName: Oracle
+    pseudo: Aegis
+    fullName: Mira Solenne
+    description: Tactical support who controls tempo and protects allies during long fights.
     role: Support control
     tierStars: 4
     element: 1

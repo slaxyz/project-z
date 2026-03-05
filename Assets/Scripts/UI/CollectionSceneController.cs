@@ -251,8 +251,10 @@ namespace ProjectZ.UI
 
             _detailText.text =
                 selected.DisplayName + "\n" +
-                selected.Role + " | " + selected.ChampionClass + " | " + selected.Element + "\n\n" +
-                "Lore: " + selected.ShortLore + "\n\n" +
+                "Pseudo: " + selected.Pseudo + "\n" +
+                "Nom: " + selected.FullName + "\n\n" +
+                "Description: " + selected.Description + "\n\n" +
+                selected.Role + " | " + selected.ChampionClass + " | " + selected.Element + "\n" +
                 "Tier: " + selected.TierStars + "★\n" +
                 "HP: " + selected.BaseHp + "\n" +
                 "ATK: " + selected.BaseAttack + "\n" +

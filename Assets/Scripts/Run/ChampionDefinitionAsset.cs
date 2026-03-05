@@ -16,6 +16,9 @@ namespace ProjectZ.Run
     {
         [SerializeField] private string id;
         [SerializeField] private string displayName;
+        [SerializeField] private string pseudo;
+        [SerializeField] private string fullName;
+        [SerializeField, TextArea(2, 6)] private string description;
         [SerializeField] private string role;
         [SerializeField] private int tierStars = 3;
         [SerializeField] private ElementType element = ElementType.Fire;
@@ -33,6 +36,9 @@ namespace ProjectZ.Run
         public ChampionDefinitionAsset(
             string id,
             string displayName,
+            string pseudo,
+            string fullName,
+            string description,
             string role,
             int tierStars,
             ElementType element,
@@ -45,6 +51,9 @@ namespace ProjectZ.Run
         {
             this.id = id;
             this.displayName = displayName;
+            this.pseudo = pseudo;
+            this.fullName = fullName;
+            this.description = description;
             this.role = role;
             this.tierStars = Mathf.Clamp(tierStars, 3, 6);
             this.element = element;
@@ -64,6 +73,29 @@ namespace ProjectZ.Run
         public string DisplayName
         {
             get { return displayName; }
+        }
+
+        public string Pseudo
+        {
+            get { return string.IsNullOrWhiteSpace(pseudo) ? displayName : pseudo; }
+        }
+
+        public string FullName
+        {
+            get
+            {
+                if (!string.IsNullOrWhiteSpace(fullName))
+                {
+                    return fullName;
+                }
+
+                return Pseudo;
+            }
+        }
+
+        public string Description
+        {
+            get { return string.IsNullOrWhiteSpace(description) ? shortLore : description; }
         }
 
         public string Role
