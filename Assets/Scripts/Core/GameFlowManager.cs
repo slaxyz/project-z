@@ -189,6 +189,30 @@ namespace ProjectZ.Core
             return MetaProgression.progressionPoints;
         }
 
+        public void DebugResetRunAndProgression()
+        {
+            CurrentRun.Reset();
+            HasLastFightResult = false;
+            LastFightWasVictory = false;
+
+            MetaProgression.EnsureCollections();
+            MetaProgression.progressionPoints = 0;
+            MetaProgression.unlockedChampionIds.Clear();
+
+            SaveMeta();
+        }
+
+        public void DebugAddCoins(int amount)
+        {
+            if (amount <= 0)
+            {
+                return;
+            }
+
+            MetaProgression.progressionPoints += amount;
+            SaveMeta();
+        }
+
         public string GetDefaultSelectedChampionIdForCollection()
         {
             var catalog = ChampionCatalog.AllAssets;

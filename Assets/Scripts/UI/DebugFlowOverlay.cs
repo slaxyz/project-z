@@ -123,6 +123,18 @@ namespace ProjectZ.UI
                 }
 
                 GUILayout.Space(10f);
+                GUILayout.Label("Meta Debug");
+                if (GUILayout.Button("Add +100 Coins"))
+                {
+                    manager.DebugAddCoins(100);
+                }
+
+                if (GUILayout.Button("Reset Run + Coins + Unlocks"))
+                {
+                    manager.DebugResetRunAndProgression();
+                }
+
+                GUILayout.Space(10f);
                 GUILayout.Label("F1: hide/show this debug panel");
                 GUILayout.EndArea();
             }
