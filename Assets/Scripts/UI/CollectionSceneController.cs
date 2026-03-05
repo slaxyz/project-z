@@ -64,7 +64,7 @@ namespace ProjectZ.UI
         private GameFlowManager _manager;
         private Font _font;
 
-        private ChampionSortMode _sortMode = ChampionSortMode.CatalogOrder;
+        private ChampionSortMode _sortMode = ChampionSortMode.TierAsc;
         private ChampionFilter _filter;
         private string _selectedChampionId = string.Empty;
         private string _feedbackMessage = string.Empty;
@@ -74,8 +74,10 @@ namespace ProjectZ.UI
         private Text _filterSortPlaceholderText;
         private Button _sortButton;
         private Text _sortButtonText;
+        private Image _sortButtonImage;
         private Button _filterButton;
         private Text _filterButtonText;
+        private Image _filterButtonImage;
         private GameObject _sortPopup;
         private GameObject _filterPopup;
         private Text _tierFilterStatusText;
@@ -93,6 +95,8 @@ namespace ProjectZ.UI
         private readonly Color _unlockedColor = new Color(0.45f, 0.9f, 0.55f, 1f);
         private readonly Color _lockedAffordableColor = new Color(1f, 0.65f, 0.3f, 1f);
         private readonly Color _lockedColor = new Color(0.55f, 0.55f, 0.55f, 1f);
+        private readonly Color _controlButtonIdleColor = new Color(0.22f, 0.22f, 0.26f, 0.95f);
+        private readonly Color _controlButtonActiveColor = new Color(0.34f, 0.42f, 0.56f, 0.98f);
 
         private void Start()
         {
@@ -126,6 +130,7 @@ namespace ProjectZ.UI
         private void Update()
         {
             ApplySafeArea(false);
+            HandlePopupOutsideClick();
         }
 
         private void RefreshAndRender()
@@ -219,11 +224,12 @@ namespace ProjectZ.UI
         {
             _coinsText.text = "Coins: " + _manager.GetPlayerCoins();
             _filterSortPlaceholderText.text = BuildFilterSummaryLabel();
-            _sortButtonText.text = "Tri: " + ToSortLabel(_sortMode);
-            _filterButtonText.text = "Filtre";
+            _sortButtonText.text = "Tri";
+            _filterButtonText.text = "Filtre" + (CountActiveFilters() > 0 ? " (" + CountActiveFilters() + ")" : string.Empty);
             _tierFilterStatusText.text = "Tier: " + _filter.minTier + "-" + _filter.maxTier + "★";
             _elementFilterStatusText.text = "Element: " + ToElementLabel(_filter.element);
             _classFilterStatusText.text = "Type: " + ToClassLabel(_filter.championClass);
+            UpdateControlVisualState();
 
             var selected = GetSelectedChampion();
             if (selected == null)
@@ -420,18 +426,20 @@ namespace ProjectZ.UI
             _filterSortPlaceholderText.rectTransform.offsetMin = Vector2.zero;
             _filterSortPlaceholderText.rectTransform.offsetMax = Vector2.zero;
 
-            var sortButtonImage = CreatePanel("SortButton", controlsPanel.transform, new Color(0.22f, 0.22f, 0.26f, 0.95f));
+            var sortButtonImage = CreatePanel("SortButton", controlsPanel.transform, _controlButtonIdleColor);
             sortButtonImage.rectTransform.anchorMin = new Vector2(0.02f, 0.18f);
             sortButtonImage.rectTransform.anchorMax = new Vector2(0.14f, 0.82f);
+            _sortButtonImage = sortButtonImage;
             _sortButton = sortButtonImage.gameObject.AddComponent<Button>();
             _sortButton.targetGraphic = sortButtonImage;
             _sortButton.onClick.AddListener(ToggleSortPopup);
             _sortButtonText = CreateText("SortButtonText", sortButtonImage.transform, 13, TextAnchor.MiddleCenter, Color.white);
             StretchToParent(_sortButtonText.rectTransform);
 
-            var filterButtonImage = CreatePanel("FilterButton", controlsPanel.transform, new Color(0.22f, 0.22f, 0.26f, 0.95f));
+            var filterButtonImage = CreatePanel("FilterButton", controlsPanel.transform, _controlButtonIdleColor);
             filterButtonImage.rectTransform.anchorMin = new Vector2(0.15f, 0.18f);
             filterButtonImage.rectTransform.anchorMax = new Vector2(0.27f, 0.82f);
+            _filterButtonImage = filterButtonImage;
             _filterButton = filterButtonImage.gameObject.AddComponent<Button>();
             _filterButton.targetGraphic = filterButtonImage;
             _filterButton.onClick.AddListener(ToggleFilterPopup);
@@ -537,9 +545,9 @@ namespace ProjectZ.UI
             sortLayout.childForceExpandHeight = false;
             sortLayout.childForceExpandWidth = true;
 
-            CreatePopupOption(_sortPopup.transform, "Tier Asc", () => SelectSortMode(ChampionSortMode.TierAsc));
-            CreatePopupOption(_sortPopup.transform, "Tier Desc", () => SelectSortMode(ChampionSortMode.TierDesc));
-            CreatePopupOption(_sortPopup.transform, "Pack Element", () => SelectSortMode(ChampionSortMode.PackByElement));
+            CreatePopupOption(_sortPopup.transform, "Tier ↑", () => SelectSortMode(ChampionSortMode.TierAsc));
+            CreatePopupOption(_sortPopup.transform, "Tier ↓", () => SelectSortMode(ChampionSortMode.TierDesc));
+            CreatePopupOption(_sortPopup.transform, "Element", () => SelectSortMode(ChampionSortMode.PackByElement));
         }
 
         private void BuildFilterPopup(Transform parent)
@@ -567,7 +575,7 @@ namespace ProjectZ.UI
             _elementFilterStatusText = elementBtn.GetComponentInChildren<Text>();
             var classBtn = CreatePopupOption(_filterPopup.transform, string.Empty, CycleClassFilter);
             _classFilterStatusText = classBtn.GetComponentInChildren<Text>();
-            CreatePopupOption(_filterPopup.transform, "Reset Filters", ResetFilters);
+            CreatePopupOption(_filterPopup.transform, "Reset", ResetFilters);
         }
 
         private Button CreatePopupOption(Transform parent, string label, UnityEngine.Events.UnityAction onClick)
@@ -642,6 +650,7 @@ namespace ProjectZ.UI
             var shouldShow = _sortPopup != null && !_sortPopup.activeSelf;
             if (_sortPopup != null) _sortPopup.SetActive(shouldShow);
             if (_filterPopup != null) _filterPopup.SetActive(false);
+            UpdateControlVisualState();
         }
 
         private void ToggleFilterPopup()
@@ -649,6 +658,7 @@ namespace ProjectZ.UI
             var shouldShow = _filterPopup != null && !_filterPopup.activeSelf;
             if (_filterPopup != null) _filterPopup.SetActive(shouldShow);
             if (_sortPopup != null) _sortPopup.SetActive(false);
+            UpdateControlVisualState();
         }
 
         private void SelectSortMode(ChampionSortMode mode)
@@ -724,27 +734,116 @@ namespace ProjectZ.UI
         {
             switch (mode)
             {
-                case ChampionSortMode.TierAsc: return "Tier Asc";
-                case ChampionSortMode.TierDesc: return "Tier Desc";
-                case ChampionSortMode.PackByElement: return "Pack Element";
+                case ChampionSortMode.TierAsc: return "Tier ↑";
+                case ChampionSortMode.TierDesc: return "Tier ↓";
+                case ChampionSortMode.PackByElement: return "Element";
                 default: return "Catalog";
             }
         }
 
         private static string ToElementLabel(ElementType? element)
         {
-            return element.HasValue ? element.Value.ToString() : "All";
+            return element.HasValue ? element.Value.ToString() : "Tous";
         }
 
         private static string ToClassLabel(ChampionClassType? championClass)
         {
-            return championClass.HasValue ? championClass.Value.ToString() : "All";
+            return championClass.HasValue ? championClass.Value.ToString() : "Tous";
         }
 
         private string BuildFilterSummaryLabel()
         {
             var tierPart = _filter.minTier + "-" + _filter.maxTier + "★";
-            return "Tier " + tierPart + " | Elem " + ToElementLabel(_filter.element) + " | Type " + ToClassLabel(_filter.championClass);
+            return "Tri " + ToSortLabel(_sortMode) + " | T " + tierPart + " | E " + ToElementLabel(_filter.element) + " | Type " + ToClassLabel(_filter.championClass);
+        }
+
+        private int CountActiveFilters()
+        {
+            var count = 0;
+            if (_filter.minTier != 3 || _filter.maxTier != 6) count++;
+            if (_filter.element.HasValue) count++;
+            if (_filter.championClass.HasValue) count++;
+            return count;
+        }
+
+        private void UpdateControlVisualState()
+        {
+            var isSortPopupOpen = _sortPopup != null && _sortPopup.activeSelf;
+            var isFilterPopupOpen = _filterPopup != null && _filterPopup.activeSelf;
+            var hasActiveFilter = _filter.minTier != 3 || _filter.maxTier != 6 || _filter.element.HasValue || _filter.championClass.HasValue;
+
+            if (_sortButtonImage != null)
+            {
+                _sortButtonImage.color = isSortPopupOpen ? _controlButtonActiveColor : _controlButtonIdleColor;
+            }
+
+            if (_filterButtonImage != null)
+            {
+                _filterButtonImage.color = (isFilterPopupOpen || hasActiveFilter) ? _controlButtonActiveColor : _controlButtonIdleColor;
+            }
+        }
+
+        private void HandlePopupOutsideClick()
+        {
+            if ((_sortPopup == null || !_sortPopup.activeSelf) && (_filterPopup == null || !_filterPopup.activeSelf))
+            {
+                return;
+            }
+
+            if (!TryGetPointerDownPosition(out var pointerPosition))
+            {
+                return;
+            }
+
+            if (IsPointerInsideInteractiveZone(pointerPosition))
+            {
+                return;
+            }
+
+            if (_sortPopup != null) _sortPopup.SetActive(false);
+            if (_filterPopup != null) _filterPopup.SetActive(false);
+            UpdateControlVisualState();
+        }
+
+        private bool IsPointerInsideInteractiveZone(Vector2 pointerPosition)
+        {
+            return IsPointerInside(_sortPopup, pointerPosition)
+                || IsPointerInside(_filterPopup, pointerPosition)
+                || IsPointerInside(_sortButton != null ? _sortButton.gameObject : null, pointerPosition)
+                || IsPointerInside(_filterButton != null ? _filterButton.gameObject : null, pointerPosition);
+        }
+
+        private static bool IsPointerInside(GameObject target, Vector2 pointerPosition)
+        {
+            if (target == null)
+            {
+                return false;
+            }
+
+            var rect = target.GetComponent<RectTransform>();
+            return rect != null && RectTransformUtility.RectangleContainsScreenPoint(rect, pointerPosition, null);
+        }
+
+        private static bool TryGetPointerDownPosition(out Vector2 pointerPosition)
+        {
+            if (Input.touchCount > 0)
+            {
+                var touch = Input.GetTouch(0);
+                if (touch.phase == TouchPhase.Began)
+                {
+                    pointerPosition = touch.position;
+                    return true;
+                }
+            }
+
+            if (Input.GetMouseButtonDown(0))
+            {
+                pointerPosition = Input.mousePosition;
+                return true;
+            }
+
+            pointerPosition = Vector2.zero;
+            return false;
         }
 
         private void ApplySafeArea(bool force)
