@@ -1120,115 +1120,127 @@ namespace ProjectZ.Combat
                 return;
             }
 
-            if (_champions.Count == 0)
+            var previousMatrix = GUI.matrix;
+            var scale = DebugGuiScale.GetScale();
+            var safeArea = DebugGuiScale.GetSafeArea(scale);
+            GUI.matrix = Matrix4x4.Scale(new Vector3(scale, scale, 1f));
+
+            try
             {
-                GUILayout.BeginArea(new Rect(20f, 20f, 460f, 120f), GUI.skin.box);
-                GUILayout.Label("Fight setup missing: no champions selected.");
-                if (GUILayout.Button("Back Home"))
+                if (_champions.Count == 0)
                 {
-                    manager.GoToHome();
+                    GUILayout.BeginArea(new Rect(safeArea.x + 20f, safeArea.y + 20f, 460f, 120f), GUI.skin.box);
+                    GUILayout.Label("Fight setup missing: no champions selected.");
+                    if (GUILayout.Button("Back Home"))
+                    {
+                        manager.GoToHome();
+                    }
+
+                    GUILayout.EndArea();
+                    return;
                 }
 
-                GUILayout.EndArea();
-                return;
-            }
-
-            if (_enemy == null)
-            {
-                return;
-            }
-
-            var active = _champions[_activeChampionIndex];
-            const float panelWidth = 610f;
-            const float panelHeight = 620f;
-            var panelX = Screen.width - panelWidth - 18f;
-            var panelY = 18f;
-
-            GUILayout.BeginArea(new Rect(panelX, panelY, panelWidth, panelHeight), GUI.skin.box);
-            GUILayout.Label("Fight");
-            GUILayout.Label("Debug keys: F6 biome | F7 tier | F8 enemy");
-            GUILayout.Label("Turn: " + _turn + " | Rerolls left: " + _rerollsRemaining + " / " + MaxRerollsPerTurn);
-            GUILayout.Label("Enemy: " + _enemy.Definition.DisplayName + " | HP: " + _enemy.CurrentHp + " / " + _enemy.MaxHp + " | Block: " + _enemy.Block);
-            if (_debugBiomeOverride.HasValue || _debugTierOverride.HasValue || !string.IsNullOrEmpty(_debugEnemyIdOverride))
-            {
-                var biomeOverrideText = _debugBiomeOverride.HasValue ? _debugBiomeOverride.Value.ToString() : "Auto";
-                var tierOverrideText = _debugTierOverride.HasValue ? _debugTierOverride.Value.ToString() : "Auto";
-                var enemyOverrideText = string.IsNullOrEmpty(_debugEnemyIdOverride) ? "Auto" : _debugEnemyIdOverride;
-                GUILayout.Label("Overrides: Biome=" + biomeOverrideText + " | Tier=" + tierOverrideText + " | Enemy=" + enemyOverrideText + " (F6/F7/F8)");
-            }
-
-            GUILayout.Space(8f);
-            GUILayout.Label("Champions");
-            GUILayout.BeginHorizontal();
-            for (var i = 0; i < _champions.Count; i++)
-            {
-                var isActive = i == _activeChampionIndex;
-                var champion = _champions[i];
-                var status = champion.IsAlive ? "HP " + champion.CurrentHp + "/" + champion.MaxHp + " | Block " + champion.Block : "KO";
-                var label = (isActive ? "[Active] " : "") + champion.DisplayName + " - " + status;
-                GUI.enabled = champion.IsAlive && !_fightResolved;
-                if (GUILayout.Button(label))
+                if (_enemy == null)
                 {
-                    SwitchChampion(i);
-                }
-                GUI.enabled = true;
-            }
-
-            GUILayout.EndHorizontal();
-
-            GUILayout.Space(10f);
-            GUILayout.Label("Gem Pool (used gems become inactive until reroll/new turn)");
-            GUILayout.Label(string.Join(" | ", _gems.Select(FormatGemSlot)));
-            GUILayout.Label("Available: " + FormatGemCounts(CountAvailableGems()));
-            GUILayout.Label("Unavailable: " + FormatGemCounts(CountUnavailableGems()));
-
-            GUILayout.BeginHorizontal();
-            GUI.enabled = !_fightResolved;
-            if (GUILayout.Button("Reroll Gems"))
-            {
-                RerollGems();
-            }
-
-            if (GUILayout.Button("End Turn"))
-            {
-                EndTurn();
-            }
-            GUI.enabled = true;
-
-            GUILayout.EndHorizontal();
-
-            GUILayout.Space(10f);
-            GUILayout.Label("Active Champion Hand: " + active.DisplayName);
-            foreach (var card in active.Hand)
-            {
-                GUILayout.BeginHorizontal(GUI.skin.box);
-                var cardState = _playedCardsThisTurn.Contains(card) ? "USED" : "READY";
-                GUILayout.Label(card.Name + " | Cost: " + card.Cost.ToDisplayString() + " | Effect: " + FormatEffect(card.Effect) + " | " + cardState, GUILayout.Width(460f));
-
-                GUI.enabled = CanPlay(card);
-                if (GUILayout.Button("Play", GUILayout.Width(120f)))
-                {
-                    PlayCard(card);
+                    return;
                 }
 
-                GUI.enabled = true;
+                var active = _champions[_activeChampionIndex];
+                const float panelWidth = 610f;
+                const float panelHeight = 620f;
+                var panelX = safeArea.x + safeArea.width - panelWidth - 18f;
+                var panelY = safeArea.y + 18f;
+
+                GUILayout.BeginArea(new Rect(panelX, panelY, panelWidth, panelHeight), GUI.skin.box);
+                GUILayout.Label("Fight");
+                GUILayout.Label("Debug keys: F6 biome | F7 tier | F8 enemy");
+                GUILayout.Label("Turn: " + _turn + " | Rerolls left: " + _rerollsRemaining + " / " + MaxRerollsPerTurn);
+                GUILayout.Label("Enemy: " + _enemy.Definition.DisplayName + " | HP: " + _enemy.CurrentHp + " / " + _enemy.MaxHp + " | Block: " + _enemy.Block);
+                if (_debugBiomeOverride.HasValue || _debugTierOverride.HasValue || !string.IsNullOrEmpty(_debugEnemyIdOverride))
+                {
+                    var biomeOverrideText = _debugBiomeOverride.HasValue ? _debugBiomeOverride.Value.ToString() : "Auto";
+                    var tierOverrideText = _debugTierOverride.HasValue ? _debugTierOverride.Value.ToString() : "Auto";
+                    var enemyOverrideText = string.IsNullOrEmpty(_debugEnemyIdOverride) ? "Auto" : _debugEnemyIdOverride;
+                    GUILayout.Label("Overrides: Biome=" + biomeOverrideText + " | Tier=" + tierOverrideText + " | Enemy=" + enemyOverrideText + " (F6/F7/F8)");
+                }
+
+                GUILayout.Space(8f);
+                GUILayout.Label("Champions");
+                GUILayout.BeginHorizontal();
+                for (var i = 0; i < _champions.Count; i++)
+                {
+                    var isActive = i == _activeChampionIndex;
+                    var champion = _champions[i];
+                    var status = champion.IsAlive ? "HP " + champion.CurrentHp + "/" + champion.MaxHp + " | Block " + champion.Block : "KO";
+                    var label = (isActive ? "[Active] " : "") + champion.DisplayName + " - " + status;
+                    GUI.enabled = champion.IsAlive && !_fightResolved;
+                    if (GUILayout.Button(label))
+                    {
+                        SwitchChampion(i);
+                    }
+                    GUI.enabled = true;
+                }
+
                 GUILayout.EndHorizontal();
-            }
-            GUILayout.EndArea();
 
-            const float logWidth = 610f;
-            const float logHeight = 210f;
-            var logX = Screen.width - logWidth - 18f;
-            var logY = Screen.height - logHeight - 18f;
-            GUILayout.BeginArea(new Rect(logX, logY, logWidth, logHeight), GUI.skin.box);
-            GUILayout.Label("Fight Log (latest first)");
-            _combatLogScroll = GUILayout.BeginScrollView(_combatLogScroll, GUILayout.Height(170f));
-            foreach (var line in _combatLog)
-            {
-                GUILayout.Label("- " + line);
+                GUILayout.Space(10f);
+                GUILayout.Label("Gem Pool (used gems become inactive until reroll/new turn)");
+                GUILayout.Label(string.Join(" | ", _gems.Select(FormatGemSlot)));
+                GUILayout.Label("Available: " + FormatGemCounts(CountAvailableGems()));
+                GUILayout.Label("Unavailable: " + FormatGemCounts(CountUnavailableGems()));
+
+                GUILayout.BeginHorizontal();
+                GUI.enabled = !_fightResolved;
+                if (GUILayout.Button("Reroll Gems"))
+                {
+                    RerollGems();
+                }
+
+                if (GUILayout.Button("End Turn"))
+                {
+                    EndTurn();
+                }
+                GUI.enabled = true;
+
+                GUILayout.EndHorizontal();
+
+                GUILayout.Space(10f);
+                GUILayout.Label("Active Champion Hand: " + active.DisplayName);
+                foreach (var card in active.Hand)
+                {
+                    GUILayout.BeginHorizontal(GUI.skin.box);
+                    var cardState = _playedCardsThisTurn.Contains(card) ? "USED" : "READY";
+                    GUILayout.Label(card.Name + " | Cost: " + card.Cost.ToDisplayString() + " | Effect: " + FormatEffect(card.Effect) + " | " + cardState, GUILayout.Width(460f));
+
+                    GUI.enabled = CanPlay(card);
+                    if (GUILayout.Button("Play", GUILayout.Width(120f)))
+                    {
+                        PlayCard(card);
+                    }
+
+                    GUI.enabled = true;
+                    GUILayout.EndHorizontal();
+                }
+                GUILayout.EndArea();
+
+                const float logWidth = 610f;
+                const float logHeight = 210f;
+                var logX = safeArea.x + safeArea.width - logWidth - 18f;
+                var logY = safeArea.y + safeArea.height - logHeight - 18f;
+                GUILayout.BeginArea(new Rect(logX, logY, logWidth, logHeight), GUI.skin.box);
+                GUILayout.Label("Fight Log (latest first)");
+                _combatLogScroll = GUILayout.BeginScrollView(_combatLogScroll, GUILayout.Height(170f));
+                foreach (var line in _combatLog)
+                {
+                    GUILayout.Label("- " + line);
+                }
+                GUILayout.EndScrollView();
+                GUILayout.EndArea();
             }
-            GUILayout.EndScrollView();
-            GUILayout.EndArea();
+            finally
+            {
+                GUI.matrix = previousMatrix;
+            }
         }
 
         private static string FormatElement(ElementType element)

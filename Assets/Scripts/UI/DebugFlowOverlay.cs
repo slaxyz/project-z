@@ -57,61 +57,79 @@ namespace ProjectZ.UI
                 return;
             }
 
-            GUILayout.BeginArea(_panelRect, GUI.skin.box);
-            GUILayout.Label("Project Z - Debug Flow");
-            GUILayout.Space(8f);
+            var previousMatrix = GUI.matrix;
+            var scale = DebugGuiScale.GetScale();
+            var safeArea = DebugGuiScale.GetSafeArea(scale);
+            GUI.matrix = Matrix4x4.Scale(new Vector3(scale, scale, 1f));
 
-            GUILayout.Label("State: " + manager.CurrentState);
-            GUILayout.Label("Run Active: " + manager.CurrentRun.isActive);
-            GUILayout.Label("Board Node: " + manager.CurrentRun.boardNodeIndex);
-            GUILayout.Label("Wins/Losses: " + manager.CurrentRun.wins + " / " + manager.CurrentRun.losses);
-            GUILayout.Label("Meta Points: " + manager.MetaProgression.progressionPoints);
-
-            GUILayout.Space(10f);
-            GUILayout.Label("Main Navigation");
-            if (GUILayout.Button("Home")) manager.GoToHome();
-            if (GUILayout.Button("Collection")) manager.GoToCollection();
-            if (GUILayout.Button("Team Select")) manager.GoToTeamSelect();
-            if (GUILayout.Button("Open Board")) manager.OpenBoard();
-            if (GUILayout.Button("Start Fight")) manager.StartFight();
-
-            GUILayout.Space(10f);
-            if (manager.CurrentState == GameFlowState.TeamSelect)
+            try
             {
-                DrawTeamSelect(manager);
+                var panelRect = new Rect(
+                    safeArea.x + _panelRect.x,
+                    safeArea.y + _panelRect.y,
+                    _panelRect.width,
+                    _panelRect.height);
+
+                GUILayout.BeginArea(panelRect, GUI.skin.box);
+                GUILayout.Label("Project Z - Debug Flow");
+                GUILayout.Space(8f);
+
+                GUILayout.Label("State: " + manager.CurrentState);
+                GUILayout.Label("Run Active: " + manager.CurrentRun.isActive);
+                GUILayout.Label("Board Node: " + manager.CurrentRun.boardNodeIndex);
+                GUILayout.Label("Wins/Losses: " + manager.CurrentRun.wins + " / " + manager.CurrentRun.losses);
+                GUILayout.Label("Meta Points: " + manager.MetaProgression.progressionPoints);
+
                 GUILayout.Space(10f);
-            }
+                GUILayout.Label("Main Navigation");
+                if (GUILayout.Button("Home")) manager.GoToHome();
+                if (GUILayout.Button("Collection")) manager.GoToCollection();
+                if (GUILayout.Button("Team Select")) manager.GoToTeamSelect();
+                if (GUILayout.Button("Open Board")) manager.OpenBoard();
+                if (GUILayout.Button("Start Fight")) manager.StartFight();
 
-            if (GUILayout.Button("Start Run (requires 3 selected)")) manager.StartRun();
-
-            GUILayout.Space(10f);
-            GUILayout.Label("Run Results");
-            if (manager.CurrentState == GameFlowState.Fight)
-            {
-                GUILayout.Label("Fight in progress: use Fight UI actions.");
-                DrawFightSpawnDebug();
-            }
-            else if (manager.CurrentState == GameFlowState.Result)
-            {
-                GUILayout.Label("Result actions");
-                if (manager.CanGoToNextBoardNode())
+                GUILayout.Space(10f);
+                if (manager.CurrentState == GameFlowState.TeamSelect)
                 {
-                    if (GUILayout.Button("Next Node")) manager.NextBoardNode();
+                    DrawTeamSelect(manager);
+                    GUILayout.Space(10f);
                 }
-                if (manager.CanEndRun())
-                {
-                    var reward = manager.LastFightWasVictory ? 15 : 5;
-                    if (GUILayout.Button("End Run (+" + reward + ")")) manager.EndRun(reward);
-                }
-            }
-            else
-            {
-                GUILayout.Label("Result actions available only in Fight.");
-            }
 
-            GUILayout.Space(10f);
-            GUILayout.Label("F1: hide/show this debug panel");
-            GUILayout.EndArea();
+                if (GUILayout.Button("Start Run (requires 3 selected)")) manager.StartRun();
+
+                GUILayout.Space(10f);
+                GUILayout.Label("Run Results");
+                if (manager.CurrentState == GameFlowState.Fight)
+                {
+                    GUILayout.Label("Fight in progress: use Fight UI actions.");
+                    DrawFightSpawnDebug();
+                }
+                else if (manager.CurrentState == GameFlowState.Result)
+                {
+                    GUILayout.Label("Result actions");
+                    if (manager.CanGoToNextBoardNode())
+                    {
+                        if (GUILayout.Button("Next Node")) manager.NextBoardNode();
+                    }
+                    if (manager.CanEndRun())
+                    {
+                        var reward = manager.LastFightWasVictory ? 15 : 5;
+                        if (GUILayout.Button("End Run (+" + reward + ")")) manager.EndRun(reward);
+                    }
+                }
+                else
+                {
+                    GUILayout.Label("Result actions available only in Fight.");
+                }
+
+                GUILayout.Space(10f);
+                GUILayout.Label("F1: hide/show this debug panel");
+                GUILayout.EndArea();
+            }
+            finally
+            {
+                GUI.matrix = previousMatrix;
+            }
         }
 
         private static void DrawFightSpawnDebug()

@@ -32,17 +32,33 @@ namespace ProjectZ.Run
                 return;
             }
 
-            GUILayout.BeginArea(new Rect(Screen.width - 300f, 12f, 288f, 230f), GUI.skin.box);
-            GUILayout.Label("Board Controls");
-            GUILayout.Label("Current Node: " + manager.CurrentRun.boardNodeIndex);
-            GUILayout.Label("Run Team Size: " + manager.CurrentRun.selectedChampionIds.Count);
+            var previousMatrix = GUI.matrix;
+            var scale = DebugGuiScale.GetScale();
+            var safeArea = DebugGuiScale.GetSafeArea(scale);
+            GUI.matrix = Matrix4x4.Scale(new Vector3(scale, scale, 1f));
 
-            if (GUILayout.Button("Start Encounter"))
+            try
             {
-                manager.StartFight();
-            }
+                var panelWidth = 288f;
+                var panelX = safeArea.x + safeArea.width - panelWidth - 12f;
+                var panelY = safeArea.y + 12f;
 
-            GUILayout.EndArea();
+                GUILayout.BeginArea(new Rect(panelX, panelY, panelWidth, 230f), GUI.skin.box);
+                GUILayout.Label("Board Controls");
+                GUILayout.Label("Current Node: " + manager.CurrentRun.boardNodeIndex);
+                GUILayout.Label("Run Team Size: " + manager.CurrentRun.selectedChampionIds.Count);
+
+                if (GUILayout.Button("Start Encounter"))
+                {
+                    manager.StartFight();
+                }
+
+                GUILayout.EndArea();
+            }
+            finally
+            {
+                GUI.matrix = previousMatrix;
+            }
         }
     }
 }

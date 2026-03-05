@@ -73,6 +73,8 @@ namespace ProjectZ.UI
         private Text _feedbackText;
         private Button _unlockButton;
         private Text _unlockButtonText;
+        private RectTransform _safeAreaRoot;
+        private Rect _lastSafeArea;
 
         private readonly Color _selectedColor = new Color(1f, 0.85f, 0.45f, 1f);
         private readonly Color _unlockedColor = new Color(0.45f, 0.9f, 0.55f, 1f);
@@ -98,7 +100,13 @@ namespace ProjectZ.UI
             }
             EnsureEventSystem();
             BuildLayout();
+            ApplySafeArea(true);
             RefreshAndRender();
+        }
+
+        private void Update()
+        {
+            ApplySafeArea(false);
         }
 
         private void RefreshAndRender()
@@ -153,19 +161,19 @@ namespace ProjectZ.UI
         {
             var root = CreateUIObject("ChampionItem_" + champion.Id, parent);
             var rect = root.GetComponent<RectTransform>();
-            rect.sizeDelta = new Vector2(210f, 110f);
+            rect.sizeDelta = new Vector2(236f, 108f);
 
             var image = root.AddComponent<Image>();
             var button = root.AddComponent<Button>();
             button.targetGraphic = image;
 
-            var label = CreateText("Label", root.transform, 17, TextAnchor.UpperLeft);
+            var label = CreateText("Label", root.transform, 14, TextAnchor.UpperLeft);
             label.rectTransform.anchorMin = new Vector2(0.05f, 0.5f);
             label.rectTransform.anchorMax = new Vector2(0.95f, 0.95f);
             label.rectTransform.offsetMin = Vector2.zero;
             label.rectTransform.offsetMax = Vector2.zero;
 
-            var status = CreateText("Status", root.transform, 14, TextAnchor.LowerLeft);
+            var status = CreateText("Status", root.transform, 11, TextAnchor.LowerLeft);
             status.rectTransform.anchorMin = new Vector2(0.05f, 0.05f);
             status.rectTransform.anchorMax = new Vector2(0.95f, 0.45f);
             status.rectTransform.offsetMin = Vector2.zero;
@@ -337,39 +345,23 @@ namespace ProjectZ.UI
             var canvasGo = CreateUIObject("CollectionCanvas", transform);
             var canvas = canvasGo.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvasGo.AddComponent<CanvasScaler>().uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            var scaler = canvasGo.AddComponent<CanvasScaler>();
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution = new Vector2(2532f, 1170f);
+            scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
+            scaler.matchWidthOrHeight = 0.5f;
             canvasGo.AddComponent<GraphicRaycaster>();
 
             var background = CreatePanel("Background", canvasGo.transform, new Color(0.09f, 0.1f, 0.12f, 1f));
             StretchToParent(background.rectTransform);
 
-            var topPanel = CreatePanel("TopPanel", canvasGo.transform, new Color(0.15f, 0.17f, 0.2f, 0.96f));
-            topPanel.rectTransform.anchorMin = new Vector2(0.03f, 0.34f);
-            topPanel.rectTransform.anchorMax = new Vector2(0.97f, 0.97f);
-            topPanel.rectTransform.offsetMin = Vector2.zero;
-            topPanel.rectTransform.offsetMax = Vector2.zero;
+            var safeAreaGo = CreateUIObject("SafeAreaRoot", canvasGo.transform);
+            _safeAreaRoot = safeAreaGo.GetComponent<RectTransform>();
+            StretchToParent(_safeAreaRoot);
 
-            var bottomPanel = CreatePanel("BottomPanel", canvasGo.transform, new Color(0.12f, 0.13f, 0.16f, 0.98f));
-            bottomPanel.rectTransform.anchorMin = new Vector2(0f, 0f);
-            bottomPanel.rectTransform.anchorMax = new Vector2(1f, 0.31f);
-            bottomPanel.rectTransform.offsetMin = Vector2.zero;
-            bottomPanel.rectTransform.offsetMax = Vector2.zero;
-
-            _coinsText = CreateText("CoinsText", topPanel.transform, 24, TextAnchor.UpperLeft, Color.white);
-            _coinsText.rectTransform.anchorMin = new Vector2(0.03f, 0.9f);
-            _coinsText.rectTransform.anchorMax = new Vector2(0.4f, 0.98f);
-            _coinsText.rectTransform.offsetMin = Vector2.zero;
-            _coinsText.rectTransform.offsetMax = Vector2.zero;
-
-            _filterSortPlaceholderText = CreateText("FilterSortPlaceholder", topPanel.transform, 18, TextAnchor.UpperRight, Color.white);
-            _filterSortPlaceholderText.rectTransform.anchorMin = new Vector2(0.55f, 0.9f);
-            _filterSortPlaceholderText.rectTransform.anchorMax = new Vector2(0.97f, 0.98f);
-            _filterSortPlaceholderText.rectTransform.offsetMin = Vector2.zero;
-            _filterSortPlaceholderText.rectTransform.offsetMax = Vector2.zero;
-
-            var splashRoot = CreatePanel("SplashRoot", topPanel.transform, new Color(0.07f, 0.08f, 0.1f, 1f));
-            splashRoot.rectTransform.anchorMin = new Vector2(0.03f, 0.08f);
-            splashRoot.rectTransform.anchorMax = new Vector2(0.48f, 0.86f);
+            var splashRoot = CreatePanel("SplashRoot", safeAreaGo.transform, new Color(0.07f, 0.08f, 0.1f, 1f));
+            splashRoot.rectTransform.anchorMin = new Vector2(0f, 0.27f);
+            splashRoot.rectTransform.anchorMax = new Vector2(1f, 1f);
             splashRoot.rectTransform.offsetMin = Vector2.zero;
             splashRoot.rectTransform.offsetMax = Vector2.zero;
             _splashImage = splashRoot;
@@ -377,26 +369,52 @@ namespace ProjectZ.UI
             _splashFallbackText = CreateText("SplashFallbackText", splashRoot.transform, 22, TextAnchor.MiddleCenter, Color.white);
             StretchToParent(_splashFallbackText.rectTransform);
 
-            _detailText = CreateText("DetailText", topPanel.transform, 20, TextAnchor.UpperLeft, Color.white);
-            _detailText.rectTransform.anchorMin = new Vector2(0.52f, 0.24f);
-            _detailText.rectTransform.anchorMax = new Vector2(0.97f, 0.86f);
+            var modal = CreatePanel("InfoModal", splashRoot.transform, new Color(0f, 0f, 0f, 0.58f));
+            modal.rectTransform.anchorMin = new Vector2(0.56f, 0.07f);
+            modal.rectTransform.anchorMax = new Vector2(0.97f, 0.93f);
+            modal.rectTransform.offsetMin = Vector2.zero;
+            modal.rectTransform.offsetMax = Vector2.zero;
+
+            var bottomPanel = CreatePanel("BottomPanel", safeAreaGo.transform, new Color(0.12f, 0.13f, 0.16f, 0.98f));
+            bottomPanel.rectTransform.anchorMin = new Vector2(0f, 0f);
+            bottomPanel.rectTransform.anchorMax = new Vector2(1f, 0.27f);
+            bottomPanel.rectTransform.offsetMin = Vector2.zero;
+            bottomPanel.rectTransform.offsetMax = Vector2.zero;
+
+            _coinsText = CreateText("CoinsText", modal.transform, 17, TextAnchor.UpperLeft, Color.white);
+            _coinsText.rectTransform.anchorMin = new Vector2(0.04f, 0.83f);
+            _coinsText.rectTransform.anchorMax = new Vector2(0.5f, 0.97f);
+            _coinsText.rectTransform.offsetMin = Vector2.zero;
+            _coinsText.rectTransform.offsetMax = Vector2.zero;
+
+            _filterSortPlaceholderText = CreateText("FilterSortPlaceholder", modal.transform, 12, TextAnchor.UpperRight, Color.white);
+            _filterSortPlaceholderText.rectTransform.anchorMin = new Vector2(0.5f, 0.83f);
+            _filterSortPlaceholderText.rectTransform.anchorMax = new Vector2(0.96f, 0.97f);
+            _filterSortPlaceholderText.rectTransform.offsetMin = Vector2.zero;
+            _filterSortPlaceholderText.rectTransform.offsetMax = Vector2.zero;
+
+            _detailText = CreateText("DetailText", modal.transform, 15, TextAnchor.UpperLeft, Color.white);
+            _detailText.rectTransform.anchorMin = new Vector2(0.05f, 0.24f);
+            _detailText.rectTransform.anchorMax = new Vector2(0.95f, 0.76f);
             _detailText.rectTransform.offsetMin = Vector2.zero;
             _detailText.rectTransform.offsetMax = Vector2.zero;
+            _detailText.horizontalOverflow = HorizontalWrapMode.Wrap;
+            _detailText.verticalOverflow = VerticalWrapMode.Overflow;
 
-            var unlockButtonImage = CreatePanel("UnlockButton", topPanel.transform, new Color(0.27f, 0.53f, 0.29f, 1f));
-            unlockButtonImage.rectTransform.anchorMin = new Vector2(0.52f, 0.08f);
-            unlockButtonImage.rectTransform.anchorMax = new Vector2(0.72f, 0.18f);
+            var unlockButtonImage = CreatePanel("UnlockButton", modal.transform, new Color(0.27f, 0.53f, 0.29f, 1f));
+            unlockButtonImage.rectTransform.anchorMin = new Vector2(0.04f, 0.06f);
+            unlockButtonImage.rectTransform.anchorMax = new Vector2(0.45f, 0.18f);
             unlockButtonImage.rectTransform.offsetMin = Vector2.zero;
             unlockButtonImage.rectTransform.offsetMax = Vector2.zero;
             _unlockButton = unlockButtonImage.gameObject.AddComponent<Button>();
             _unlockButton.targetGraphic = unlockButtonImage;
             _unlockButton.onClick.AddListener(OnClickUnlockSelected);
-            _unlockButtonText = CreateText("UnlockButtonText", unlockButtonImage.transform, 18, TextAnchor.MiddleCenter, Color.white);
+            _unlockButtonText = CreateText("UnlockButtonText", unlockButtonImage.transform, 14, TextAnchor.MiddleCenter, Color.white);
             StretchToParent(_unlockButtonText.rectTransform);
 
-            _feedbackText = CreateText("FeedbackText", topPanel.transform, 17, TextAnchor.MiddleLeft, new Color(1f, 0.95f, 0.75f, 1f));
-            _feedbackText.rectTransform.anchorMin = new Vector2(0.74f, 0.08f);
-            _feedbackText.rectTransform.anchorMax = new Vector2(0.97f, 0.18f);
+            _feedbackText = CreateText("FeedbackText", modal.transform, 13, TextAnchor.MiddleLeft, new Color(1f, 0.95f, 0.75f, 1f));
+            _feedbackText.rectTransform.anchorMin = new Vector2(0.5f, 0.06f);
+            _feedbackText.rectTransform.anchorMax = new Vector2(0.96f, 0.18f);
             _feedbackText.rectTransform.offsetMin = Vector2.zero;
             _feedbackText.rectTransform.offsetMax = Vector2.zero;
 
@@ -405,10 +423,10 @@ namespace ProjectZ.UI
 
         private void BuildCarousel(Transform parent)
         {
-            var title = CreateText("CarouselTitle", parent, 24, TextAnchor.MiddleLeft, Color.white);
+            var title = CreateText("CarouselTitle", parent, 17, TextAnchor.MiddleLeft, Color.white);
             title.text = "Champion Gallery";
-            title.rectTransform.anchorMin = new Vector2(0.03f, 0.78f);
-            title.rectTransform.anchorMax = new Vector2(0.4f, 0.98f);
+            title.rectTransform.anchorMin = new Vector2(0.03f, 0.73f);
+            title.rectTransform.anchorMax = new Vector2(0.5f, 0.95f);
             title.rectTransform.offsetMin = Vector2.zero;
             title.rectTransform.offsetMax = Vector2.zero;
 
@@ -416,7 +434,7 @@ namespace ProjectZ.UI
             var scrollRect = scrollRoot.AddComponent<ScrollRect>();
             var scrollRectTransform = scrollRoot.GetComponent<RectTransform>();
             scrollRectTransform.anchorMin = new Vector2(0.03f, 0.08f);
-            scrollRectTransform.anchorMax = new Vector2(0.97f, 0.74f);
+            scrollRectTransform.anchorMax = new Vector2(0.97f, 0.71f);
             scrollRectTransform.offsetMin = Vector2.zero;
             scrollRectTransform.offsetMax = Vector2.zero;
 
@@ -439,7 +457,7 @@ namespace ProjectZ.UI
             layout.childForceExpandWidth = false;
             layout.childControlHeight = false;
             layout.childControlWidth = false;
-            layout.padding = new RectOffset(6, 6, 8, 8);
+            layout.padding = new RectOffset(10, 10, 8, 8);
 
             var fitter = content.AddComponent<ContentSizeFitter>();
             fitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
@@ -502,6 +520,33 @@ namespace ProjectZ.UI
 #else
             eventSystemGo.AddComponent<StandaloneInputModule>();
 #endif
+        }
+
+        private void ApplySafeArea(bool force)
+        {
+            if (_safeAreaRoot == null || Screen.width <= 0 || Screen.height <= 0)
+            {
+                return;
+            }
+
+            var safeArea = Screen.safeArea;
+            if (!force && safeArea == _lastSafeArea)
+            {
+                return;
+            }
+
+            _lastSafeArea = safeArea;
+            var min = safeArea.position;
+            var max = safeArea.position + safeArea.size;
+            min.x /= Screen.width;
+            min.y /= Screen.height;
+            max.x /= Screen.width;
+            max.y /= Screen.height;
+
+            _safeAreaRoot.anchorMin = min;
+            _safeAreaRoot.anchorMax = max;
+            _safeAreaRoot.offsetMin = Vector2.zero;
+            _safeAreaRoot.offsetMax = Vector2.zero;
         }
     }
 }
