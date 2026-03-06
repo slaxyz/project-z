@@ -9,6 +9,10 @@ namespace ProjectZ.Meta
         public int progressionPoints;
         public List<string> unlockedSpellIds = new List<string>();
         public List<string> unlockedChampionIds = new List<string>();
+        public bool hasActiveRunProgress;
+        public int runZoneIndex;
+        public int runTileIndex;
+        public int runCoinsGained;
 
         public void UnlockSpell(string spellId)
         {
@@ -83,6 +87,22 @@ namespace ProjectZ.Meta
             {
                 unlockedChampionIds = new List<string>();
             }
+        }
+
+        public void SetRunProgress(int zoneIndex, int tileIndex, int coinsGained)
+        {
+            hasActiveRunProgress = true;
+            runZoneIndex = zoneIndex;
+            runTileIndex = tileIndex;
+            runCoinsGained = coinsGained;
+        }
+
+        public void ClearRunProgress()
+        {
+            hasActiveRunProgress = false;
+            runZoneIndex = 0;
+            runTileIndex = 0;
+            runCoinsGained = 0;
         }
     }
 }

@@ -59,6 +59,7 @@ namespace ProjectZ.Core
             EnsureDefaultUnlockedChampions();
             CurrentRun = new RunData();
             LoadRunLoopConfig();
+            RestoreRunProgress();
 
             SceneManager.sceneLoaded += OnSceneLoaded;
         }
@@ -165,6 +166,7 @@ namespace ProjectZ.Core
             LastFightWasVictory = false;
             LastFightCoinsReward = 0;
             _isBoardTileValidated = false;
+            PersistRunProgress();
             NextSceneAfterLoading = GameScenes.Board;
             Debug.Log("Run started: Zone 1, Tile 1.");
             LoadScene(GameScenes.Loading);
@@ -219,6 +221,7 @@ namespace ProjectZ.Core
             LastFightWasVictory = false;
             LastFightCoinsReward = 0;
             _isBoardTileValidated = false;
+            MetaProgression.ClearRunProgress();
 
             MetaProgression.EnsureCollections();
             MetaProgression.progressionPoints = 0;
@@ -391,6 +394,7 @@ namespace ProjectZ.Core
                 Debug.Log("Fight lost: no coins.");
             }
 
+            PersistRunProgress();
             LoadScene(GameScenes.Result);
         }
 
@@ -423,6 +427,7 @@ namespace ProjectZ.Core
                 HasLastFightResult = false;
                 LastFightCoinsReward = 0;
                 _isBoardTileValidated = false;
+                PersistRunProgress();
                 Debug.Log("Zone cleared. Moving to Zone " + GetCurrentZoneNumber() + ".");
                 NextSceneAfterLoading = GameScenes.Board;
                 LoadScene(GameScenes.Loading);
@@ -432,6 +437,7 @@ namespace ProjectZ.Core
             HasLastFightResult = false;
             LastFightCoinsReward = 0;
             _isBoardTileValidated = false;
+            PersistRunProgress();
             Debug.Log("Moving to Zone " + GetCurrentZoneNumber() + ", Tile " + (GetActiveTileIndex() + 1) + ".");
             LoadScene(GameScenes.Board);
         }
@@ -453,6 +459,8 @@ namespace ProjectZ.Core
             LastFightWasVictory = false;
             LastFightCoinsReward = 0;
             _isBoardTileValidated = false;
+            MetaProgression.ClearRunProgress();
+            SaveMeta();
             Debug.Log("Run ended. Reward added: " + totalReward + " coins.");
             LoadScene(GameScenes.Home);
         }
@@ -481,6 +489,34 @@ namespace ProjectZ.Core
             }
 
             Debug.Log("RunLoopConfig loaded.");
+        }
+
+        private void PersistRunProgress()
+        {
+            if (CurrentRun != null && CurrentRun.isActive)
+            {
+                MetaProgression.SetRunProgress(CurrentRun.zoneIndex, CurrentRun.tileIndex, CurrentRun.coinsGained);
+            }
+            else
+            {
+                MetaProgression.ClearRunProgress();
+            }
+
+            SaveMeta();
+        }
+
+        private void RestoreRunProgress()
+        {
+            if (!MetaProgression.hasActiveRunProgress)
+            {
+                return;
+            }
+
+            CurrentRun.zoneIndex = Mathf.Max(0, MetaProgression.runZoneIndex);
+            CurrentRun.tileIndex = Mathf.Max(0, MetaProgression.runTileIndex);
+            CurrentRun.coinsGained = Mathf.Max(0, MetaProgression.runCoinsGained);
+            CurrentRun.isActive = true;
+            Debug.Log("Run progress restored: zone=" + GetCurrentZoneNumber() + ", tile=" + (GetActiveTileIndex() + 1) + ".");
         }
 
         private static void LoadScene(string sceneName)

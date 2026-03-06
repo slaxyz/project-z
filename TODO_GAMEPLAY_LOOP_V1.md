@@ -14,7 +14,7 @@
 - [x] When Zone 1 is finished: go to Zone 2 through fake load (`LoadingScene` temporaire en attendant `ZoneAnimationScene`).
 - [x] Zone 2 uses the same loop (`Board -> Fight -> Win -> Next`).
 - [x] End of Zone 2: run completion screen + return Home.
-- [ ] Persist minimal run progression (zone index, tile index, coins gained).
+- [x] Persist minimal run progression (zone index, tile index, coins gained).
 - [x] Add guard rails (cannot start fight without validating active tile).
 - [x] Add clear debug logs for each state transition.
 
