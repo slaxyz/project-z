@@ -17,7 +17,7 @@ namespace ProjectZ.UI
 
         public void OpenTeamSelect()
         {
-            GameFlowManager.Instance.GoToTeamSelect();
+            GameFlowManager.Instance.OpenPlayEntry();
         }
 
         public void StartRun()

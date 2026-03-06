@@ -7,24 +7,26 @@ namespace ProjectZ.Core
     {
         public static float GetScale()
         {
+            var safeWidth = Screen.safeArea.width;
             var safeHeight = Screen.safeArea.height;
+            var minSide = Mathf.Min(safeWidth, safeHeight);
 
-            if (safeHeight >= 2200f)
+            if (minSide >= 1400f)
             {
                 return 1.8f;
             }
 
-            if (safeHeight >= 1800f)
+            if (minSide >= 1000f)
             {
                 return 1.6f;
             }
 
-            if (safeHeight >= 1400f)
+            if (minSide >= 720f)
             {
                 return 1.3f;
             }
 
-            return 1f;
+            return 1.15f;
         }
 
         public static Rect GetSafeArea(float scale)

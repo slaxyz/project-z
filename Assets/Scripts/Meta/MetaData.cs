@@ -12,7 +12,9 @@ namespace ProjectZ.Meta
         public bool hasActiveRunProgress;
         public int runZoneIndex;
         public int runTileIndex;
+        public int runBoardNodeIndex;
         public int runCoinsGained;
+        public List<string> runSelectedChampionIds = new List<string>();
 
         public void UnlockSpell(string spellId)
         {
@@ -89,12 +91,16 @@ namespace ProjectZ.Meta
             }
         }
 
-        public void SetRunProgress(int zoneIndex, int tileIndex, int coinsGained)
+        public void SetRunProgress(int zoneIndex, int tileIndex, int boardNodeIndex, int coinsGained, IEnumerable<string> selectedChampionIds)
         {
             hasActiveRunProgress = true;
             runZoneIndex = zoneIndex;
             runTileIndex = tileIndex;
+            runBoardNodeIndex = boardNodeIndex;
             runCoinsGained = coinsGained;
+            runSelectedChampionIds = selectedChampionIds != null
+                ? selectedChampionIds.Where(id => !string.IsNullOrWhiteSpace(id)).Distinct().Take(3).ToList()
+                : new List<string>();
         }
 
         public void ClearRunProgress()
@@ -102,7 +108,9 @@ namespace ProjectZ.Meta
             hasActiveRunProgress = false;
             runZoneIndex = 0;
             runTileIndex = 0;
+            runBoardNodeIndex = 0;
             runCoinsGained = 0;
+            runSelectedChampionIds = new List<string>();
         }
     }
 }

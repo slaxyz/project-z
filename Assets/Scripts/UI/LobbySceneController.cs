@@ -58,7 +58,7 @@ namespace ProjectZ.UI
 
                 if (GUILayout.Button("Play", GUILayout.Height(64f)))
                 {
-                    manager.GoToTeamSelect();
+                    manager.OpenPlayEntry();
                 }
 
                 GUILayout.EndArea();

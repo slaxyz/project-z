@@ -144,6 +144,19 @@ namespace ProjectZ.Core
             LoadScene(GameScenes.TeamSelect);
         }
 
+        public void OpenPlayEntry()
+        {
+            if (CurrentRun != null && CurrentRun.isActive && CurrentRun.HasValidTeam())
+            {
+                Debug.Log("Active run detected from Home. Going directly to run.");
+                NextSceneAfterLoading = GameScenes.Board;
+                LoadScene(GameScenes.Loading);
+                return;
+            }
+
+            LoadScene(GameScenes.TeamSelect);
+        }
+
         public void BootToLobby()
         {
             NextSceneAfterLoading = GameScenes.Home;
@@ -152,6 +165,14 @@ namespace ProjectZ.Core
 
         public void StartRun()
         {
+            if (CurrentRun.isActive && CurrentRun.HasValidTeam())
+            {
+                Debug.Log("Run already active. Continuing from saved progression.");
+                NextSceneAfterLoading = GameScenes.Board;
+                LoadScene(GameScenes.Loading);
+                return;
+            }
+
             if (!CurrentRun.HasValidTeam())
             {
                 Debug.LogWarning("StartRun blocked: select exactly 3 unique champions first.");
@@ -495,7 +516,12 @@ namespace ProjectZ.Core
         {
             if (CurrentRun != null && CurrentRun.isActive)
             {
-                MetaProgression.SetRunProgress(CurrentRun.zoneIndex, CurrentRun.tileIndex, CurrentRun.coinsGained);
+                MetaProgression.SetRunProgress(
+                    CurrentRun.zoneIndex,
+                    CurrentRun.tileIndex,
+                    CurrentRun.boardNodeIndex,
+                    CurrentRun.coinsGained,
+                    CurrentRun.selectedChampionIds);
             }
             else
             {
@@ -514,7 +540,9 @@ namespace ProjectZ.Core
 
             CurrentRun.zoneIndex = Mathf.Max(0, MetaProgression.runZoneIndex);
             CurrentRun.tileIndex = Mathf.Max(0, MetaProgression.runTileIndex);
+            CurrentRun.boardNodeIndex = Mathf.Max(0, MetaProgression.runBoardNodeIndex);
             CurrentRun.coinsGained = Mathf.Max(0, MetaProgression.runCoinsGained);
+            CurrentRun.SetTeam(MetaProgression.runSelectedChampionIds);
             CurrentRun.isActive = true;
             Debug.Log("Run progress restored: zone=" + GetCurrentZoneNumber() + ", tile=" + (GetActiveTileIndex() + 1) + ".");
         }
