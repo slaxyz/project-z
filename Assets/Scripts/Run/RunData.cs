@@ -9,6 +9,9 @@ namespace ProjectZ.Run
         public List<string> selectedChampionIds = new List<string>();
         public List<string> deckCardIds = new List<string>();
         public int boardNodeIndex;
+        public int zoneIndex;
+        public int tileIndex;
+        public int coinsGained;
         public int wins;
         public int losses;
         public bool isActive;
@@ -23,6 +26,9 @@ namespace ProjectZ.Run
             selectedChampionIds.Clear();
             deckCardIds.Clear();
             boardNodeIndex = 0;
+            zoneIndex = 0;
+            tileIndex = 0;
+            coinsGained = 0;
             wins = 0;
             losses = 0;
             isActive = false;

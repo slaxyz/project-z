@@ -6,9 +6,6 @@ namespace ProjectZ.Run
 {
     public class ResultSceneController : MonoBehaviour
     {
-        [SerializeField] private int defeatEndRunReward = 5;
-        [SerializeField] private int victoryEndRunReward = 15;
-
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void EnsureInstanceOnResultScene()
         {
@@ -71,8 +68,11 @@ namespace ProjectZ.Run
                 GUILayout.Space(4f);
                 GUILayout.Label("Outcome: " + title);
                 GUILayout.Label("Node Reached: " + manager.CurrentRun.boardNodeIndex);
+                GUILayout.Label("Zone / Tile: " + manager.GetCurrentZoneNumber() + " / " + (manager.GetActiveTileIndex() + 1));
                 GUILayout.Label("Wins / Losses: " + manager.CurrentRun.wins + " / " + manager.CurrentRun.losses);
                 GUILayout.Label("Team Size: " + manager.CurrentRun.selectedChampionIds.Count + " / 3");
+                GUILayout.Label("Coins won this fight: +" + manager.LastFightCoinsReward);
+                GUILayout.Label("Coins won this run: " + manager.CurrentRun.coinsGained);
 
                 GUILayout.Space(14f);
                 GUILayout.Label("Actions");
@@ -87,10 +87,9 @@ namespace ProjectZ.Run
 
                 if (manager.CanEndRun())
                 {
-                    var reward = wasVictory ? victoryEndRunReward : defeatEndRunReward;
-                    if (GUILayout.Button("End Run (+" + reward + " points)"))
+                    if (GUILayout.Button("End Run (keep earned coins)"))
                     {
-                        manager.EndRun(reward);
+                        manager.EndRun(0);
                     }
                 }
                 else

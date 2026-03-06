@@ -4,24 +4,24 @@
 - [ ] Keep current `Home -> Team Select` flow (3 champions required for Play).
 - [ ] Add a `ZoneAnimationScene` (fake load) before each board.
 - [ ] `StartRun` should route to `ZoneAnimationScene` then `BoardScene`.
-- [ ] Build Board V1 with clickable tiles (at least one active tile).
-- [ ] Clicking the active tile opens a small confirmation pop-in.
-- [ ] Pop-in `Validate` button starts `FightScene`.
+- [x] Build Board V1 with clickable tiles (at least one active tile).
+- [x] Clicking the active tile opens a small confirmation pop-in.
+- [x] Pop-in `Validate` button starts `FightScene`.
 - [ ] Keep current fight resolution logic (kill monster).
-- [ ] On victory, open win/result screen with coin rewards only.
-- [ ] `Next` from win screen lights up the next board tile.
-- [ ] While zone is not finished: loop `Board -> Fight -> Win -> Next`.
-- [ ] When Zone 1 is finished: go to Zone 2 through `ZoneAnimationScene`.
-- [ ] Zone 2 uses the same loop (`Board -> Fight -> Win -> Next`).
-- [ ] End of Zone 2: run completion screen + return Home.
+- [x] On victory, open win/result screen with coin rewards only.
+- [x] `Next` from win screen lights up the next board tile.
+- [x] While zone is not finished: loop `Board -> Fight -> Win -> Next`.
+- [x] When Zone 1 is finished: go to Zone 2 through fake load (`LoadingScene` temporaire en attendant `ZoneAnimationScene`).
+- [x] Zone 2 uses the same loop (`Board -> Fight -> Win -> Next`).
+- [x] End of Zone 2: run completion screen + return Home.
 - [ ] Persist minimal run progression (zone index, tile index, coins gained).
-- [ ] Add guard rails (cannot start fight without validating active tile).
-- [ ] Add clear debug logs for each state transition.
+- [x] Add guard rails (cannot start fight without validating active tile).
+- [x] Add clear debug logs for each state transition.
 
 ## Data & Config
 - [ ] Add simple zone config asset (tiles count per zone).
-- [ ] Add coin reward config per victory.
-- [ ] Extend `RunData` with `zoneIndex` and `tileIndex`.
+- [x] Add coin reward config per victory.
+- [x] Extend `RunData` with `zoneIndex` and `tileIndex`.
 
 ## Manual Validation
 - [ ] Full run from Zone 1 to Zone 2 works without blockers.

@@ -20,9 +20,13 @@ namespace ProjectZ.Core
         public float LoadingProgress { get; private set; }
         public bool HasLastFightResult { get; private set; }
         public bool LastFightWasVictory { get; private set; }
+        public int LastFightCoinsReward { get; private set; }
 
         [SerializeField] private float minLoadingDuration = 0.7f;
+        [SerializeField] private int[] zoneTileCounts = { 4, 4 };
+        [SerializeField] private int victoryCoinReward = 15;
         private Coroutine _loadingCoroutine;
+        private bool _isBoardTileValidated;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void EnsureInstance()
@@ -155,7 +159,11 @@ namespace ProjectZ.Core
             CurrentRun.SetTeam(teamSnapshot);
             CurrentRun.isActive = true;
             HasLastFightResult = false;
+            LastFightWasVictory = false;
+            LastFightCoinsReward = 0;
+            _isBoardTileValidated = false;
             NextSceneAfterLoading = GameScenes.Board;
+            Debug.Log("Run started: Zone 1, Tile 1.");
             LoadScene(GameScenes.Loading);
         }
 
@@ -206,6 +214,8 @@ namespace ProjectZ.Core
             CurrentRun.Reset();
             HasLastFightResult = false;
             LastFightWasVictory = false;
+            LastFightCoinsReward = 0;
+            _isBoardTileValidated = false;
 
             MetaProgression.EnsureCollections();
             MetaProgression.progressionPoints = 0;
@@ -295,6 +305,45 @@ namespace ProjectZ.Core
             return CurrentRun.selectedChampionIds;
         }
 
+        public int GetCurrentZoneNumber()
+        {
+            return CurrentRun.zoneIndex + 1;
+        }
+
+        public int GetActiveTileIndex()
+        {
+            return CurrentRun.tileIndex;
+        }
+
+        public int GetTilesForCurrentZone()
+        {
+            if (zoneTileCounts == null || zoneTileCounts.Length == 0)
+            {
+                return 4;
+            }
+
+            var index = Mathf.Clamp(CurrentRun.zoneIndex, 0, zoneTileCounts.Length - 1);
+            return Mathf.Max(1, zoneTileCounts[index]);
+        }
+
+        public bool IsCurrentBoardTileValidated()
+        {
+            return _isBoardTileValidated;
+        }
+
+        public bool TryValidateCurrentBoardTile()
+        {
+            if (!CurrentRun.isActive || CurrentState != GameFlowState.Board)
+            {
+                Debug.LogWarning("Validate tile blocked: must be in Board during an active run.");
+                return false;
+            }
+
+            _isBoardTileValidated = true;
+            Debug.Log("Board tile validated. Fight can start.");
+            return true;
+        }
+
         public void OpenBoard()
         {
             LoadScene(GameScenes.Board);
@@ -304,10 +353,11 @@ namespace ProjectZ.Core
         {
             if (!CanStartFight())
             {
-                Debug.LogWarning("StartFight blocked: must be in Board during an active run.");
+                Debug.LogWarning("StartFight blocked: validate the active board tile first.");
                 return;
             }
 
+            Debug.Log("Fight started.");
             LoadScene(GameScenes.Fight);
         }
 
@@ -321,14 +371,19 @@ namespace ProjectZ.Core
 
             HasLastFightResult = true;
             LastFightWasVictory = victory;
+            LastFightCoinsReward = 0;
 
             if (victory)
             {
                 CurrentRun.wins++;
+                LastFightCoinsReward = Mathf.Max(0, victoryCoinReward);
+                CurrentRun.coinsGained += LastFightCoinsReward;
+                Debug.Log("Fight won: +" + LastFightCoinsReward + " coins.");
             }
             else
             {
                 CurrentRun.losses++;
+                Debug.Log("Fight lost: no coins.");
             }
 
             LoadScene(GameScenes.Result);
@@ -343,7 +398,33 @@ namespace ProjectZ.Core
             }
 
             CurrentRun.boardNodeIndex++;
+            CurrentRun.tileIndex++;
+
+            if (CurrentRun.tileIndex >= GetTilesForCurrentZone())
+            {
+                CurrentRun.zoneIndex++;
+                CurrentRun.tileIndex = 0;
+
+                if (CurrentRun.zoneIndex >= Mathf.Max(1, zoneTileCounts.Length))
+                {
+                    Debug.Log("Run complete after Zone " + zoneTileCounts.Length + ".");
+                    EndRun(0);
+                    return;
+                }
+
+                HasLastFightResult = false;
+                LastFightCoinsReward = 0;
+                _isBoardTileValidated = false;
+                Debug.Log("Zone cleared. Moving to Zone " + GetCurrentZoneNumber() + ".");
+                NextSceneAfterLoading = GameScenes.Board;
+                LoadScene(GameScenes.Loading);
+                return;
+            }
+
             HasLastFightResult = false;
+            LastFightCoinsReward = 0;
+            _isBoardTileValidated = false;
+            Debug.Log("Moving to Zone " + GetCurrentZoneNumber() + ", Tile " + (GetActiveTileIndex() + 1) + ".");
             LoadScene(GameScenes.Board);
         }
 
@@ -355,12 +436,16 @@ namespace ProjectZ.Core
                 return;
             }
 
-            MetaProgression.progressionPoints += pointsEarned;
+            var totalReward = Mathf.Max(0, pointsEarned) + Mathf.Max(0, CurrentRun.coinsGained);
+            MetaProgression.progressionPoints += totalReward;
             SaveMeta();
 
             CurrentRun.Reset();
             HasLastFightResult = false;
             LastFightWasVictory = false;
+            LastFightCoinsReward = 0;
+            _isBoardTileValidated = false;
+            Debug.Log("Run ended. Reward added: " + totalReward + " coins.");
             LoadScene(GameScenes.Home);
         }
 
@@ -385,7 +470,7 @@ namespace ProjectZ.Core
 
         public bool CanStartFight()
         {
-            return CurrentRun.isActive && CurrentState == GameFlowState.Board;
+            return CurrentRun.isActive && CurrentState == GameFlowState.Board && _isBoardTileValidated;
         }
 
         public bool CanShowFightResult()
