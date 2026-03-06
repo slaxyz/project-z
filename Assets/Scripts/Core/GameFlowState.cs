@@ -6,6 +6,7 @@ namespace ProjectZ.Core
         Collection,
         TeamSelect,
         Loading,
+        ZoneAnimation,
         Board,
         Fight,
         Result

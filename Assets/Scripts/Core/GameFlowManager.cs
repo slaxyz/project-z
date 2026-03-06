@@ -105,6 +105,9 @@ namespace ProjectZ.Core
                 case GameFlowState.Loading:
                     EnsureController<LoadingSceneController>("LoadingSceneController");
                     break;
+                case GameFlowState.ZoneAnimation:
+                    EnsureController<ZoneAnimationSceneController>("ZoneAnimationSceneController");
+                    break;
                 case GameFlowState.Board:
                     EnsureController<BoardSceneController>("BoardSceneController");
                     break;
@@ -149,8 +152,7 @@ namespace ProjectZ.Core
             if (CurrentRun != null && CurrentRun.isActive && CurrentRun.HasValidTeam())
             {
                 Debug.Log("Active run detected from Home. Going directly to run.");
-                NextSceneAfterLoading = GameScenes.Board;
-                LoadScene(GameScenes.Loading);
+                EnterBoardViaZoneAnimation();
                 return;
             }
 
@@ -168,8 +170,7 @@ namespace ProjectZ.Core
             if (CurrentRun.isActive && CurrentRun.HasValidTeam())
             {
                 Debug.Log("Run already active. Continuing from saved progression.");
-                NextSceneAfterLoading = GameScenes.Board;
-                LoadScene(GameScenes.Loading);
+                EnterBoardViaZoneAnimation();
                 return;
             }
 
@@ -188,9 +189,8 @@ namespace ProjectZ.Core
             LastFightCoinsReward = 0;
             _isBoardTileValidated = false;
             PersistRunProgress();
-            NextSceneAfterLoading = GameScenes.Board;
             Debug.Log("Run started: Zone 1, Tile 1.");
-            LoadScene(GameScenes.Loading);
+            EnterBoardViaZoneAnimation();
         }
 
         public bool ToggleChampionSelection(string championId)
@@ -450,8 +450,7 @@ namespace ProjectZ.Core
                 _isBoardTileValidated = false;
                 PersistRunProgress();
                 Debug.Log("Zone cleared. Moving to Zone " + GetCurrentZoneNumber() + ".");
-                NextSceneAfterLoading = GameScenes.Board;
-                LoadScene(GameScenes.Loading);
+                EnterBoardViaZoneAnimation();
                 return;
             }
 
@@ -460,7 +459,7 @@ namespace ProjectZ.Core
             _isBoardTileValidated = false;
             PersistRunProgress();
             Debug.Log("Moving to Zone " + GetCurrentZoneNumber() + ", Tile " + (GetActiveTileIndex() + 1) + ".");
-            LoadScene(GameScenes.Board);
+            EnterBoardViaZoneAnimation();
         }
 
         public void EndRun(int pointsEarned)
@@ -489,6 +488,11 @@ namespace ProjectZ.Core
         public void SaveMeta()
         {
             MetaSaveService.Save(MetaProgression);
+        }
+
+        public void EnterBoardViaZoneAnimation()
+        {
+            LoadScene(GameScenes.ZoneAnimation);
         }
 
         private void EnsureDefaultUnlockedChampions()
@@ -616,6 +620,8 @@ namespace ProjectZ.Core
                     return GameFlowState.TeamSelect;
                 case GameScenes.Loading:
                     return GameFlowState.Loading;
+                case GameScenes.ZoneAnimation:
+                    return GameFlowState.ZoneAnimation;
                 case GameScenes.Board:
                     return GameFlowState.Board;
                 case GameScenes.Fight:
