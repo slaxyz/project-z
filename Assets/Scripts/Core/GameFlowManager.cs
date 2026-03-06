@@ -23,10 +23,12 @@ namespace ProjectZ.Core
         public int LastFightCoinsReward { get; private set; }
 
         [SerializeField] private float minLoadingDuration = 0.7f;
-        [SerializeField] private int[] zoneTileCounts = { 4, 4 };
-        [SerializeField] private int victoryCoinReward = 15;
+        [SerializeField] private int fallbackTilesPerZone = 4;
+        [SerializeField] private int fallbackZoneCount = 2;
+        [SerializeField] private int fallbackVictoryCoinReward = 15;
         private Coroutine _loadingCoroutine;
         private bool _isBoardTileValidated;
+        private RunLoopConfigAsset _runLoopConfig;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void EnsureInstance()
@@ -56,6 +58,7 @@ namespace ProjectZ.Core
             MetaProgression.EnsureCollections();
             EnsureDefaultUnlockedChampions();
             CurrentRun = new RunData();
+            LoadRunLoopConfig();
 
             SceneManager.sceneLoaded += OnSceneLoaded;
         }
@@ -317,13 +320,12 @@ namespace ProjectZ.Core
 
         public int GetTilesForCurrentZone()
         {
-            if (zoneTileCounts == null || zoneTileCounts.Length == 0)
+            if (_runLoopConfig == null)
             {
-                return 4;
+                return Mathf.Max(1, fallbackTilesPerZone);
             }
 
-            var index = Mathf.Clamp(CurrentRun.zoneIndex, 0, zoneTileCounts.Length - 1);
-            return Mathf.Max(1, zoneTileCounts[index]);
+            return _runLoopConfig.GetZoneTileCount(CurrentRun.zoneIndex, fallbackTilesPerZone);
         }
 
         public bool IsCurrentBoardTileValidated()
@@ -376,7 +378,10 @@ namespace ProjectZ.Core
             if (victory)
             {
                 CurrentRun.wins++;
-                LastFightCoinsReward = Mathf.Max(0, victoryCoinReward);
+                var rewardFromConfig = _runLoopConfig != null
+                    ? _runLoopConfig.VictoryCoinReward
+                    : Mathf.Max(0, fallbackVictoryCoinReward);
+                LastFightCoinsReward = rewardFromConfig;
                 CurrentRun.coinsGained += LastFightCoinsReward;
                 Debug.Log("Fight won: +" + LastFightCoinsReward + " coins.");
             }
@@ -405,9 +410,12 @@ namespace ProjectZ.Core
                 CurrentRun.zoneIndex++;
                 CurrentRun.tileIndex = 0;
 
-                if (CurrentRun.zoneIndex >= Mathf.Max(1, zoneTileCounts.Length))
+                var zoneCount = _runLoopConfig != null
+                    ? _runLoopConfig.GetZoneCount(fallbackZoneCount)
+                    : Mathf.Max(1, fallbackZoneCount);
+                if (CurrentRun.zoneIndex >= zoneCount)
                 {
-                    Debug.Log("Run complete after Zone " + zoneTileCounts.Length + ".");
+                    Debug.Log("Run complete after Zone " + zoneCount + ".");
                     EndRun(0);
                     return;
                 }
@@ -461,6 +469,18 @@ namespace ProjectZ.Core
             {
                 SaveMeta();
             }
+        }
+
+        private void LoadRunLoopConfig()
+        {
+            _runLoopConfig = Resources.Load<RunLoopConfigAsset>("Run/RunLoopConfig");
+            if (_runLoopConfig == null)
+            {
+                Debug.LogWarning("RunLoopConfig missing at Resources/Run/RunLoopConfig. Using fallback values.");
+                return;
+            }
+
+            Debug.Log("RunLoopConfig loaded.");
         }
 
         private static void LoadScene(string sceneName)

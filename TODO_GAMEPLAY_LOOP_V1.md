@@ -19,7 +19,7 @@
 - [x] Add clear debug logs for each state transition.
 
 ## Data & Config
-- [ ] Add simple zone config asset (tiles count per zone).
+- [x] Add simple zone config asset (tiles count per zone).
 - [x] Add coin reward config per victory.
 - [x] Extend `RunData` with `zoneIndex` and `tileIndex`.
 
