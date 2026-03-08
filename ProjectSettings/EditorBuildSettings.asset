@@ -24,6 +24,9 @@ EditorBuildSettings:
     path: Assets/Scenes/ZoneAnimationScene.unity
     guid: 91f99b8f7d8d4a5b8fc2c80255281974
   - enabled: 1
+    path: Assets/Scenes/BossCelebrationScene.unity
+    guid: 2aeb28ca2d1f47528f1c7f00bfc626dc
+  - enabled: 1
     path: Assets/Scenes/BoardScene.unity
     guid: 4ba4c74f7a3ae4af495710fa5321af0c
   - enabled: 1

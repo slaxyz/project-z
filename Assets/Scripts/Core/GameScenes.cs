@@ -7,6 +7,7 @@ namespace ProjectZ.Core
         public const string TeamSelect = "TeamSelectScene";
         public const string Loading = "LoadingScene";
         public const string ZoneAnimation = "ZoneAnimationScene";
+        public const string BossCelebration = "BossCelebrationScene";
         public const string Board = "BoardScene";
         public const string Fight = "FightScene";
         public const string Result = "ResultScene";

@@ -7,6 +7,7 @@ namespace ProjectZ.Core
         TeamSelect,
         Loading,
         ZoneAnimation,
+        BossCelebration,
         Board,
         Fight,
         Result

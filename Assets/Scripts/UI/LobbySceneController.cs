@@ -39,7 +39,7 @@ namespace ProjectZ.UI
             try
             {
                 const float panelWidth = 520f;
-                const float panelHeight = 300f;
+                const float panelHeight = 340f;
                 var panelX = safeArea.x + (safeArea.width - panelWidth) * 0.5f;
                 var panelY = safeArea.y + (safeArea.height - panelHeight) * 0.5f;
 
@@ -55,6 +55,15 @@ namespace ProjectZ.UI
                 }
 
                 GUILayout.Space(8f);
+                var hasActiveRun = manager.CurrentRun != null
+                    && manager.CurrentRun.isActive
+                    && manager.CurrentRun.HasValidTeam();
+                if (hasActiveRun)
+                {
+                    var playStepLabel = "Step: Zone " + manager.GetCurrentZoneNumber() + " - Tile " + (manager.GetActiveTileIndex() + 1);
+                    GUILayout.Label(playStepLabel);
+                    GUILayout.Space(6f);
+                }
 
                 if (GUILayout.Button("Play", GUILayout.Height(64f)))
                 {

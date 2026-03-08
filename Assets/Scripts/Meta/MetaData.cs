@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using ProjectZ.Run;
 
 namespace ProjectZ.Meta
 {
@@ -12,9 +13,12 @@ namespace ProjectZ.Meta
         public bool hasActiveRunProgress;
         public int runZoneIndex;
         public int runTileIndex;
+        public int runBranchChoice = -1;
         public int runBoardNodeIndex;
         public int runCoinsGained;
         public List<string> runSelectedChampionIds = new List<string>();
+        public List<string> runDeckSpellIds = new List<string>();
+        public List<ChampionSpellLoadout> runChampionSpellLoadouts = new List<ChampionSpellLoadout>();
 
         public void UnlockSpell(string spellId)
         {
@@ -91,16 +95,40 @@ namespace ProjectZ.Meta
             }
         }
 
-        public void SetRunProgress(int zoneIndex, int tileIndex, int boardNodeIndex, int coinsGained, IEnumerable<string> selectedChampionIds)
+        public void SetRunProgress(
+            int zoneIndex,
+            int tileIndex,
+            int branchChoice,
+            int boardNodeIndex,
+            int coinsGained,
+            IEnumerable<string> selectedChampionIds,
+            IEnumerable<string> runDeckSpellIdsInput,
+            IEnumerable<ChampionSpellLoadout> championSpellLoadoutsInput)
         {
             hasActiveRunProgress = true;
             runZoneIndex = zoneIndex;
             runTileIndex = tileIndex;
+            runBranchChoice = branchChoice;
             runBoardNodeIndex = boardNodeIndex;
             runCoinsGained = coinsGained;
             runSelectedChampionIds = selectedChampionIds != null
                 ? selectedChampionIds.Where(id => !string.IsNullOrWhiteSpace(id)).Distinct().Take(3).ToList()
                 : new List<string>();
+            runDeckSpellIds = runDeckSpellIdsInput != null
+                ? runDeckSpellIdsInput.Where(id => !string.IsNullOrWhiteSpace(id)).Distinct().ToList()
+                : new List<string>();
+            runChampionSpellLoadouts = championSpellLoadoutsInput != null
+                ? championSpellLoadoutsInput
+                    .Where(x => x != null && !string.IsNullOrWhiteSpace(x.championId))
+                    .Select(x => new ChampionSpellLoadout
+                    {
+                        championId = x.championId,
+                        spellIds = x.spellIds != null
+                            ? x.spellIds.Where(id => !string.IsNullOrWhiteSpace(id)).Take(4).ToList()
+                            : new List<string>()
+                    })
+                    .ToList()
+                : new List<ChampionSpellLoadout>();
         }
 
         public void ClearRunProgress()
@@ -108,9 +136,12 @@ namespace ProjectZ.Meta
             hasActiveRunProgress = false;
             runZoneIndex = 0;
             runTileIndex = 0;
+            runBranchChoice = -1;
             runBoardNodeIndex = 0;
             runCoinsGained = 0;
             runSelectedChampionIds = new List<string>();
+            runDeckSpellIds = new List<string>();
+            runChampionSpellLoadouts = new List<ChampionSpellLoadout>();
         }
     }
 }

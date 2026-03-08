@@ -178,6 +178,11 @@ namespace ProjectZ.UI
             {
                 fight.DebugRespawnEnemyNow();
             }
+
+            if (GUILayout.Button("OS Enemy Now"))
+            {
+                fight.DebugOneShotEnemyNow();
+            }
         }
 
         private static void DrawTeamSelect(GameFlowManager manager)

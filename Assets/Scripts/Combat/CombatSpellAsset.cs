@@ -18,6 +18,8 @@ namespace ProjectZ.Combat
         public string SpellId => spellId;
         public string DisplayName => displayName;
         public bool IsEnemyUsable => isEnemyUsable;
+        public int Value => value;
+        public int CostEntriesCount => costs != null ? costs.Count : 0;
 
         public bool IsValidForEnemy()
         {
@@ -48,6 +50,28 @@ namespace ProjectZ.Combat
             var label = string.IsNullOrWhiteSpace(intentLabelOverride) ? displayName : intentLabelOverride;
             return new EnemyIntentDefinition(
                 label,
+                new CardCost(runtimeCost),
+                new CardEffect(effectType, value));
+        }
+
+        public CardDefinition ToCardDefinition(string cardNameOverride = null)
+        {
+            var runtimeCost = new Dictionary<ElementType, int>();
+            foreach (var cost in costs.Where(cost => cost != null && cost.amount > 0))
+            {
+                if (runtimeCost.ContainsKey(cost.element))
+                {
+                    runtimeCost[cost.element] += cost.amount;
+                }
+                else
+                {
+                    runtimeCost[cost.element] = cost.amount;
+                }
+            }
+
+            var name = string.IsNullOrWhiteSpace(cardNameOverride) ? displayName : cardNameOverride;
+            return new CardDefinition(
+                name,
                 new CardCost(runtimeCost),
                 new CardEffect(effectType, value));
         }

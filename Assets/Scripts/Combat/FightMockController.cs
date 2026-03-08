@@ -266,18 +266,59 @@ namespace ProjectZ.Combat
             var manager = GameFlowManager.Instance;
             var ids = manager != null ? manager.CurrentRun.selectedChampionIds : new List<string>();
             var sourceIds = ids.Count == 3 ? ids : new List<string> { "warden", "arcanist", "ranger" };
+            var spellLibrary = Resources.Load<CombatSpellLibraryAsset>(SpellLibraryResourcePath);
+            var spellIndex = spellLibrary != null
+                ? spellLibrary.BuildIndexById()
+                : new Dictionary<string, CombatSpellAsset>();
 
             for (var i = 0; i < sourceIds.Count; i++)
             {
                 var championId = sourceIds[i];
+                var hand = BuildRunHand(championId, i, manager, spellIndex);
                 _champions.Add(new ChampionCombatState(
                     championId,
                     DisplayNameFor(championId),
                     40,
-                    BuildMockHand(i)));
+                    hand));
             }
 
             _activeChampionIndex = 0;
+        }
+
+        private static List<CardDefinition> BuildRunHand(
+            string championId,
+            int championIndex,
+            GameFlowManager manager,
+            IReadOnlyDictionary<string, CombatSpellAsset> spellIndex)
+        {
+            if (manager == null)
+            {
+                return BuildMockHand(championIndex);
+            }
+
+            var loadout = manager.GetChampionSpellLoadout(championId);
+            if (loadout == null || loadout.Count == 0)
+            {
+                return BuildMockHand(championIndex);
+            }
+
+            var hand = new List<CardDefinition>();
+            foreach (var spellId in loadout)
+            {
+                if (string.IsNullOrWhiteSpace(spellId))
+                {
+                    continue;
+                }
+
+                if (!spellIndex.TryGetValue(spellId, out var spellAsset) || spellAsset == null)
+                {
+                    continue;
+                }
+
+                hand.Add(spellAsset.ToCardDefinition());
+            }
+
+            return hand.Count > 0 ? hand : BuildMockHand(championIndex);
         }
 
         private static string DisplayNameFor(string championId)
@@ -905,11 +946,8 @@ namespace ProjectZ.Combat
             }
 
             var manager = GameFlowManager.Instance;
-            var nodeIndex = manager != null ? manager.CurrentRun.boardNodeIndex : 0;
-            var zone1Combats = _spawnRules != null
-                ? _spawnRules.GetCombatsPerZone(EnemyBiome.Zone1, DefaultCombatsPerZone)
-                : DefaultCombatsPerZone;
-            return nodeIndex < zone1Combats ? EnemyBiome.Zone1 : EnemyBiome.Zone2;
+            var zoneIndex = manager != null ? manager.CurrentRun.zoneIndex : 0;
+            return zoneIndex <= 0 ? EnemyBiome.Zone1 : EnemyBiome.Zone2;
         }
 
         private int ResolveZoneCombatIndex(EnemyBiome biome)
@@ -932,6 +970,12 @@ namespace ProjectZ.Combat
 
         private bool IsBossFight(EnemyBiome biome, int zoneCombatIndex)
         {
+            var manager = GameFlowManager.Instance;
+            if (manager != null && manager.IsNextFightBoss())
+            {
+                return true;
+            }
+
             var combatsPerZone = _spawnRules != null
                 ? _spawnRules.GetCombatsPerZone(biome, DefaultCombatsPerZone)
                 : DefaultCombatsPerZone;
@@ -1112,6 +1156,19 @@ namespace ProjectZ.Combat
             _lastAction = "Debug respawn enemy: " + _enemy.Definition.DisplayName;
         }
 
+        public void DebugOneShotEnemyNow()
+        {
+            if (_fightResolved || _enemy == null)
+            {
+                return;
+            }
+
+            var damage = Mathf.Max(1, _enemy.CurrentHp + _enemy.Block);
+            _enemy.TakeDamage(damage);
+            _lastAction = "Debug OS: enemy defeated";
+            TryResolveFight();
+        }
+
         private void OnGUI()
         {
             var manager = GameFlowManager.Instance;
@@ -1202,6 +1259,14 @@ namespace ProjectZ.Combat
                 }
                 GUI.enabled = true;
 
+                GUILayout.EndHorizontal();
+                GUILayout.BeginHorizontal();
+                GUI.enabled = !_fightResolved;
+                if (GUILayout.Button("OS Enemy (Debug)", GUILayout.Height(34f)))
+                {
+                    DebugOneShotEnemyNow();
+                }
+                GUI.enabled = true;
                 GUILayout.EndHorizontal();
 
                 GUILayout.Space(10f);

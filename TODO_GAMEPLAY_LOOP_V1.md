@@ -1,13 +1,13 @@
 # TODO - Gameplay Loop V1 (Zone 1 -> Zone 2)
 
 ## Core Loop
-- [ ] Keep current `Home -> Team Select` flow (3 champions required for Play).
+- [x] Keep `Home -> Team Select` for new runs (3 champions required), and direct resume when a run is already active.
 - [x] Add a `ZoneAnimationScene` (fake load) before each board.
 - [x] `StartRun` should route to `ZoneAnimationScene` then `BoardScene`.
 - [x] Build Board V1 with clickable tiles (at least one active tile).
 - [x] Clicking the active tile opens a small confirmation pop-in.
 - [x] Pop-in `Validate` button starts `FightScene`.
-- [ ] Keep current fight resolution logic (kill monster).
+- [x] Keep current fight resolution logic (kill monster).
 - [x] On victory, open win/result screen with coin rewards only.
 - [x] `Next` from win screen lights up the next board tile.
 - [x] While zone is not finished: loop `Board -> Fight -> Win -> Next`.
@@ -24,9 +24,30 @@
 - [x] Extend `RunData` with `zoneIndex` and `tileIndex`.
 
 ## Manual Validation
-- [ ] Full run from Zone 1 to Zone 2 works without blockers.
-- [ ] Confirmation pop-in always appears on active tile.
-- [ ] After victory, next tile lights up correctly.
-- [ ] Zone 1 -> Zone 2 always passes through fake load screen.
-- [ ] Coins are displayed and updated correctly on win screen.
-- [ ] End-of-run returns cleanly to Home.
+- [x] Full run from Zone 1 to Zone 2 works without blockers.
+- [x] Confirmation pop-in always appears on active tile.
+- [x] After victory, next tile lights up correctly.
+- [x] Zone 1 -> Zone 2 always passes through `ZoneAnimationScene`.
+- [x] Coins are displayed and updated correctly on win screen.
+- [x] End-of-run returns cleanly to Home.
+
+## Vision V2 (Run Depth)
+- [x] Add board tile categories (`Fight`, `Event`, `Shop`, `Boss`).
+- [x] Guarantee `Boss` encounter on last tile of each zone.
+- [x] Add non-combat tile resolution flow (`Event` and `Shop`) from Board.
+- [x] Add run spell reward choice after combat victory.
+- [x] Enforce run spell cap (max 4) with replacement choice flow.
+- [x] Add run shop interface with 3 spell offers.
+- [x] Add boss celebration screen before returning to board flow.
+- [x] Remove meta shop from MVP flow.
+- [x] Reward flow: choose spell -> choose champion -> choose spell to replace.
+- [x] Shop flow: choose priced spell -> choose champion -> choose spell to replace.
+- [x] Board composition per zone: 5 fights + 1 event + 1 shop (always before boss) + 1 boss.
+- [x] Add branch system after step 2.
+
+## Vision V2 Validation
+- [ ] Last tile of each zone always spawns a boss.
+- [ ] Event tile grants coins and advances correctly.
+- [ ] Shop tile shows 3 spells and supports buy/skip.
+- [ ] Choosing reward spell with full deck requires selecting a spell to replace.
+- [ ] Boss victory shows celebration screen before next board flow.

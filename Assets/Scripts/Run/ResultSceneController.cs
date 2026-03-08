@@ -6,6 +6,8 @@ namespace ProjectZ.Run
 {
     public class ResultSceneController : MonoBehaviour
     {
+        private Vector2 _scroll;
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void EnsureInstanceOnResultScene()
         {
@@ -60,9 +62,14 @@ namespace ProjectZ.Run
 
                 var wasVictory = manager.LastFightWasVictory;
                 var title = wasVictory ? "Victory" : "Defeat";
-                var panelX = safeArea.x + (safeArea.width - 500f) * 0.5f;
+                if (wasVictory && manager.LastFightWasBoss)
+                {
+                    title = "Boss Victory";
+                }
+                var panelX = safeArea.x + (safeArea.width - 560f) * 0.5f;
                 var panelY = safeArea.y + 40f;
-                GUILayout.BeginArea(new Rect(panelX, panelY, 500f, 420f), GUI.skin.box);
+                GUILayout.BeginArea(new Rect(panelX, panelY, 560f, 620f), GUI.skin.box);
+                _scroll = GUILayout.BeginScrollView(_scroll, GUILayout.Width(540f), GUILayout.Height(590f));
 
                 GUILayout.Label("Run Result");
                 GUILayout.Space(4f);
@@ -73,11 +80,61 @@ namespace ProjectZ.Run
                 GUILayout.Label("Team Size: " + manager.CurrentRun.selectedChampionIds.Count + " / 3");
                 GUILayout.Label("Coins won this fight: +" + manager.LastFightCoinsReward);
                 GUILayout.Label("Coins won this run: " + manager.CurrentRun.coinsGained);
+                GUILayout.Label("Run Spells: " + manager.CurrentRun.deckCardIds.Count);
 
                 GUILayout.Space(14f);
                 GUILayout.Label("Actions");
 
-                if (manager.CanGoToNextBoardNode())
+                if (wasVictory && manager.HasPendingSpellRewardChoice())
+                {
+                    GUILayout.Label("Choose 1 spell reward");
+                    foreach (var spellId in manager.GetPendingSpellRewardOffers())
+                    {
+                        var price = manager.GetSpellPrice(spellId);
+                        if (GUILayout.Button("Take: " + spellId + " (value " + price + ")"))
+                        {
+                            manager.TrySelectSpellReward(spellId, out var _);
+                        }
+                    }
+
+                    if (GUILayout.Button("Skip Reward"))
+                    {
+                        manager.SkipSpellReward();
+                    }
+
+                    GUILayout.Space(8f);
+                }
+
+                if (manager.IsWaitingSpellReplacementChoice() && !manager.IsPendingReplacementFromShop())
+                {
+                    if (string.IsNullOrWhiteSpace(manager.GetPendingReplacementChampionId()))
+                    {
+                        GUILayout.Label("Choose champion for: " + manager.GetPendingIncomingSpellId());
+                        foreach (var championId in manager.GetSelectedChampionIdsForRun())
+                        {
+                            if (GUILayout.Button("Champion: " + championId))
+                            {
+                                manager.TrySelectReplacementChampion(championId, out var _);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        var selectedChampion = manager.GetPendingReplacementChampionId();
+                        GUILayout.Label("Replace on " + selectedChampion + " with: " + manager.GetPendingIncomingSpellId());
+                        foreach (var existing in manager.GetChampionSpellLoadout(selectedChampion))
+                        {
+                            if (GUILayout.Button("Replace: " + existing))
+                            {
+                                manager.TryReplaceRunSpell(existing, out var _);
+                            }
+                        }
+                    }
+
+                    GUILayout.Space(8f);
+                }
+
+                if (manager.CanGoToNextBoardNode() && !manager.HasPendingSpellRewardChoice() && !manager.IsWaitingSpellReplacementChoice())
                 {
                     if (GUILayout.Button("Next Node (continue run)"))
                     {
@@ -102,6 +159,7 @@ namespace ProjectZ.Run
                     manager.GoToHome();
                 }
 
+                GUILayout.EndScrollView();
                 GUILayout.EndArea();
             }
             finally
