@@ -166,7 +166,7 @@ namespace ProjectZ.Run
             }
             else if (tileType == BoardTileType.Event)
             {
-                GUILayout.Label("Event reward: +10 run coins");
+                GUILayout.Label("Event reward: +12 run coins");
                 GUILayout.BeginHorizontal();
                 if (GUILayout.Button("Cancel", GUILayout.Height(36f)))
                 {
@@ -203,7 +203,8 @@ namespace ProjectZ.Run
                         GUILayout.Label("Choose champion for: " + manager.GetPendingIncomingSpellId());
                         foreach (var championId in manager.GetSelectedChampionIdsForRun())
                         {
-                            if (GUILayout.Button("Champion: " + championId, GUILayout.Height(32f)))
+                            var championName = manager.GetChampionDisplayName(championId);
+                            if (GUILayout.Button("Champion: " + championName, GUILayout.Height(32f)))
                             {
                                 manager.TrySelectReplacementChampion(championId, out _shopFeedback);
                             }
@@ -212,7 +213,7 @@ namespace ProjectZ.Run
                     else
                     {
                         var selectedChampion = manager.GetPendingReplacementChampionId();
-                        GUILayout.Label("Replace on " + selectedChampion + " with: " + manager.GetPendingIncomingSpellId());
+                        GUILayout.Label("Replace on " + manager.GetChampionDisplayName(selectedChampion) + " with: " + manager.GetPendingIncomingSpellId());
                         foreach (var existing in manager.GetChampionSpellLoadout(selectedChampion))
                         {
                             if (GUILayout.Button("Replace " + existing, GUILayout.Height(32f)))

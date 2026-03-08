@@ -19,6 +19,16 @@ namespace ProjectZ.Meta
         public List<string> runSelectedChampionIds = new List<string>();
         public List<string> runDeckSpellIds = new List<string>();
         public List<ChampionSpellLoadout> runChampionSpellLoadouts = new List<ChampionSpellLoadout>();
+        public bool runHasLastFightResult;
+        public bool runLastFightWasVictory;
+        public bool runLastFightWasBoss;
+        public int runLastFightCoinsReward;
+        public List<string> runPendingSpellRewardOffers = new List<string>();
+        public List<string> runShopOffers = new List<string>();
+        public string runPendingReplacementIncomingSpellId;
+        public string runPendingReplacementChampionId;
+        public bool runPendingReplacementFromShop;
+        public int runPendingReplacementShopCost;
 
         public void UnlockSpell(string spellId)
         {
@@ -103,7 +113,17 @@ namespace ProjectZ.Meta
             int coinsGained,
             IEnumerable<string> selectedChampionIds,
             IEnumerable<string> runDeckSpellIdsInput,
-            IEnumerable<ChampionSpellLoadout> championSpellLoadoutsInput)
+            IEnumerable<ChampionSpellLoadout> championSpellLoadoutsInput,
+            bool hasLastFightResult,
+            bool lastFightWasVictory,
+            bool lastFightWasBoss,
+            int lastFightCoinsReward,
+            IEnumerable<string> pendingSpellRewardOffers,
+            IEnumerable<string> shopOffers,
+            string pendingReplacementIncomingSpellId,
+            string pendingReplacementChampionId,
+            bool pendingReplacementFromShop,
+            int pendingReplacementShopCost)
         {
             hasActiveRunProgress = true;
             runZoneIndex = zoneIndex;
@@ -129,6 +149,20 @@ namespace ProjectZ.Meta
                     })
                     .ToList()
                 : new List<ChampionSpellLoadout>();
+            runHasLastFightResult = hasLastFightResult;
+            runLastFightWasVictory = lastFightWasVictory;
+            runLastFightWasBoss = lastFightWasBoss;
+            runLastFightCoinsReward = lastFightCoinsReward;
+            runPendingSpellRewardOffers = pendingSpellRewardOffers != null
+                ? pendingSpellRewardOffers.Where(id => !string.IsNullOrWhiteSpace(id)).Distinct().ToList()
+                : new List<string>();
+            runShopOffers = shopOffers != null
+                ? shopOffers.Where(id => !string.IsNullOrWhiteSpace(id)).Distinct().ToList()
+                : new List<string>();
+            runPendingReplacementIncomingSpellId = pendingReplacementIncomingSpellId;
+            runPendingReplacementChampionId = pendingReplacementChampionId;
+            runPendingReplacementFromShop = pendingReplacementFromShop;
+            runPendingReplacementShopCost = pendingReplacementShopCost;
         }
 
         public void ClearRunProgress()
@@ -142,6 +176,16 @@ namespace ProjectZ.Meta
             runSelectedChampionIds = new List<string>();
             runDeckSpellIds = new List<string>();
             runChampionSpellLoadouts = new List<ChampionSpellLoadout>();
+            runHasLastFightResult = false;
+            runLastFightWasVictory = false;
+            runLastFightWasBoss = false;
+            runLastFightCoinsReward = 0;
+            runPendingSpellRewardOffers = new List<string>();
+            runShopOffers = new List<string>();
+            runPendingReplacementIncomingSpellId = null;
+            runPendingReplacementChampionId = null;
+            runPendingReplacementFromShop = false;
+            runPendingReplacementShopCost = 0;
         }
     }
 }

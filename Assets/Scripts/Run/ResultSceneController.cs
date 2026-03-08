@@ -112,7 +112,8 @@ namespace ProjectZ.Run
                         GUILayout.Label("Choose champion for: " + manager.GetPendingIncomingSpellId());
                         foreach (var championId in manager.GetSelectedChampionIdsForRun())
                         {
-                            if (GUILayout.Button("Champion: " + championId))
+                            var championName = manager.GetChampionDisplayName(championId);
+                            if (GUILayout.Button("Champion: " + championName))
                             {
                                 manager.TrySelectReplacementChampion(championId, out var _);
                             }
@@ -121,7 +122,7 @@ namespace ProjectZ.Run
                     else
                     {
                         var selectedChampion = manager.GetPendingReplacementChampionId();
-                        GUILayout.Label("Replace on " + selectedChampion + " with: " + manager.GetPendingIncomingSpellId());
+                        GUILayout.Label("Replace on " + manager.GetChampionDisplayName(selectedChampion) + " with: " + manager.GetPendingIncomingSpellId());
                         foreach (var existing in manager.GetChampionSpellLoadout(selectedChampion))
                         {
                             if (GUILayout.Button("Replace: " + existing))
