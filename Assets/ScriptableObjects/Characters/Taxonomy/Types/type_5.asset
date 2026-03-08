@@ -14,4 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ProjectZ.Run.HeroTypeDefinitionAsset
   id: type_5
   displayName: Normal
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 5185337881340004cb8ed9fd838dee34, type: 3}

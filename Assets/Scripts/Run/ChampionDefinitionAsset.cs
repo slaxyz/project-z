@@ -27,7 +27,6 @@ namespace ProjectZ.Run
         [SerializeField, TextArea(2, 6)] private string description;
         [SerializeField] private HeroRarityDefinitionAsset rarityDefinition;
         [SerializeField] private HeroTypeDefinitionAsset typeDefinition;
-        [SerializeField] private HeroRoleDefinitionAsset roleDefinition;
         [SerializeField] private HeroClassDefinitionAsset classDefinition;
         [SerializeField] private HeroPassiveDefinitionAsset passiveDefinition;
         [SerializeField] private string role;
@@ -53,7 +52,7 @@ namespace ProjectZ.Run
             string pseudo,
             string fullName,
             string description,
-            string role,
+            string classLabel,
             int tierStars,
             ElementType element,
             ChampionClassType championClass,
@@ -68,7 +67,7 @@ namespace ProjectZ.Run
             this.pseudo = pseudo;
             this.fullName = fullName;
             this.description = description;
-            this.role = role;
+            role = classLabel;
             this.tierStars = Mathf.Clamp(tierStars, 3, 6);
             this.element = element;
             this.championClass = championClass;
@@ -90,10 +89,9 @@ namespace ProjectZ.Run
             string description,
             HeroRarityDefinitionAsset rarityDefinition,
             HeroTypeDefinitionAsset typeDefinition,
-            HeroRoleDefinitionAsset roleDefinition,
             HeroClassDefinitionAsset classDefinition,
             HeroPassiveDefinitionAsset passiveDefinition,
-            string role,
+            string classLabel,
             int tierStars,
             ElementType element,
             ChampionClassType championClass,
@@ -111,7 +109,7 @@ namespace ProjectZ.Run
                 pseudo,
                 fullName,
                 description,
-                role,
+                classLabel,
                 tierStars,
                 element,
                 championClass,
@@ -124,7 +122,6 @@ namespace ProjectZ.Run
             this.sourceNumericId = sourceNumericId;
             this.rarityDefinition = rarityDefinition;
             this.typeDefinition = typeDefinition;
-            this.roleDefinition = roleDefinition;
             this.classDefinition = classDefinition;
             this.passiveDefinition = passiveDefinition;
             this.avatarSprite = avatarSprite;
@@ -170,11 +167,6 @@ namespace ProjectZ.Run
             get { return string.IsNullOrWhiteSpace(description) ? shortLore : description; }
         }
 
-        public string Role
-        {
-            get { return role; }
-        }
-
         public HeroRarityDefinitionAsset RarityDefinition
         {
             get { return rarityDefinition; }
@@ -185,9 +177,17 @@ namespace ProjectZ.Run
             get { return typeDefinition; }
         }
 
-        public HeroRoleDefinitionAsset RoleDefinition
+        public string ClassLabel
         {
-            get { return roleDefinition; }
+            get
+            {
+                if (classDefinition != null && !string.IsNullOrWhiteSpace(classDefinition.DisplayName))
+                {
+                    return classDefinition.DisplayName;
+                }
+
+                return string.IsNullOrWhiteSpace(role) ? championClass.ToString() : role;
+            }
         }
 
         public HeroClassDefinitionAsset ClassDefinition

@@ -249,21 +249,22 @@ namespace ProjectZ.UI
             var coins = _manager.GetPlayerCoins();
             var affordable = coins >= selected.UnlockCost;
             var typeLabel = selected.TypeDefinition != null ? selected.TypeDefinition.DisplayName : selected.Element.ToString();
-            var roleLabel = selected.RoleDefinition != null ? selected.RoleDefinition.DisplayName : selected.Role;
-            var classLabel = selected.ClassDefinition != null ? selected.ClassDefinition.DisplayName : selected.ChampionClass.ToString();
+            var classLabel = selected.ClassLabel;
+            var archetypeLabel = selected.ChampionClass.ToString();
 
             _detailText.text =
                 selected.DisplayName + "\n" +
                 "Pseudo: " + selected.Pseudo + "\n" +
                 "Nom: " + selected.FullName + "\n\n" +
                 "Description: " + selected.Description + "\n\n" +
-                roleLabel + " | " + classLabel + " | " + typeLabel + "\n" +
+                classLabel + " | " + archetypeLabel + " | " + typeLabel + "\n" +
                 "Tier: " + selected.TierStars + "★\n" +
                 "HP: " + selected.BaseHp + "\n" +
                 "ATK: " + selected.BaseAttack + "\n" +
                 "DEF: " + selected.BaseDefense + "\n" +
                 "SPE: " + selected.BaseSpecial + "\n" +
-                "Class: " + (selected.ClassDefinition != null ? selected.ClassDefinition.DisplayName : "-") + "\n" +
+                "Class: " + classLabel + "\n" +
+                "Archetype: " + archetypeLabel + "\n" +
                 "Passive: " + (selected.PassiveDefinition != null ? selected.PassiveDefinition.Description : "-") + "\n" +
                 "Cost: " + selected.UnlockCost + "\n" +
                 "State: " + (unlocked ? "Unlocked" : "Locked");
@@ -799,7 +800,7 @@ namespace ProjectZ.UI
         private static string BuildChampionTagLine(ChampionDefinitionAsset champion)
         {
             var typeLabel = champion.TypeDefinition != null ? champion.TypeDefinition.DisplayName : champion.Element.ToString();
-            var classLabel = champion.ClassDefinition != null ? champion.ClassDefinition.DisplayName : champion.ChampionClass.ToString();
+            var classLabel = champion.ClassLabel;
             return typeLabel + " • " + classLabel + " • " + champion.TierStars + "★";
         }
 

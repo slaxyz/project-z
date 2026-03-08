@@ -10,6 +10,7 @@ namespace ProjectZ.UI
 {
     public class DebugFlowOverlay : MonoBehaviour
     {
+        private const string DisableMarkerName = "DISABLE_DEBUG_UI";
         private bool _isVisible = true;
         private readonly Rect _panelRect = new Rect(12f, 12f, 380f, 640f);
 
@@ -46,6 +47,11 @@ namespace ProjectZ.UI
 
         private void OnGUI()
         {
+            if (GameObject.Find(DisableMarkerName) != null)
+            {
+                return;
+            }
+
             if (!_isVisible)
             {
                 return;
@@ -202,7 +208,7 @@ namespace ProjectZ.UI
             foreach (var champion in ChampionCatalog.All)
             {
                 var selected = manager.IsChampionSelected(champion.Id);
-                var label = (selected ? "[x] " : "[ ] ") + champion.DisplayName + " - " + champion.Role;
+                var label = (selected ? "[x] " : "[ ] ") + champion.DisplayName + " - " + champion.ClassLabel;
                 if (GUILayout.Button(label))
                 {
                     manager.ToggleChampionSelection(champion.Id);

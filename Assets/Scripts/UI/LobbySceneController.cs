@@ -6,10 +6,17 @@ namespace ProjectZ.UI
 {
     public class LobbySceneController : MonoBehaviour
     {
+        private const string DisableMarkerName = "DISABLE_LOBBY_UI";
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void EnsureInstanceOnHome()
         {
             if (SceneManager.GetActiveScene().name != GameScenes.Home)
+            {
+                return;
+            }
+
+            if (GameObject.Find(DisableMarkerName) != null)
             {
                 return;
             }
@@ -25,6 +32,11 @@ namespace ProjectZ.UI
 
         private void OnGUI()
         {
+            if (GameObject.Find(DisableMarkerName) != null)
+            {
+                return;
+            }
+
             var manager = GameFlowManager.Instance;
             if (manager == null)
             {

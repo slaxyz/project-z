@@ -14,4 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ProjectZ.Run.HeroTypeDefinitionAsset
   id: type_2
   displayName: Nature
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 0da6628abd13e6d479e7e45ac9bedf2d, type: 3}

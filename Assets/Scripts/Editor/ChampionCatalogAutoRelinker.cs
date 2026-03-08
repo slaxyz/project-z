@@ -27,7 +27,6 @@ namespace ProjectZ.EditorTools
 
             var rarities = LoadById<HeroRarityDefinitionAsset>();
             var types = LoadById<HeroTypeDefinitionAsset>();
-            var roles = LoadById<HeroRoleDefinitionAsset>();
             var classes = LoadById<HeroClassDefinitionAsset>();
             var passives = LoadById<HeroPassiveDefinitionAsset>();
 
@@ -49,7 +48,6 @@ namespace ProjectZ.EditorTools
 
                 changed += SetIfMissing(champion, "rarityDefinition", ResolveRarity(tier, rarities));
                 changed += SetIfMissing(champion, "typeDefinition", ResolveType(id, element, types));
-                changed += SetIfMissing(champion, "roleDefinition", ResolveRole(roleLabel, roles));
                 changed += SetIfMissing(champion, "classDefinition", ResolveClass(roleLabel, classes));
                 changed += SetIfMissing(champion, "passiveDefinition", ResolvePassive(id, passives));
             }
@@ -126,21 +124,6 @@ namespace ProjectZ.EditorTools
             };
             map.TryGetValue(fallback, out var byElement);
             return byElement;
-        }
-
-        private static HeroRoleDefinitionAsset ResolveRole(string roleLabel, Dictionary<string, HeroRoleDefinitionAsset> map)
-        {
-            map.TryGetValue(roleLabel switch
-            {
-                "warrior" => "role_1",
-                "tank" => "role_2",
-                "rogue" => "role_3",
-                "healer" => "role_4",
-                "specialist" => "role_5",
-                "gunner" => "role_6",
-                _ => string.Empty
-            }, out var asset);
-            return asset;
         }
 
         private static HeroClassDefinitionAsset ResolveClass(string roleLabel, Dictionary<string, HeroClassDefinitionAsset> map)

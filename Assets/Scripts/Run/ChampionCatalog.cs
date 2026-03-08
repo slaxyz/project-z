@@ -9,16 +9,16 @@ namespace ProjectZ.Run
 {
     public readonly struct ChampionDefinition
     {
-        public ChampionDefinition(string id, string displayName, string role)
+        public ChampionDefinition(string id, string displayName, string classLabel)
         {
             Id = id;
             DisplayName = displayName;
-            Role = role;
+            ClassLabel = classLabel;
         }
 
         public string Id { get; }
         public string DisplayName { get; }
-        public string Role { get; }
+        public string ClassLabel { get; }
     }
 
     public static class ChampionCatalog
@@ -119,7 +119,7 @@ namespace ProjectZ.Run
             }
 
             _cachedDefinitions = _cachedAssets
-                .Select(c => new ChampionDefinition(c.Id, c.DisplayName, c.Role))
+                .Select(c => new ChampionDefinition(c.Id, c.DisplayName, c.ClassLabel))
                 .ToList();
         }
 
@@ -151,7 +151,7 @@ namespace ProjectZ.Run
                 seenIds.Add(id);
 
                 var displayName = string.IsNullOrWhiteSpace(champion.DisplayName) ? ToTitleFallback(id) : champion.DisplayName.Trim();
-                var role = string.IsNullOrWhiteSpace(champion.Role) ? "Unknown role" : champion.Role.Trim();
+                var classLabel = string.IsNullOrWhiteSpace(champion.ClassLabel) ? "Unknown class" : champion.ClassLabel.Trim();
                 var pseudo = string.IsNullOrWhiteSpace(champion.Pseudo) ? displayName : champion.Pseudo.Trim();
                 var fullName = string.IsNullOrWhiteSpace(champion.FullName) ? pseudo : champion.FullName.Trim();
                 var shortLore = string.IsNullOrWhiteSpace(champion.ShortLore) ? "No lore yet." : champion.ShortLore.Trim();
@@ -192,10 +192,9 @@ namespace ProjectZ.Run
                     description,
                     champion.RarityDefinition,
                     champion.TypeDefinition,
-                    champion.RoleDefinition,
                     champion.ClassDefinition,
                     champion.PassiveDefinition,
-                    role,
+                    classLabel,
                     tier,
                     element,
                     championClass,
@@ -237,7 +236,7 @@ namespace ProjectZ.Run
                     c.DisplayName,
                     c.DisplayName,
                     "Fallback champion description.",
-                    c.Role,
+                    c.ClassLabel,
                     3,
                     ElementType.Fire,
                     ChampionClassType.Vanguard,

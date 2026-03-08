@@ -51,7 +51,7 @@ namespace ProjectZ.EditorTools
             { 6, "Mystic" }
         };
 
-        private static readonly Dictionary<int, string> RoleNames = new Dictionary<int, string>
+        private static readonly Dictionary<int, string> ClassNames = new Dictionary<int, string>
         {
             { 1, "Warrior" },
             { 2, "Tank" },
@@ -112,7 +112,6 @@ namespace ProjectZ.EditorTools
                 EnsureFolder(TaxonomyRoot);
                 EnsureFolder(TaxonomyRoot + "/Rarities");
                 EnsureFolder(TaxonomyRoot + "/Types");
-                EnsureFolder(TaxonomyRoot + "/Roles");
                 EnsureFolder(TaxonomyRoot + "/Classes");
                 EnsureFolder(TaxonomyRoot + "/Passives");
                 EnsureFolder(HeroArtRoot);
@@ -120,12 +119,11 @@ namespace ProjectZ.EditorTools
 
                 var rarityById = new Dictionary<string, HeroRarityDefinitionAsset>();
                 var typeById = new Dictionary<string, HeroTypeDefinitionAsset>();
-                var roleById = new Dictionary<string, HeroRoleDefinitionAsset>();
                 var classById = new Dictionary<string, HeroClassDefinitionAsset>();
                 var passiveById = new Dictionary<string, HeroPassiveDefinitionAsset>();
                 var champions = new List<ChampionDefinitionAsset>();
 
-                EnsureBaselineTaxonomy(rarityById, typeById, roleById);
+                EnsureBaselineTaxonomy(rarityById, typeById, classById);
 
                 foreach (var row in rows)
                 {
@@ -143,18 +141,17 @@ namespace ProjectZ.EditorTools
 
                     var rarityId = "rarity_" + rarityNum;
                     var typeId = "type_" + typeNum;
-                    var roleId = "role_" + roleNum;
                     var className = row.Get("className");
                     var classText = row.Get("classText");
-                    var classId = "class_" + Slug(className);
                     var passiveId = "passive_" + championId;
 
                     var rarity = GetOrCreateRarity(rarityById, rarityId, rarityNum);
                     var typeLabel = TypeNames.TryGetValue(typeNum, out var tn) ? tn : "Type " + typeNum;
-                    var roleLabel = RoleNames.TryGetValue(roleNum, out var rn) ? rn : "Role " + roleNum;
+                    var classLabel = ClassNames.TryGetValue(roleNum, out var rn) ? rn : "Class " + roleNum;
+                    var effectiveClassName = string.IsNullOrWhiteSpace(className) ? classLabel : className;
+                    var classId = "class_" + Slug(effectiveClassName);
                     var type = GetOrCreateSimple(typeById, typeId, typeLabel, TaxonomyRoot + "/Types", x => ScriptableObject.CreateInstance<HeroTypeDefinitionAsset>());
-                    var role = GetOrCreateSimple(roleById, roleId, roleLabel, TaxonomyRoot + "/Roles", x => ScriptableObject.CreateInstance<HeroRoleDefinitionAsset>());
-                    var heroClass = GetOrCreateClass(classById, classId, className, classText);
+                    var heroClass = GetOrCreateClass(classById, classId, effectiveClassName, classText);
                     var passive = GetOrCreatePassive(passiveById, passiveId, "Passive " + row.Get("nickname"), row.Get("passiveText"));
 
                     var avatarSprite = CopyAndLoadSprite(exportFolder, row.Get("nickname"), "Small", championId, "avatar", 1024);
@@ -169,13 +166,12 @@ namespace ProjectZ.EditorTools
                         row.Get("description"),
                         rarity,
                         type,
-                        role,
                         heroClass,
                         passive,
-                        role.DisplayName,
+                        heroClass.DisplayName,
                         TierFromRarity(rarityNum),
                         MapElement(typeNum),
-                        MapChampionClass(className),
+                        MapChampionClass(effectiveClassName),
                         UnlockCostFromRarity(rarityNum),
                         row.Get("description"),
                         row.GetInt("HP"),
@@ -324,7 +320,7 @@ namespace ProjectZ.EditorTools
         private static void EnsureBaselineTaxonomy(
             Dictionary<string, HeroRarityDefinitionAsset> rarityById,
             Dictionary<string, HeroTypeDefinitionAsset> typeById,
-            Dictionary<string, HeroRoleDefinitionAsset> roleById)
+            Dictionary<string, HeroClassDefinitionAsset> classById)
         {
             foreach (var pair in RarityNames)
             {
@@ -336,9 +332,9 @@ namespace ProjectZ.EditorTools
                 GetOrCreateSimple(typeById, "type_" + pair.Key, pair.Value, TaxonomyRoot + "/Types", x => ScriptableObject.CreateInstance<HeroTypeDefinitionAsset>());
             }
 
-            foreach (var pair in RoleNames)
+            foreach (var pair in ClassNames)
             {
-                GetOrCreateSimple(roleById, "role_" + pair.Key, pair.Value, TaxonomyRoot + "/Roles", x => ScriptableObject.CreateInstance<HeroRoleDefinitionAsset>());
+                GetOrCreateClass(classById, "class_" + Slug(pair.Value), pair.Value, string.Empty);
             }
         }
 

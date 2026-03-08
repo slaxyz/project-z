@@ -14,4 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ProjectZ.Run.HeroTypeDefinitionAsset
   id: type_4
   displayName: Water
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 8f0c3bb5f977f094c9bc38fb0eafe944, type: 3}
