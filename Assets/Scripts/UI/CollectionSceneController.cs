@@ -324,14 +324,8 @@ namespace ProjectZ.UI
                 return;
             }
 
-            if (_manager.TryUnlockChampion(selected.Id, out var reason))
-            {
-                _feedbackMessage = reason;
-            }
-            else
-            {
-                _feedbackMessage = reason;
-            }
+            _manager.TryUnlockChampion(selected.Id, out var reason);
+            _feedbackMessage = reason;
 
             RefreshAndRender();
         }

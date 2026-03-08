@@ -7,7 +7,7 @@ namespace ProjectZ.Combat
     {
         public CardCost(Dictionary<ElementType, int> requirements)
         {
-            Requirements = requirements;
+            Requirements = requirements ?? new Dictionary<ElementType, int>();
         }
 
         public Dictionary<ElementType, int> Requirements { get; }

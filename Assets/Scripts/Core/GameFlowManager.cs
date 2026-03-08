@@ -24,7 +24,6 @@ namespace ProjectZ.Core
         public int LastFightCoinsReward { get; private set; }
 
         [SerializeField] private float minLoadingDuration = 0.7f;
-        [SerializeField] private int fallbackTilesPerZone = 4;
         [SerializeField] private int fallbackZoneCount = 2;
         [SerializeField] private int fallbackVictoryCoinReward = 12;
         private Coroutine _loadingCoroutine;
@@ -35,6 +34,9 @@ namespace ProjectZ.Core
         private readonly List<string> _pendingSpellRewardOffers = new List<string>();
         private readonly List<string> _currentShopOffers = new List<string>();
         private const int MaxRunSpells = 4;
+        private const int TilesPerZone = 8;
+        private const int ShopTileIndex = TilesPerZone - 2;
+        private const int BossTileIndex = TilesPerZone - 1;
         private string _pendingReplacementIncomingSpellId;
         private string _pendingReplacementTargetChampionId;
         private bool _pendingReplacementFromShop;
@@ -167,7 +169,7 @@ namespace ProjectZ.Core
             if (CurrentRun != null && CurrentRun.isActive && CurrentRun.HasValidTeam())
             {
                 Debug.Log("Active run detected from Home. Going directly to run.");
-                if (HasLastFightResult && LastFightWasVictory && (HasPendingSpellRewardChoice() || (IsWaitingSpellReplacementChoice() && !IsPendingReplacementFromShop())))
+                if (HasLastFightResult)
                 {
                     LoadScene(GameScenes.Result);
                     return;
@@ -379,12 +381,12 @@ namespace ProjectZ.Core
 
         public int GetTilesForCurrentZone()
         {
-            return 8;
+            return TilesPerZone;
         }
 
         public BoardTileType GetCurrentTileType()
         {
-            var index = Mathf.Clamp(CurrentRun.tileIndex, 0, 7);
+            var index = Mathf.Clamp(CurrentRun.tileIndex, 0, BossTileIndex);
             if (index == 0 || index == 1)
             {
                 return BoardTileType.Fight;
@@ -410,7 +412,7 @@ namespace ProjectZ.Core
                 return BoardTileType.Fight;
             }
 
-            if (index == 6)
+            if (index == ShopTileIndex)
             {
                 return BoardTileType.Shop;
             }
@@ -1019,22 +1021,6 @@ namespace ProjectZ.Core
 
             var index = GetSpellIndex();
             return index.TryGetValue(spellId, out var spell) ? spell : null;
-        }
-
-        private void AddSpellToRunDeck(string spellId)
-        {
-            if (string.IsNullOrWhiteSpace(spellId))
-            {
-                return;
-            }
-
-            if (CurrentRun.deckCardIds.Contains(spellId))
-            {
-                return;
-            }
-
-            CurrentRun.deckCardIds.Add(spellId);
-            Debug.Log("Run spell added: " + spellId);
         }
 
         private void ClearPendingReplacement()

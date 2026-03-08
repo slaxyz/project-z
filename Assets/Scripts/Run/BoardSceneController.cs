@@ -95,7 +95,7 @@ namespace ProjectZ.Run
             var nodeHeight = 92f;
             var laneOffsetY = 66f;
             var activeIndex = manager.GetActiveTileIndex();
-            var activeCenterX = GetActiveCenterX(activeIndex, manager.CurrentRun.branchChoice, stepSpacing);
+            var activeCenterX = activeIndex * stepSpacing;
             var desiredCenterX = boardWidth * 0.5f;
             var offsetX = desiredCenterX - activeCenterX;
 
@@ -301,16 +301,6 @@ namespace ProjectZ.Run
             return lane == 0;
         }
 
-        private static float GetActiveCenterX(int activeStep, int branchChoice, float stepSpacing)
-        {
-            if (activeStep == 2 && branchChoice < 0)
-            {
-                return activeStep * stepSpacing;
-            }
-
-            return activeStep * stepSpacing;
-        }
-
         private static List<(int step, int lane, BoardTileType type)> BuildNodes(int tileCount)
         {
             var nodes = new List<(int step, int lane, BoardTileType type)>();
@@ -318,19 +308,15 @@ namespace ProjectZ.Run
             {
                 if (step == 2)
                 {
-                    var leftType = BoardTileType.Fight;
-                    var rightType = BoardTileType.Event;
-                    nodes.Add((step, -1, leftType));
-                    nodes.Add((step, 1, rightType));
+                    nodes.Add((step, -1, BoardTileType.Fight));
+                    nodes.Add((step, 1, BoardTileType.Event));
                     continue;
                 }
 
                 if (step == 3)
                 {
-                    var leftType = BoardTileType.Event;
-                    var rightType = BoardTileType.Fight;
-                    nodes.Add((step, -1, leftType));
-                    nodes.Add((step, 1, rightType));
+                    nodes.Add((step, -1, BoardTileType.Event));
+                    nodes.Add((step, 1, BoardTileType.Fight));
                     continue;
                 }
 

@@ -5,54 +5,106 @@ namespace ProjectZ.UI
 {
     public class SceneNavigationUI : MonoBehaviour
     {
+        private static GameFlowManager Manager => GameFlowManager.Instance;
+
         public void OpenHome()
         {
-            GameFlowManager.Instance.GoToHome();
+            if (Manager == null)
+            {
+                return;
+            }
+
+            Manager.GoToHome();
         }
 
         public void OpenCollection()
         {
-            GameFlowManager.Instance.GoToCollection();
+            if (Manager == null)
+            {
+                return;
+            }
+
+            Manager.GoToCollection();
         }
 
         public void OpenTeamSelect()
         {
-            GameFlowManager.Instance.OpenPlayEntry();
+            if (Manager == null)
+            {
+                return;
+            }
+
+            Manager.OpenPlayEntry();
         }
 
         public void StartRun()
         {
-            GameFlowManager.Instance.StartRun();
+            if (Manager == null)
+            {
+                return;
+            }
+
+            Manager.StartRun();
         }
 
         public void OpenBoard()
         {
-            GameFlowManager.Instance.OpenBoard();
+            if (Manager == null)
+            {
+                return;
+            }
+
+            Manager.OpenBoard();
         }
 
         public void StartFight()
         {
-            GameFlowManager.Instance.StartFight();
+            if (Manager == null)
+            {
+                return;
+            }
+
+            Manager.StartFight();
         }
 
         public void ShowVictoryResult()
         {
-            GameFlowManager.Instance.ShowResult(true);
+            if (Manager == null)
+            {
+                return;
+            }
+
+            Manager.ShowResult(true);
         }
 
         public void ShowDefeatResult()
         {
-            GameFlowManager.Instance.ShowResult(false);
+            if (Manager == null)
+            {
+                return;
+            }
+
+            Manager.ShowResult(false);
         }
 
         public void NextBoardNode()
         {
-            GameFlowManager.Instance.NextBoardNode();
+            if (Manager == null)
+            {
+                return;
+            }
+
+            Manager.NextBoardNode();
         }
 
         public void EndRunWithSmallReward()
         {
-            GameFlowManager.Instance.EndRun(10);
+            if (Manager == null)
+            {
+                return;
+            }
+
+            Manager.EndRun(10);
         }
     }
 }

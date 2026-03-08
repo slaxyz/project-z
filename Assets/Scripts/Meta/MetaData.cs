@@ -38,6 +38,11 @@ namespace ProjectZ.Meta
 
         public void UnlockSpell(string spellId)
         {
+            if (string.IsNullOrWhiteSpace(spellId))
+            {
+                return;
+            }
+
             if (!unlockedSpellIds.Contains(spellId))
             {
                 unlockedSpellIds.Add(spellId);

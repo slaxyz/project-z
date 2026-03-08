@@ -1342,17 +1342,6 @@ namespace ProjectZ.Combat
             return effect.Type + " " + effect.Amount;
         }
 
-        private string FormatEnemyPreview()
-        {
-            if (!TryChooseEnemyAction(out var intent, out var target))
-            {
-                return "No playable intent";
-            }
-
-            var targetPart = target != null ? " | Target: " + target.DisplayName : string.Empty;
-            return intent.Name + " | Cost: " + intent.Cost.ToDisplayString() + " | Effect: " + FormatEffect(intent.Effect) + targetPart;
-        }
-
         private class GemSlot
         {
             public GemSlot(ElementType element)

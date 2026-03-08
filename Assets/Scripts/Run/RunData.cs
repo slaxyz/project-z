@@ -48,7 +48,15 @@ namespace ProjectZ.Run
         public void SetTeam(IEnumerable<string> championIds)
         {
             selectedChampionIds.Clear();
-            selectedChampionIds.AddRange(championIds.Distinct().Take(3));
+            if (championIds == null)
+            {
+                return;
+            }
+
+            selectedChampionIds.AddRange(championIds
+                .Where(id => !string.IsNullOrWhiteSpace(id))
+                .Distinct()
+                .Take(3));
         }
 
         public List<string> GetChampionSpells(string championId)
