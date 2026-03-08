@@ -58,6 +58,11 @@ namespace ProjectZ.UI
                 var hasActiveRun = manager.CurrentRun != null
                     && manager.CurrentRun.isActive
                     && manager.CurrentRun.HasValidTeam();
+                if (manager.HasLastRunSummary())
+                {
+                    GUILayout.Label(manager.GetLastRunSummaryLabel());
+                    GUILayout.Space(6f);
+                }
                 if (hasActiveRun)
                 {
                     var playStepLabel = "Step: Zone " + manager.GetCurrentZoneNumber() + " - Tile " + (manager.GetActiveTileIndex() + 1);

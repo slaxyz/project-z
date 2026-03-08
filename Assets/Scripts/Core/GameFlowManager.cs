@@ -645,6 +645,13 @@ namespace ProjectZ.Core
                 return;
             }
 
+            MetaProgression.SetLastRunSummary(
+                Mathf.Max(0, CurrentRun.coinsGained),
+                Mathf.Max(0, CurrentRun.wins),
+                Mathf.Max(0, CurrentRun.losses),
+                Mathf.Max(0, CurrentRun.zoneIndex),
+                Mathf.Max(0, CurrentRun.tileIndex));
+
             var totalReward = Mathf.Max(0, pointsEarned) + Mathf.Max(0, CurrentRun.coinsGained);
             MetaProgression.progressionPoints += totalReward;
             SaveMeta();
@@ -725,6 +732,30 @@ namespace ProjectZ.Core
         public string GetPendingReplacementChampionId()
         {
             return _pendingReplacementTargetChampionId ?? string.Empty;
+        }
+
+        public void CancelPendingReplacementChampion()
+        {
+            _pendingReplacementTargetChampionId = null;
+            PersistRunProgress();
+        }
+
+        public bool HasLastRunSummary()
+        {
+            return MetaProgression.hasLastRunSummary;
+        }
+
+        public string GetLastRunSummaryLabel()
+        {
+            if (!MetaProgression.hasLastRunSummary)
+            {
+                return "No run summary yet.";
+            }
+
+            return "Last Run: +" + MetaProgression.lastRunCoinsEarned
+                + " coins | W/L " + MetaProgression.lastRunWins + "/" + MetaProgression.lastRunLosses
+                + " | Zone " + (MetaProgression.lastRunZoneReached + 1)
+                + " Tile " + (MetaProgression.lastRunLastTileIndex + 1);
         }
 
         public bool TrySelectReplacementChampion(string championId, out string message)
@@ -1130,8 +1161,33 @@ namespace ProjectZ.Core
             _pendingReplacementTargetChampionId = MetaProgression.runPendingReplacementChampionId;
             _pendingReplacementFromShop = MetaProgression.runPendingReplacementFromShop;
             _pendingReplacementShopCost = Mathf.Max(0, MetaProgression.runPendingReplacementShopCost);
+            ValidatePendingStateAfterRestore();
             CurrentRun.isActive = true;
             Debug.Log("Run progress restored: zone=" + GetCurrentZoneNumber() + ", tile=" + (GetActiveTileIndex() + 1) + ".");
+        }
+
+        private void ValidatePendingStateAfterRestore()
+        {
+            if (!IsWaitingSpellReplacementChoice())
+            {
+                return;
+            }
+
+            var incomingExists = FindSpellById(_pendingReplacementIncomingSpellId) != null;
+            if (!incomingExists)
+            {
+                ClearPendingReplacement();
+                return;
+            }
+
+            if (!string.IsNullOrWhiteSpace(_pendingReplacementTargetChampionId))
+            {
+                var spells = CurrentRun.GetChampionSpells(_pendingReplacementTargetChampionId);
+                if (spells == null || spells.Count == 0)
+                {
+                    _pendingReplacementTargetChampionId = null;
+                }
+            }
         }
 
         private static void LoadScene(string sceneName)

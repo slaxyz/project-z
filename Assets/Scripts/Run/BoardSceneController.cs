@@ -222,6 +222,11 @@ namespace ProjectZ.Run
                                 _showConfirmPopup = false;
                             }
                         }
+
+                        if (GUILayout.Button("Choose Another Champion", GUILayout.Height(32f)))
+                        {
+                            manager.CancelPendingReplacementChampion();
+                        }
                     }
                 }
 

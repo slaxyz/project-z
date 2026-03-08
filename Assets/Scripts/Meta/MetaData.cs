@@ -29,6 +29,12 @@ namespace ProjectZ.Meta
         public string runPendingReplacementChampionId;
         public bool runPendingReplacementFromShop;
         public int runPendingReplacementShopCost;
+        public bool hasLastRunSummary;
+        public int lastRunCoinsEarned;
+        public int lastRunWins;
+        public int lastRunLosses;
+        public int lastRunZoneReached;
+        public int lastRunLastTileIndex;
 
         public void UnlockSpell(string spellId)
         {
@@ -186,6 +192,16 @@ namespace ProjectZ.Meta
             runPendingReplacementChampionId = null;
             runPendingReplacementFromShop = false;
             runPendingReplacementShopCost = 0;
+        }
+
+        public void SetLastRunSummary(int coinsEarned, int wins, int losses, int zoneReached, int lastTileIndex)
+        {
+            hasLastRunSummary = true;
+            lastRunCoinsEarned = coinsEarned;
+            lastRunWins = wins;
+            lastRunLosses = losses;
+            lastRunZoneReached = zoneReached;
+            lastRunLastTileIndex = lastTileIndex;
         }
     }
 }

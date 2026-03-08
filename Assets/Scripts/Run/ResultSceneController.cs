@@ -130,6 +130,11 @@ namespace ProjectZ.Run
                                 manager.TryReplaceRunSpell(existing, out var _);
                             }
                         }
+
+                        if (GUILayout.Button("Choose Another Champion"))
+                        {
+                            manager.CancelPendingReplacementChampion();
+                        }
                     }
 
                     GUILayout.Space(8f);
