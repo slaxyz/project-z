@@ -78,11 +78,6 @@ namespace ProjectZ.Meta
         {
             EnsureCollections();
 
-            if (unlockedChampionIds.Count > 0)
-            {
-                return false;
-            }
-
             var changed = false;
             foreach (var id in defaultChampionIds ?? Enumerable.Empty<string>())
             {

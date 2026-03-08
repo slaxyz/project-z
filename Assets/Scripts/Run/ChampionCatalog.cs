@@ -62,10 +62,24 @@ namespace ProjectZ.Run
         public static IReadOnlyList<string> GetDefaultUnlockedChampionIds(int count = 3)
         {
             EnsureLoaded();
-            return _cachedAssets
-                .Where(c => c != null && !string.IsNullOrWhiteSpace(c.Id))
-                .Take(Mathf.Max(0, count))
+            var preferredOrder = new[] { "ace", "blaze", "slugger" };
+            var preferred = preferredOrder
+                .Where(id => _cachedAssets.Any(c => c != null && c.Id == id))
+                .ToList();
+
+            if (preferred.Count >= Mathf.Max(0, count))
+            {
+                return preferred.Take(count).ToList();
+            }
+
+            var fallback = _cachedAssets
+                .Where(c => c != null && !string.IsNullOrWhiteSpace(c.Id) && !preferred.Contains(c.Id))
                 .Select(c => c.Id)
+                .ToList();
+
+            return preferred
+                .Concat(fallback)
+                .Take(Mathf.Max(0, count))
                 .ToList();
         }
 
@@ -165,13 +179,21 @@ namespace ProjectZ.Run
                 var unlockCost = Mathf.Max(0, champion.UnlockCost);
                 var baseHp = Mathf.Max(1, champion.BaseHp);
                 var baseAttack = Mathf.Max(1, champion.BaseAttack);
+                var baseDefense = Mathf.Max(0, champion.BaseDefense);
+                var baseSpecial = Mathf.Max(0, champion.BaseSpecial);
 
                 result.Add(new ChampionDefinitionAsset(
+                    champion.SourceNumericId,
                     id,
                     displayName,
                     pseudo,
                     fullName,
                     description,
+                    champion.RarityDefinition,
+                    champion.TypeDefinition,
+                    champion.RoleDefinition,
+                    champion.ClassDefinition,
+                    champion.PassiveDefinition,
                     role,
                     tier,
                     element,
@@ -180,6 +202,9 @@ namespace ProjectZ.Run
                     shortLore,
                     baseHp,
                     baseAttack,
+                    baseDefense,
+                    baseSpecial,
+                    champion.AvatarSprite,
                     champion.SplashSprite));
             }
 

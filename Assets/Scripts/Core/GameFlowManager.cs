@@ -891,6 +891,18 @@ namespace ProjectZ.Core
         private void EnsureDefaultUnlockedChampions()
         {
             var changed = MetaProgression.EnsureDefaultUnlockedChampions(ChampionCatalog.GetDefaultUnlockedChampionIds(3));
+            if (MetaProgression.unlockedChampionIds.Contains("crusher"))
+            {
+                MetaProgression.unlockedChampionIds.Remove("crusher");
+                changed = true;
+            }
+
+            if (!MetaProgression.unlockedChampionIds.Contains("slugger"))
+            {
+                MetaProgression.unlockedChampionIds.Add("slugger");
+                changed = true;
+            }
+
             if (changed)
             {
                 SaveMeta();

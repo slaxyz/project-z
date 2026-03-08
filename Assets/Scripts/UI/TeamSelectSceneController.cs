@@ -18,6 +18,7 @@ namespace ProjectZ.UI
         {
             public string championId;
             public Image background;
+            public Image portraitBackground;
             public Image portrait;
             public Text nameText;
             public Button button;
@@ -27,6 +28,7 @@ namespace ProjectZ.UI
         private sealed class SlotView
         {
             public Image background;
+            public Image portraitBackground;
             public Image portrait;
             public Text titleText;
             public Text nameText;
@@ -288,14 +290,18 @@ namespace ProjectZ.UI
             button.targetGraphic = bg;
             button.onClick.AddListener(() => OnChampionClicked(champion.Id));
 
-            var portrait = CreatePanel("Portrait", root.transform, new Color(0.12f, 0.12f, 0.12f, 1f));
-            portrait.rectTransform.anchorMin = new Vector2(0.04f, 0.16f);
-            portrait.rectTransform.anchorMax = new Vector2(0.96f, 0.96f);
-            portrait.rectTransform.offsetMin = Vector2.zero;
-            portrait.rectTransform.offsetMax = Vector2.zero;
+            var portraitBg = CreatePanel("PortraitBg", root.transform, new Color(0.12f, 0.12f, 0.12f, 1f));
+            portraitBg.rectTransform.anchorMin = new Vector2(0.04f, 0.16f);
+            portraitBg.rectTransform.anchorMax = new Vector2(0.96f, 0.96f);
+            portraitBg.rectTransform.offsetMin = Vector2.zero;
+            portraitBg.rectTransform.offsetMax = Vector2.zero;
+
+            var portrait = CreatePanel("Portrait", portraitBg.transform, new Color(1f, 1f, 1f, 0f));
+            StretchToParent(portrait.rectTransform);
             portrait.preserveAspect = true;
-            portrait.sprite = champion.SplashSprite;
-            portrait.color = champion.SplashSprite != null
+            var portraitSprite = champion.AvatarSprite != null ? champion.AvatarSprite : champion.SplashSprite;
+            portrait.sprite = portraitSprite;
+            portrait.color = portraitSprite != null
                 ? Color.white
                 : new Color(0.14f, 0.14f, 0.14f, 1f);
 
@@ -310,10 +316,11 @@ namespace ProjectZ.UI
             {
                 championId = champion.Id,
                 background = bg,
+                portraitBackground = portraitBg,
                 portrait = portrait,
                 nameText = nameText,
                 button = button,
-                hasSplash = champion.SplashSprite != null
+                hasSplash = portraitSprite != null
             };
         }
 
@@ -338,11 +345,14 @@ namespace ProjectZ.UI
             title.rectTransform.offsetMin = Vector2.zero;
             title.rectTransform.offsetMax = Vector2.zero;
 
-            var portrait = CreatePanel("Portrait", root.transform, new Color(0.1f, 0.1f, 0.1f, 1f));
-            portrait.rectTransform.anchorMin = new Vector2(0.08f, 0.22f);
-            portrait.rectTransform.anchorMax = new Vector2(0.92f, 0.8f);
-            portrait.rectTransform.offsetMin = Vector2.zero;
-            portrait.rectTransform.offsetMax = Vector2.zero;
+            var portraitBg = CreatePanel("PortraitBg", root.transform, new Color(0.1f, 0.1f, 0.1f, 1f));
+            portraitBg.rectTransform.anchorMin = new Vector2(0.08f, 0.22f);
+            portraitBg.rectTransform.anchorMax = new Vector2(0.92f, 0.8f);
+            portraitBg.rectTransform.offsetMin = Vector2.zero;
+            portraitBg.rectTransform.offsetMax = Vector2.zero;
+
+            var portrait = CreatePanel("Portrait", portraitBg.transform, new Color(1f, 1f, 1f, 0f));
+            StretchToParent(portrait.rectTransform);
             portrait.preserveAspect = true;
 
             var nameText = CreateText("Name", root.transform, 20, TextAnchor.MiddleCenter, Color.white);
@@ -354,6 +364,7 @@ namespace ProjectZ.UI
             return new SlotView
             {
                 background = bg,
+                portraitBackground = portraitBg,
                 portrait = portrait,
                 titleText = title,
                 nameText = nameText,
@@ -444,8 +455,15 @@ namespace ProjectZ.UI
                     : (hasChampion ? _slotFilledColor : _slotIdleColor);
                 slot.titleText.text = "Slot " + (i + 1) + (i == _activeSlotIndex ? "  •  Active" : string.Empty);
                 slot.nameText.text = hasChampion ? champion.DisplayName : "Empty";
-                slot.portrait.sprite = hasChampion ? champion.SplashSprite : null;
+                slot.portrait.sprite = hasChampion
+                    ? (champion.AvatarSprite != null ? champion.AvatarSprite : champion.SplashSprite)
+                    : null;
                 slot.portrait.color = hasChampion ? Color.white : new Color(0.22f, 0.22f, 0.22f, 1f);
+                var rarityBg = ResolveRarityBackgroundSprite(champion);
+                slot.portraitBackground.sprite = rarityBg;
+                slot.portraitBackground.color = rarityBg != null
+                    ? Color.white
+                    : (hasChampion && champion.RarityDefinition != null ? champion.RarityDefinition.BackgroundColor : new Color(0.1f, 0.1f, 0.1f, 1f));
             }
         }
 
@@ -456,11 +474,18 @@ namespace ProjectZ.UI
                 var item = _gridItems[i];
                 var selected = _slotChampionIds.Contains(item.championId);
                 var unlocked = _manager.IsChampionUnlocked(item.championId);
+                var champion = ChampionCatalog.FindById(item.championId);
+                var rarityColor = champion != null && champion.RarityDefinition != null
+                    ? champion.RarityDefinition.BackgroundColor
+                    : _tileIdleColor;
 
                 item.button.interactable = unlocked;
                 item.background.color = !unlocked
                     ? _tileLockedColor
-                    : (selected ? _tileSelectedColor : _tileIdleColor);
+                    : (selected ? _tileSelectedColor : rarityColor);
+                var rarityBg = ResolveRarityBackgroundSprite(champion);
+                item.portraitBackground.sprite = rarityBg;
+                item.portraitBackground.color = rarityBg != null ? Color.white : rarityColor;
                 if (!item.hasSplash)
                 {
                     item.portrait.color = unlocked
@@ -564,6 +589,41 @@ namespace ProjectZ.UI
             rectTransform.anchorMax = Vector2.one;
             rectTransform.offsetMin = Vector2.zero;
             rectTransform.offsetMax = Vector2.zero;
+        }
+
+        private static Sprite ResolveRarityBackgroundSprite(ChampionDefinitionAsset champion)
+        {
+            if (champion == null)
+            {
+                return null;
+            }
+
+            if (champion.RarityDefinition != null && champion.RarityDefinition.BackgroundSprite != null)
+            {
+                return champion.RarityDefinition.BackgroundSprite;
+            }
+
+            string key;
+            switch (champion.TierStars)
+            {
+                case 6:
+                    key = "lr";
+                    break;
+                case 5:
+                    key = "ssr";
+                    break;
+                case 4:
+                    key = "sr";
+                    break;
+                case 3:
+                    key = "r";
+                    break;
+                default:
+                    key = "default";
+                    break;
+            }
+
+            return Resources.Load<Sprite>("Art/UI/Rarity/" + key);
         }
     }
 }

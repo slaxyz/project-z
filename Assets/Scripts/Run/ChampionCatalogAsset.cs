@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace ProjectZ.Run
@@ -11,6 +12,13 @@ namespace ProjectZ.Run
         public IReadOnlyList<ChampionDefinitionAsset> Champions
         {
             get { return champions; }
+        }
+
+        public void ReplaceChampions(IEnumerable<ChampionDefinitionAsset> entries)
+        {
+            champions = entries != null
+                ? entries.Where(x => x != null).ToList()
+                : new List<ChampionDefinitionAsset>();
         }
     }
 }
