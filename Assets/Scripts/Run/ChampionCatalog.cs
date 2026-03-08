@@ -3,6 +3,7 @@ using System.Linq;
 using UnityEngine;
 using ProjectZ.Combat;
 using System;
+using ProjectZ.Core;
 
 namespace ProjectZ.Run
 {
@@ -22,7 +23,6 @@ namespace ProjectZ.Run
 
     public static class ChampionCatalog
     {
-        private const string CatalogResourcePath = "Run/ChampionCatalog";
         private static readonly List<ChampionDefinition> FallbackChampions = new List<ChampionDefinition>
         {
             new ChampionDefinition("warden", "Warden", "Frontline tank"),
@@ -90,10 +90,11 @@ namespace ProjectZ.Run
                 return;
             }
 
-            _loadedCatalog = Resources.Load<ChampionCatalogAsset>(CatalogResourcePath);
+            var registry = RuntimeAssetRegistryAsset.Load();
+            _loadedCatalog = registry != null ? registry.ChampionCatalog : null;
             if (_loadedCatalog == null || _loadedCatalog.Champions == null || _loadedCatalog.Champions.Count == 0)
             {
-                Debug.LogWarning("ChampionCatalog: missing or empty Resources/Run/ChampionCatalog. Using fallback catalog.");
+                Debug.LogWarning("ChampionCatalog: missing or empty runtime registry catalog. Using fallback catalog.");
                 BuildFromFallback();
                 return;
             }

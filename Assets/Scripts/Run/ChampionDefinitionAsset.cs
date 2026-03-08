@@ -297,7 +297,7 @@ namespace ProjectZ.Run
             }
 
 #if UNITY_EDITOR
-            var editorPath = "Assets/Art/Characters/" + normalizedId + "/" + normalizedId + "_" + kind + ".png";
+            var editorPath = "Assets/Resources/Art/Characters/" + normalizedId + "/" + normalizedId + "_" + kind + ".png";
             var direct = AssetDatabase.LoadAssetAtPath<Sprite>(editorPath);
             if (direct != null)
             {

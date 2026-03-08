@@ -1,0 +1,299 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d4b6f335d18f4a9da754d4f29cb2530f, type: 3}
+  m_Name: ChampionCatalog
+  m_EditorClassIdentifier: Assembly-CSharp::ProjectZ.Run.ChampionCatalogAsset
+  champions:
+  - sourceNumericId: 1
+    id: slugger
+    displayName: Slugger
+    pseudo: Slugger
+    fullName: Alex Reynolds
+    description: Alex Reynolds, known as Slugger, was a rising star in baseball celebrated
+      for his powerful batting. During a crucial game under a starlit sky, stardust
+      infused him with superhuman strength and agility. Now wielding a stardust-charged
+      bat, Slugger defends humanity from Underworld threats with resilience and heroism.
+    rarityDefinition: {fileID: 11400000, guid: 3e8933f5e086d9c40b20fb0c41335fe6, type: 2}
+    typeDefinition: {fileID: 11400000, guid: c23f2a0fad0aade4babadaac15d9314e, type: 2}
+    roleDefinition: {fileID: 11400000, guid: c7d28979080c3d74384fcde20b51a61f, type: 2}
+    classDefinition: {fileID: 11400000, guid: 2b6984c3bd1f31647be4d34e824992a4, type: 2}
+    passiveDefinition: {fileID: 11400000, guid: b37e9305efa247a47be9b9807b86c2cb, type: 2}
+    role: Warrior
+    tierStars: 3
+    element: 2
+    championClass: 0
+    unlockCost: 25
+    avatarSprite: {fileID: 21300000, guid: d7075fee725509648a069ed0631521ba, type: 3}
+    splashSprite: {fileID: 21300000, guid: 8101c6bac3c7ca0479f1944cd9245658, type: 3}
+    shortLore: Alex Reynolds, known as Slugger, was a rising star in baseball celebrated
+      for his powerful batting. During a crucial game under a starlit sky, stardust
+      infused him with superhuman strength and agility. Now wielding a stardust-charged
+      bat, Slugger defends humanity from Underworld threats with resilience and heroism.
+    baseHp: 100
+    baseAttack: 200
+    baseDefense: 200
+    baseSpecial: 100
+  - sourceNumericId: 2
+    id: ace
+    displayName: Ace
+    pseudo: Ace
+    fullName: Sarah Thompson
+    description: Sarah Thompson, also known as Ace, was a celebrated professional
+      baseball player known for her powerful batting and strategic leadership. Exposure
+      to stardust enhanced her abilities, granting superhuman strength and agility.
+      Embracing her new powers, Ace wields a stardust-charged baseball bat against
+      Underworld threats, driven by her passion for sportsmanship and determination
+      to protect humanity.
+    rarityDefinition: {fileID: 11400000, guid: 3e8933f5e086d9c40b20fb0c41335fe6, type: 2}
+    typeDefinition: {fileID: 11400000, guid: 4554b0ab2c8a29a44bf787114745010f, type: 2}
+    roleDefinition: {fileID: 11400000, guid: c7d28979080c3d74384fcde20b51a61f, type: 2}
+    classDefinition: {fileID: 11400000, guid: 2b6984c3bd1f31647be4d34e824992a4, type: 2}
+    passiveDefinition: {fileID: 11400000, guid: 734ed60954d90f14fb4594b774dbcb19, type: 2}
+    role: Warrior
+    tierStars: 3
+    element: 0
+    championClass: 0
+    unlockCost: 25
+    avatarSprite: {fileID: 21300000, guid: 425cdc7891f89b6489b730dab2eb7834, type: 3}
+    splashSprite: {fileID: 21300000, guid: 68975446881d2a546bacf519157f1c19, type: 3}
+    shortLore: Sarah Thompson, also known as Ace, was a celebrated professional baseball
+      player known for her powerful batting and strategic leadership. Exposure to
+      stardust enhanced her abilities, granting superhuman strength and agility.
+      Embracing her new powers, Ace wields a stardust-charged baseball bat against
+      Underworld threats, driven by her passion for sportsmanship and determination
+      to protect humanity.
+    baseHp: 100
+    baseAttack: 200
+    baseDefense: 200
+    baseSpecial: 100
+  - sourceNumericId: 3
+    id: blaze
+    displayName: Blaze
+    pseudo: Blaze
+    fullName: Jessica Martinez
+    description: Jessica Martinez, known as Blaze, was a fearless firefighter whose
+      bravery was renowned. Stardust granted her control over fire, which she now
+      wields against Underworld threats with unwavering determination.
+    rarityDefinition: {fileID: 11400000, guid: 3e8933f5e086d9c40b20fb0c41335fe6, type: 2}
+    typeDefinition: {fileID: 11400000, guid: 4554b0ab2c8a29a44bf787114745010f, type: 2}
+    roleDefinition: {fileID: 11400000, guid: 62fc85ea13af66540af20b96d5b4698e, type: 2}
+    classDefinition: {fileID: 11400000, guid: 5fa77bc2dbfc1e44d960353e7243fc09, type: 2}
+    passiveDefinition: {fileID: 11400000, guid: da3617b558d3fce479a72a20d6eeeb9a, type: 2}
+    role: Gunner
+    tierStars: 3
+    element: 0
+    championClass: 1
+    unlockCost: 25
+    avatarSprite: {fileID: 21300000, guid: 0c6f52bea0f2ecb489fe4eb98cdecb64, type: 3}
+    splashSprite: {fileID: 21300000, guid: bc1db18f6115c9849812d2b8e5355b30, type: 3}
+    shortLore: Jessica Martinez, known as Blaze, was a fearless firefighter whose
+      bravery was renowned. Stardust granted her control over fire, which she now
+      wields against Underworld threats with unwavering determination.
+    baseHp: 50
+    baseAttack: 150
+    baseDefense: 100
+    baseSpecial: 100
+  - sourceNumericId: 4
+    id: wrench
+    displayName: Wrench
+    pseudo: Wrench
+    fullName: Emily Roberts
+    description: Emily Roberts, known as Wrench, was a prodigious mechanical engineer
+      with a passion for robotics. Stardust granted her technomancy, allowing her
+      to control and enhance machines to support allies and dismantle Underworld
+      threats effectively.
+    rarityDefinition: {fileID: 11400000, guid: aba93595afd4f694181578c6db96e768, type: 2}
+    typeDefinition: {fileID: 11400000, guid: c23f2a0fad0aade4babadaac15d9314e, type: 2}
+    roleDefinition: {fileID: 11400000, guid: 2774a69eb1776ae428b59f571cec7165, type: 2}
+    classDefinition: {fileID: 11400000, guid: 83c1558f172c182468149b4605430e4e, type: 2}
+    passiveDefinition: {fileID: 11400000, guid: a6ac0b87d3960944ebd9d32c1c1f0b7d, type: 2}
+    role: Tank
+    tierStars: 4
+    element: 2
+    championClass: 0
+    unlockCost: 50
+    avatarSprite: {fileID: 21300000, guid: c7324fce77d5cdc4cb07fafcdc7abb04, type: 3}
+    splashSprite: {fileID: 21300000, guid: 168d69c13d68d7f4381da2cb6cf4d267, type: 3}
+    shortLore: Emily Roberts, known as Wrench, was a prodigious mechanical engineer
+      with a passion for robotics. Stardust granted her technomancy, allowing her
+      to control and enhance machines to support allies and dismantle Underworld
+      threats effectively.
+    baseHp: 175
+    baseAttack: 150
+    baseDefense: 400
+    baseSpecial: 125
+  - sourceNumericId: 5
+    id: crusher
+    displayName: Crusher
+    pseudo: Crusher
+    fullName: Fiona Lee
+    description: Emily Roberts, known as Crusher, was a heavyweight boxer celebrated
+      for his raw strength. Infused with stardust, he gained earth manipulation abilities,
+      using them to crush through Underworld foes with relentless force.
+    rarityDefinition: {fileID: 11400000, guid: aba93595afd4f694181578c6db96e768, type: 2}
+    typeDefinition: {fileID: 11400000, guid: af5071e687758154d9a0aa8a5605ef0b, type: 2}
+    roleDefinition: {fileID: 11400000, guid: 2774a69eb1776ae428b59f571cec7165, type: 2}
+    classDefinition: {fileID: 11400000, guid: 83c1558f172c182468149b4605430e4e, type: 2}
+    passiveDefinition: {fileID: 11400000, guid: ec99b6aaf6c75eb4b9e3ef4c8817a8db, type: 2}
+    role: Tank
+    tierStars: 4
+    element: 2
+    championClass: 0
+    unlockCost: 50
+    avatarSprite: {fileID: 21300000, guid: fc44d1ffc2ea3b94e912fa8e2ee9a501, type: 3}
+    splashSprite: {fileID: 21300000, guid: 99477d95a5c78d04db61bebd0b4335c8, type: 3}
+    shortLore: Emily Roberts, known as Crusher, was a heavyweight boxer celebrated
+      for his raw strength. Infused with stardust, he gained earth manipulation abilities,
+      using them to crush through Underworld foes with relentless force.
+    baseHp: 175
+    baseAttack: 150
+    baseDefense: 400
+    baseSpecial: 125
+  - sourceNumericId: 6
+    id: sonar
+    displayName: Sonar
+    pseudo: Sonar
+    fullName: Elijah Svensson
+    description: Elijah Brown, aka Sonar, was a talented musician whose rhythmic
+      skills were unparalleled. Stardust infused him with sonic manipulation abilities,
+      which he now employs to orchestrate precise attacks against Underworld enemies.
+    rarityDefinition: {fileID: 11400000, guid: aba93595afd4f694181578c6db96e768, type: 2}
+    typeDefinition: {fileID: 11400000, guid: 5cdd169318a575648bf2b2556b206660, type: 2}
+    roleDefinition: {fileID: 11400000, guid: b92b628cae0070a4bb0f927d8c6bb283, type: 2}
+    classDefinition: {fileID: 11400000, guid: 97cd444314812c945a15a12a8e5f1aae, type: 2}
+    passiveDefinition: {fileID: 11400000, guid: 938fc2845a86f444689663b1d87a473d, type: 2}
+    role: Healer
+    tierStars: 4
+    element: 1
+    championClass: 3
+    unlockCost: 50
+    avatarSprite: {fileID: 21300000, guid: 0a7830dca89c9874183756ee4c5ff1cb, type: 3}
+    splashSprite: {fileID: 21300000, guid: 7df8d503639f22a449e59d2b10595149, type: 3}
+    shortLore: Elijah Brown, aka Sonar, was a talented musician whose rhythmic skills
+      were unparalleled. Stardust infused him with sonic manipulation abilities,
+      which he now employs to orchestrate precise attacks against Underworld enemies.
+    baseHp: 50
+    baseAttack: 25
+    baseDefense: 100
+    baseSpecial: 100
+  - sourceNumericId: 7
+    id: phantom
+    displayName: Phantom
+    pseudo: Phantom
+    fullName: Lucas Ivanov
+    description: Lucas Ivanov, known as Phantom, was a skilled covert operative with
+      a knack for stealth. Stardust granted him the power of intangibility, enabling
+      him to infiltrate and disrupt Underworld operations unnoticed.
+    rarityDefinition: {fileID: 11400000, guid: f9c611832c76e454199d0c90d7227e82, type: 2}
+    typeDefinition: {fileID: 11400000, guid: 4699670a6a48edd46b74d5295613bed8, type: 2}
+    roleDefinition: {fileID: 11400000, guid: 2a3e5c1784d214747bbee06a271a5377, type: 2}
+    classDefinition: {fileID: 11400000, guid: 3710cc780c4cb3243b9f2b1630f27b12, type: 2}
+    passiveDefinition: {fileID: 11400000, guid: ac0b6ad3497a66b45a43e9083ef65fca, type: 2}
+    role: Rogue
+    tierStars: 5
+    element: 3
+    championClass: 1
+    unlockCost: 75
+    avatarSprite: {fileID: 21300000, guid: 4bd15e98ba591664b96807fdbcdf43b8, type: 3}
+    splashSprite: {fileID: 21300000, guid: 92bb605ed590336408f6499f87935f78, type: 3}
+    shortLore: Lucas Ivanov, known as Phantom, was a skilled covert operative with
+      a knack for stealth. Stardust granted him the power of intangibility, enabling
+      him to infiltrate and disrupt Underworld operations unnoticed.
+    baseHp: 75
+    baseAttack: 75
+    baseDefense: 125
+    baseSpecial: 200
+  - sourceNumericId: 8
+    id: psyche
+    displayName: Psyche
+    pseudo: Psyche
+    fullName: Victor Morgan
+    description: Victor Morgan, known as Psyche, was a dedicated neuroscientist researching
+      psychic phenomena. After encountering stardust, he gained powerful psychic
+      abilities, using them to probe enemy minds, protect allies, and counter Underworld
+      psychic threats effectively.
+    rarityDefinition: {fileID: 11400000, guid: f9c611832c76e454199d0c90d7227e82, type: 2}
+    typeDefinition: {fileID: 11400000, guid: 5cdd169318a575648bf2b2556b206660, type: 2}
+    roleDefinition: {fileID: 11400000, guid: 3a6b3f93def3d764683c16488c8cc576, type: 2}
+    classDefinition: {fileID: 11400000, guid: 591cb3e76afb8cb429407bfc6f89e4c7, type: 2}
+    passiveDefinition: {fileID: 11400000, guid: b02e391c1955d2d47885e05fd86beba9, type: 2}
+    role: Specialist
+    tierStars: 5
+    element: 1
+    championClass: 2
+    unlockCost: 75
+    avatarSprite: {fileID: 21300000, guid: edcf73e042a8ffc4f8ad8bc90b5542d9, type: 3}
+    splashSprite: {fileID: 21300000, guid: 49fb1bbb7505b684194653bb0f29ff39, type: 3}
+    shortLore: Victor Morgan, known as Psyche, was a dedicated neuroscientist researching
+      psychic phenomena. After encountering stardust, he gained powerful psychic
+      abilities, using them to probe enemy minds, protect allies, and counter Underworld
+      psychic threats effectively.
+    baseHp: 75
+    baseAttack: 100
+    baseDefense: 100
+    baseSpecial: 500
+  - sourceNumericId: 9
+    id: whiplash
+    displayName: Whiplash
+    pseudo: Whiplash
+    fullName: Finn O'Malley
+    description: Finn O'Malley, aka Whiplash, was a thrill-seeking street racer known
+      for his daring maneuvers. After encountering stardust, he gained the power
+      to manipulate kinetic energy, using it to combat Underworld adversaries with
+      unmatched agility.
+    rarityDefinition: {fileID: 11400000, guid: e743525ae213d684f8ccd9980b5b8d52, type: 2}
+    typeDefinition: {fileID: 11400000, guid: 4699670a6a48edd46b74d5295613bed8, type: 2}
+    roleDefinition: {fileID: 11400000, guid: c7d28979080c3d74384fcde20b51a61f, type: 2}
+    classDefinition: {fileID: 11400000, guid: 2b6984c3bd1f31647be4d34e824992a4, type: 2}
+    passiveDefinition: {fileID: 11400000, guid: 3e11387bf16a730449eb0abed4de3653, type: 2}
+    role: Warrior
+    tierStars: 6
+    element: 3
+    championClass: 0
+    unlockCost: 100
+    avatarSprite: {fileID: 21300000, guid: 208f7ee84ebc293418ec9ee244725716, type: 3}
+    splashSprite: {fileID: 21300000, guid: 24fbfb769d576864e8747b417960e6cc, type: 3}
+    shortLore: Finn O'Malley, aka Whiplash, was a thrill-seeking street racer known
+      for his daring maneuvers. After encountering stardust, he gained the power
+      to manipulate kinetic energy, using it to combat Underworld adversaries with
+      unmatched agility.
+    baseHp: 200
+    baseAttack: 150
+    baseDefense: 500
+    baseSpecial: 100
+  - sourceNumericId: 10
+    id: vortex
+    displayName: Vortex
+    pseudo: Vortex
+    fullName: Natalia Volkova
+    description: Dr. Natalia Volkova, a physicist fascinated by alternate dimensions,
+      gained the ability to manipulate gravity from stardust. As Vortex, she defends
+      Earth by controlling gravitational forces against the Underworld's incursions.
+    rarityDefinition: {fileID: 11400000, guid: e743525ae213d684f8ccd9980b5b8d52, type: 2}
+    typeDefinition: {fileID: 11400000, guid: af5071e687758154d9a0aa8a5605ef0b, type: 2}
+    roleDefinition: {fileID: 11400000, guid: b92b628cae0070a4bb0f927d8c6bb283, type: 2}
+    classDefinition: {fileID: 11400000, guid: 97cd444314812c945a15a12a8e5f1aae, type: 2}
+    passiveDefinition: {fileID: 11400000, guid: 85db84c0dcf88bd41ba83b03ce02f0a5, type: 2}
+    role: Healer
+    tierStars: 6
+    element: 2
+    championClass: 3
+    unlockCost: 100
+    avatarSprite: {fileID: 21300000, guid: c481adb18890262469e082adc7ef9cf1, type: 3}
+    splashSprite: {fileID: 21300000, guid: d06ffd0e5ff12e0408771872bb0850fd, type: 3}
+    shortLore: Dr. Natalia Volkova, a physicist fascinated by alternate dimensions,
+      gained the ability to manipulate gravity from stardust. As Vortex, she defends
+      Earth by controlling gravitational forces against the Underworld's incursions.
+    baseHp: 100
+    baseAttack: 100
+    baseDefense: 100
+    baseSpecial: 100

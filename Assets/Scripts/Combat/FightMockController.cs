@@ -16,9 +16,6 @@ namespace ProjectZ.Combat
         private const int MaxRerollsPerTurn = 2;
         private const int CombatLogMaxEntries = 8;
         private const int DefaultCombatsPerZone = 8;
-        private const string SpellLibraryResourcePath = "Combat/SpellLibrary";
-        private const string EnemyCatalogResourcePath = "Combat/EnemyCatalog";
-        private const string SpawnRulesResourcePath = "Combat/SpawnRules";
 
         private readonly System.Random _rng = new System.Random();
         private readonly List<GemSlot> _gems = new List<GemSlot>();
@@ -168,23 +165,24 @@ namespace ProjectZ.Combat
         {
             _availableEnemies.Clear();
 
-            var spellLibrary = Resources.Load<CombatSpellLibraryAsset>(SpellLibraryResourcePath);
+            var registry = RuntimeAssetRegistryAsset.Load();
+            var spellLibrary = registry != null ? registry.SpellLibrary : null;
             if (spellLibrary == null)
             {
-                Debug.LogWarning("SpellLibrary missing at Resources/Combat/SpellLibrary");
+                Debug.LogWarning("SpellLibrary missing in RuntimeAssetRegistry.");
             }
 
             var spellIndex = spellLibrary != null
                 ? spellLibrary.BuildIndexById()
                 : new Dictionary<string, CombatSpellAsset>();
 
-            _spawnRules = Resources.Load<CombatSpawnRulesAsset>(SpawnRulesResourcePath);
+            _spawnRules = registry != null ? registry.SpawnRules : null;
             if (_spawnRules == null)
             {
-                Debug.LogWarning("SpawnRules missing at Resources/Combat/SpawnRules");
+                Debug.LogWarning("SpawnRules missing in RuntimeAssetRegistry.");
             }
 
-            var asset = Resources.Load<EnemyCatalogAsset>(EnemyCatalogResourcePath);
+            var asset = registry != null ? registry.EnemyCatalog : null;
             if (asset != null)
             {
                 var fromAsset = asset.BuildRuntimeDefinitions(spellIndex);
@@ -195,7 +193,7 @@ namespace ProjectZ.Combat
             }
             else
             {
-                Debug.LogWarning("EnemyCatalog missing at Resources/Combat/EnemyCatalog");
+                Debug.LogWarning("EnemyCatalog missing in RuntimeAssetRegistry.");
             }
 
             if (_availableEnemies.Count == 0)
@@ -266,7 +264,8 @@ namespace ProjectZ.Combat
             var manager = GameFlowManager.Instance;
             var ids = manager != null ? manager.CurrentRun.selectedChampionIds : new List<string>();
             var sourceIds = ids.Count == 3 ? ids : new List<string> { "warden", "arcanist", "ranger" };
-            var spellLibrary = Resources.Load<CombatSpellLibraryAsset>(SpellLibraryResourcePath);
+            var registry = RuntimeAssetRegistryAsset.Load();
+            var spellLibrary = registry != null ? registry.SpellLibrary : null;
             var spellIndex = spellLibrary != null
                 ? spellLibrary.BuildIndexById()
                 : new Dictionary<string, CombatSpellAsset>();

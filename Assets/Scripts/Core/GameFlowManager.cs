@@ -911,10 +911,11 @@ namespace ProjectZ.Core
 
         private void LoadRunLoopConfig()
         {
-            _runLoopConfig = Resources.Load<RunLoopConfigAsset>("Run/RunLoopConfig");
+            var registry = RuntimeAssetRegistryAsset.Load();
+            _runLoopConfig = registry != null ? registry.RunLoopConfig : null;
             if (_runLoopConfig == null)
             {
-                Debug.LogWarning("RunLoopConfig missing at Resources/Run/RunLoopConfig. Using fallback values.");
+                Debug.LogWarning("RunLoopConfig missing in RuntimeAssetRegistry. Using fallback values.");
                 return;
             }
 
@@ -1017,7 +1018,8 @@ namespace ProjectZ.Core
                 return _spellIndexCache;
             }
 
-            var library = Resources.Load<CombatSpellLibraryAsset>("Combat/SpellLibrary");
+            var registry = RuntimeAssetRegistryAsset.Load();
+            var library = registry != null ? registry.SpellLibrary : null;
             _spellIndexCache = library != null
                 ? library.BuildIndexById()
                 : new Dictionary<string, CombatSpellAsset>();

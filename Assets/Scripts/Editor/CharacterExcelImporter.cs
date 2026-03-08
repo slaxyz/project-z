@@ -17,9 +17,9 @@ namespace ProjectZ.EditorTools
     {
         private const string DefaultExcelPath = @"C:\Users\Clement\Downloads\SOEdatas - Characters.xlsx";
         private const string DefaultExportFolder = @"C:\Users\Clement\Downloads\export";
-        private const string ChampionCatalogPath = "Assets/Resources/Run/ChampionCatalog.asset";
+        private const string ChampionCatalogPath = "Assets/ScriptableObjects/Run/ChampionCatalog.asset";
         private const string TaxonomyRoot = "Assets/ScriptableObjects/Characters/Taxonomy";
-        private const string HeroArtRoot = "Assets/Art/Characters";
+        private const string HeroArtRoot = "Assets/Resources/Art/Characters";
 
         private static readonly Dictionary<int, string> RarityNames = new Dictionary<int, string>
         {
@@ -61,7 +61,7 @@ namespace ProjectZ.EditorTools
             { 6, "Gunner" }
         };
 
-        [MenuItem("Tools/Project Z/Import Characters From Excel")]
+        [MenuItem("Tools/Project Z/Import Users")]
         public static void ImportFromExcel()
         {
             var excelPath = EditorUtility.OpenFilePanel("Choose Character Excel", Path.GetDirectoryName(DefaultExcelPath), "xlsx");
@@ -124,6 +124,8 @@ namespace ProjectZ.EditorTools
                 var classById = new Dictionary<string, HeroClassDefinitionAsset>();
                 var passiveById = new Dictionary<string, HeroPassiveDefinitionAsset>();
                 var champions = new List<ChampionDefinitionAsset>();
+
+                EnsureBaselineTaxonomy(rarityById, typeById, roleById);
 
                 foreach (var row in rows)
                 {
@@ -188,8 +190,8 @@ namespace ProjectZ.EditorTools
                 var catalog = AssetDatabase.LoadAssetAtPath<ChampionCatalogAsset>(ChampionCatalogPath);
                 if (catalog == null)
                 {
-                    EnsureFolder("Assets/Resources");
-                    EnsureFolder("Assets/Resources/Run");
+                    EnsureFolder("Assets/ScriptableObjects");
+                    EnsureFolder("Assets/ScriptableObjects/Run");
                     catalog = ScriptableObject.CreateInstance<ChampionCatalogAsset>();
                     AssetDatabase.CreateAsset(catalog, ChampionCatalogPath);
                 }
@@ -317,6 +319,27 @@ namespace ProjectZ.EditorTools
             EditorUtility.SetDirty(asset);
             cache[id] = asset;
             return asset;
+        }
+
+        private static void EnsureBaselineTaxonomy(
+            Dictionary<string, HeroRarityDefinitionAsset> rarityById,
+            Dictionary<string, HeroTypeDefinitionAsset> typeById,
+            Dictionary<string, HeroRoleDefinitionAsset> roleById)
+        {
+            foreach (var pair in RarityNames)
+            {
+                GetOrCreateRarity(rarityById, "rarity_" + pair.Key, pair.Key);
+            }
+
+            foreach (var pair in TypeNames)
+            {
+                GetOrCreateSimple(typeById, "type_" + pair.Key, pair.Value, TaxonomyRoot + "/Types", x => ScriptableObject.CreateInstance<HeroTypeDefinitionAsset>());
+            }
+
+            foreach (var pair in RoleNames)
+            {
+                GetOrCreateSimple(roleById, "role_" + pair.Key, pair.Value, TaxonomyRoot + "/Roles", x => ScriptableObject.CreateInstance<HeroRoleDefinitionAsset>());
+            }
         }
 
         private static Sprite CopyAndLoadSprite(string exportFolder, string nickname, string sizeLabel, string championId, string kind, int maxSize)

@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4ca68d970be34b4fb62bb7c6d06f7582, type: 3}
+  m_Name: class_gunner
+  m_EditorClassIdentifier: Assembly-CSharp::ProjectZ.Run.HeroClassDefinitionAsset
+  id: class_gunner
+  displayName: Gunner
+  icon: {fileID: 0}
+  description: Gunners are masters of dealing massive damage, but they are also very
+    fragile. They need careful positioning and support from allies. During their
+    turn, Gunners unleash a storm of spells, maximizing their chances to hit enemies
+    with powerful effects, quickly changing the course of the battle.
