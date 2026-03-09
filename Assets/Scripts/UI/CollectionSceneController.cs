@@ -64,6 +64,7 @@ namespace ProjectZ.UI
 
         private GameFlowManager _manager;
         private Font _font;
+        private Sprite _tierStarSprite;
 
         private ChampionSortMode _sortMode = ChampionSortMode.TierAsc;
         private ChampionFilter _filter;
@@ -89,6 +90,8 @@ namespace ProjectZ.UI
         private Text _feedbackText;
         private Button _unlockButton;
         private Text _unlockButtonText;
+        private RectTransform _detailStarsRoot;
+        private readonly List<Image> _detailStars = new List<Image>();
         private RectTransform _safeAreaRoot;
         private Rect _lastSafeArea;
 
@@ -115,6 +118,12 @@ namespace ProjectZ.UI
                 Debug.LogWarning("CollectionSceneController: built-in font LegacyRuntime.ttf not found.");
                 enabled = false;
                 return;
+            }
+
+            _tierStarSprite = Resources.Load<Sprite>("Art/UI/Stars/champion_star");
+            if (_tierStarSprite == null)
+            {
+                Debug.LogWarning("CollectionSceneController: missing star sprite at Resources/Art/UI/Stars/champion_star.png");
             }
 
             _filter.minTier = 3;
@@ -144,13 +153,9 @@ namespace ProjectZ.UI
                 _selectedChampionId = string.Empty;
                 _feedbackMessage = "No champions available in catalog.";
             }
-            else if (string.IsNullOrWhiteSpace(_selectedChampionId) || !ContainsChampion(_selectedChampionId))
+            else
             {
-                _selectedChampionId = _manager.GetDefaultSelectedChampionIdForCollection();
-                if (string.IsNullOrWhiteSpace(_selectedChampionId) || !ContainsChampion(_selectedChampionId))
-                {
-                    _selectedChampionId = _visibleChampions[0].Id;
-                }
+                _selectedChampionId = _visibleChampions[0].Id;
             }
 
             RebuildCarousel();
@@ -193,14 +198,14 @@ namespace ProjectZ.UI
             button.targetGraphic = image;
 
             var label = CreateText("Label", root.transform, 14, TextAnchor.UpperLeft);
-            label.rectTransform.anchorMin = new Vector2(0.05f, 0.5f);
+            label.rectTransform.anchorMin = new Vector2(0.05f, 0.56f);
             label.rectTransform.anchorMax = new Vector2(0.95f, 0.95f);
             label.rectTransform.offsetMin = Vector2.zero;
             label.rectTransform.offsetMax = Vector2.zero;
 
             var status = CreateText("Status", root.transform, 11, TextAnchor.LowerLeft);
             status.rectTransform.anchorMin = new Vector2(0.05f, 0.05f);
-            status.rectTransform.anchorMax = new Vector2(0.95f, 0.45f);
+            status.rectTransform.anchorMax = new Vector2(0.95f, 0.5f);
             status.rectTransform.offsetMin = Vector2.zero;
             status.rectTransform.offsetMax = Vector2.zero;
 
@@ -236,6 +241,7 @@ namespace ProjectZ.UI
             if (selected == null)
             {
                 _detailText.text = "No champion selected.";
+                RefreshStarRow(_detailStarsRoot, _detailStars, 0, 22f, 22f);
                 _unlockButton.gameObject.SetActive(false);
                 _feedbackText.text = _feedbackMessage;
                 _splashImage.sprite = null;
@@ -258,7 +264,6 @@ namespace ProjectZ.UI
                 "Nom: " + selected.FullName + "\n\n" +
                 "Description: " + selected.Description + "\n\n" +
                 classLabel + " | " + archetypeLabel + " | " + typeLabel + "\n" +
-                "Tier: " + selected.TierStars + "★\n" +
                 "HP: " + selected.BaseHp + "\n" +
                 "ATK: " + selected.BaseAttack + "\n" +
                 "DEF: " + selected.BaseDefense + "\n" +
@@ -268,6 +273,7 @@ namespace ProjectZ.UI
                 "Passive: " + (selected.PassiveDefinition != null ? selected.PassiveDefinition.Description : "-") + "\n" +
                 "Cost: " + selected.UnlockCost + "\n" +
                 "State: " + (unlocked ? "Unlocked" : "Locked");
+            RefreshStarRow(_detailStarsRoot, _detailStars, selected.TierStars, 22f, 22f);
 
             _splashImage.sprite = selected.SplashSprite;
             _splashImage.color = selected.SplashSprite != null ? Color.white : new Color(0.12f, 0.12f, 0.12f, 1f);
@@ -298,7 +304,7 @@ namespace ProjectZ.UI
                 var unlocked = _manager.IsChampionUnlocked(champion.Id);
                 var affordable = _manager.GetPlayerCoins() >= champion.UnlockCost;
 
-                item.label.text = champion.DisplayName + "  " + champion.TierStars + "★";
+                item.label.text = champion.DisplayName;
                 item.status.color = GetElementTagColor(champion.Element);
 
                 if (isSelected)
@@ -465,6 +471,19 @@ namespace ProjectZ.UI
 
             BuildSortPopup(controlsPanel.transform);
             BuildFilterPopup(controlsPanel.transform);
+
+            _detailStarsRoot = CreateUIObject("DetailStars", modal.transform).GetComponent<RectTransform>();
+            _detailStarsRoot.anchorMin = new Vector2(0.05f, 0.49f);
+            _detailStarsRoot.anchorMax = new Vector2(0.55f, 0.57f);
+            _detailStarsRoot.offsetMin = Vector2.zero;
+            _detailStarsRoot.offsetMax = Vector2.zero;
+            var detailStarsLayout = _detailStarsRoot.gameObject.AddComponent<HorizontalLayoutGroup>();
+            detailStarsLayout.spacing = 6f;
+            detailStarsLayout.childAlignment = TextAnchor.MiddleLeft;
+            detailStarsLayout.childControlHeight = false;
+            detailStarsLayout.childControlWidth = false;
+            detailStarsLayout.childForceExpandHeight = false;
+            detailStarsLayout.childForceExpandWidth = false;
 
             _detailText = CreateText("DetailText", modal.transform, 15, TextAnchor.UpperLeft, Color.white);
             _detailText.rectTransform.anchorMin = new Vector2(0.05f, 0.18f);
@@ -801,7 +820,7 @@ namespace ProjectZ.UI
         {
             var typeLabel = champion.TypeDefinition != null ? champion.TypeDefinition.DisplayName : champion.Element.ToString();
             var classLabel = champion.ClassLabel;
-            return typeLabel + " • " + classLabel + " • " + champion.TierStars + "★";
+            return typeLabel + " • " + classLabel;
         }
 
         private static Color GetElementTagColor(ElementType element)
@@ -818,6 +837,47 @@ namespace ProjectZ.UI
                     return new Color(0.83f, 0.83f, 1f, 1f);
                 default:
                     return Color.white;
+            }
+        }
+
+        private void RefreshStarRow(RectTransform parent, List<Image> stars, int count, float width, float height)
+        {
+            if (parent == null)
+            {
+                return;
+            }
+
+            var clampedCount = Mathf.Max(0, count);
+            while (stars.Count < clampedCount)
+            {
+                var star = CreatePanel("Star", parent, Color.white);
+                var layoutElement = star.gameObject.AddComponent<LayoutElement>();
+                layoutElement.preferredWidth = width;
+                layoutElement.preferredHeight = height;
+                star.preserveAspect = true;
+                stars.Add(star);
+            }
+
+            for (var index = 0; index < stars.Count; index++)
+            {
+                var star = stars[index];
+                var isVisible = index < clampedCount;
+                star.gameObject.SetActive(isVisible);
+                if (!isVisible)
+                {
+                    continue;
+                }
+
+                if (_tierStarSprite != null)
+                {
+                    star.sprite = _tierStarSprite;
+                    star.color = Color.white;
+                }
+                else
+                {
+                    star.sprite = null;
+                    star.color = new Color(1f, 0.82f, 0.1f, 1f);
+                }
             }
         }
 

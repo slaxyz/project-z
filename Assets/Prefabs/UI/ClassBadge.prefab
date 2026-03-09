@@ -65,7 +65,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 85314eae6effcf94895bd37e307a2017, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 09cf2769714c8c444b0dc5b7c1f411ca, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -84,9 +84,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6384679416999434107}
-  - component: {fileID: 4462723785029629003}
+  - component: {fileID: 5642990918782469947}
   m_Layer: 5
-  m_Name: TypeBadge
+  m_Name: ClassBadge
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -113,7 +113,7 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 80, y: 80}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &4462723785029629003
+--- !u!114 &5642990918782469947
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -122,13 +122,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 7151179167307963987}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3aefa51fa7eab9948aa489f6e9e395b1, type: 3}
+  m_Script: {fileID: 11500000, guid: 53e90fc2007c5cd4cbd7770a97fbb11e, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ProjectZ.UI.TypeBadgeView
+  m_EditorClassIdentifier: Assembly-CSharp::ProjectZ.UI.ClassBadgeView
   backgroundLayer: {fileID: 7037509436422701256}
   iconLayer: {fileID: 1857152398528699540}
-  previewType: {fileID: 11400000, guid: 4699670a6a48edd46b74d5295613bed8, type: 2}
-  previewAsGem: 1
+  previewClass: {fileID: 11400000, guid: 2b6984c3bd1f31647be4d34e824992a4, type: 2}
   applyOnStart: 1
 --- !u!1 &7561939878228099027
 GameObject:
@@ -195,7 +194,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: d9e4b89503bae2249bc7309fa2851edf, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 1da74eff068dc9841971520412068672, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
