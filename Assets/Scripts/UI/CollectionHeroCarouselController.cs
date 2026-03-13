@@ -6,6 +6,12 @@ using UnityEngine;
 
 namespace ProjectZ.UI
 {
+    public enum CollectionHeroSortMode
+    {
+        ByLevel = 0,
+        ByRarity = 1
+    }
+
     [DisallowMultipleComponent]
     public class CollectionHeroCarouselController : MonoBehaviour
     {
@@ -16,6 +22,7 @@ namespace ProjectZ.UI
         [Header("Behavior")]
         [SerializeField] private bool populateOnStart = true;
         [SerializeField] private string selectedChampionId;
+        [SerializeField] private CollectionHeroSortMode sortMode = CollectionHeroSortMode.ByLevel;
 
         private readonly List<HeroSelectorView> _views = new List<HeroSelectorView>();
         private GameFlowManager _manager;
@@ -69,9 +76,7 @@ namespace ProjectZ.UI
 
             ClearContent();
 
-            var champions = _manager.GetChampionCatalog()
-                .Where(champion => champion != null && !string.IsNullOrWhiteSpace(champion.Id))
-                .ToList();
+            var champions = GetSortedChampions();
 
             if (champions.Count == 0)
             {
@@ -95,6 +100,17 @@ namespace ProjectZ.UI
             }
 
             SelectChampion(fallbackSelectedId, true);
+        }
+
+        public void SetSortMode(CollectionHeroSortMode nextSortMode)
+        {
+            if (sortMode == nextSortMode && _views.Count > 0)
+            {
+                return;
+            }
+
+            sortMode = nextSortMode;
+            Rebuild();
         }
 
         public void RefreshOwnership()
@@ -209,6 +225,29 @@ namespace ProjectZ.UI
             }
 
             return champions[0].Id;
+        }
+
+        private List<ChampionDefinitionAsset> GetSortedChampions()
+        {
+            IEnumerable<ChampionDefinitionAsset> query = _manager.GetChampionCatalog()
+                .Where(champion => champion != null && !string.IsNullOrWhiteSpace(champion.Id));
+
+            switch (sortMode)
+            {
+                case CollectionHeroSortMode.ByRarity:
+                    query = query
+                        .OrderByDescending(champion => champion.TierStars)
+                        .ThenBy(champion => champion.DisplayName);
+                    break;
+
+                default:
+                    query = query
+                        .OrderBy(champion => champion.SourceNumericId <= 0 ? int.MaxValue : champion.SourceNumericId)
+                        .ThenBy(champion => champion.DisplayName);
+                    break;
+            }
+
+            return query.ToList();
         }
 
         private void ClearContent()

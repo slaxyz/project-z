@@ -107,9 +107,6 @@ namespace ProjectZ.Core
         {
             switch (CurrentState)
             {
-                case GameFlowState.Collection:
-                    EnsureController<CollectionSceneController>("CollectionSceneController");
-                    break;
                 case GameFlowState.Home:
                     EnsureController<LobbySceneController>("LobbySceneController");
                     break;

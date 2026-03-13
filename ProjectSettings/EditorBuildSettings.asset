@@ -13,7 +13,7 @@ EditorBuildSettings:
     guid: 05c77ca67fca24cf19602f209bda9c68
   - enabled: 1
     path: Assets/Scenes/CollectionScene.unity
-    guid: 88b5a5518937d4aa9976d4e8d482867e
+    guid: 1422538230524144c9e190e6fbbcb2b3
   - enabled: 1
     path: Assets/Scenes/TeamSelectScene.unity
     guid: 241bd7258c351494abbd6ac74e0b7f51
