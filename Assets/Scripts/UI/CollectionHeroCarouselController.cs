@@ -28,6 +28,8 @@ namespace ProjectZ.UI
         private GameFlowManager _manager;
 
         public ChampionDefinitionAsset SelectedChampion { get; private set; }
+        public Transform ContentRoot => contentRoot;
+        public HeroSelectorView HeroSelectorPrefab => heroSelectorPrefab;
 
         public event System.Action<ChampionDefinitionAsset> SelectionChanged;
 
@@ -135,6 +137,23 @@ namespace ProjectZ.UI
 
                 view.SetOwned(_manager.IsChampionUnlocked(view.ChampionId));
             }
+        }
+
+        public void ClearRuntimeItems()
+        {
+            if (contentRoot == null)
+            {
+                AutoAssignIfNeeded();
+            }
+
+            if (contentRoot == null)
+            {
+                return;
+            }
+
+            ClearContent();
+            SelectedChampion = null;
+            selectedChampionId = string.Empty;
         }
 
         public void SelectChampion(string championId)
