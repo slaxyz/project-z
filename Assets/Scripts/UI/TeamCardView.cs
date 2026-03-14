@@ -2,12 +2,13 @@ using ProjectZ.Run;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace ProjectZ.UI
 {
     [DisallowMultipleComponent]
-    public class TeamCardView : MonoBehaviour
+    public class TeamCardView : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
     {
         [Header("States")]
         [SerializeField] private GameObject idleRoot;
@@ -31,20 +32,33 @@ namespace ProjectZ.UI
         [SerializeField] private Image clickSurface;
 
         public Button Button => button;
+        public Vector3 DefaultScale => _defaultScale;
+        public int SlotIndex { get; set; } = -1;
+        public bool HasChampion => _hasChampion;
+        public event System.Action<TeamCardView, PointerEventData> DragStarted;
+        public event System.Action<TeamCardView, PointerEventData> DragMoved;
+        public event System.Action<TeamCardView, PointerEventData> DragEnded;
 
         private readonly List<Image> _stars = new List<Image>();
         private Sprite _starSprite;
+        private bool _hasChampion;
+        private Vector3 _defaultScale = Vector3.one;
+        private CanvasGroup _canvasGroup;
 
         private void Awake()
         {
             AutoAssignIfNeeded();
             EnsureButton();
+            _defaultScale = transform.localScale;
+            EnsureCanvasGroup();
         }
 
         private void Reset()
         {
             AutoAssignIfNeeded();
             EnsureButton();
+            _defaultScale = transform.localScale;
+            EnsureCanvasGroup();
         }
 
         private void OnValidate()
@@ -55,6 +69,7 @@ namespace ProjectZ.UI
         public void ShowIdle()
         {
             AutoAssignIfNeeded();
+            _hasChampion = false;
 
             if (idleRoot != null)
             {
@@ -77,6 +92,7 @@ namespace ProjectZ.UI
                 return;
             }
 
+            _hasChampion = true;
             if (idleRoot != null)
             {
                 idleRoot.SetActive(false);
@@ -300,6 +316,55 @@ namespace ProjectZ.UI
             {
                 button.targetGraphic = clickSurface;
             }
+        }
+
+        private void EnsureCanvasGroup()
+        {
+            if (_canvasGroup == null)
+            {
+                _canvasGroup = GetComponent<CanvasGroup>();
+            }
+
+            if (_canvasGroup == null)
+            {
+                _canvasGroup = gameObject.AddComponent<CanvasGroup>();
+            }
+        }
+
+        public void OnBeginDrag(PointerEventData eventData)
+        {
+            if (!_hasChampion)
+            {
+                return;
+            }
+
+            EnsureCanvasGroup();
+            _canvasGroup.blocksRaycasts = false;
+            transform.localScale = _defaultScale * 1.1f;
+            DragStarted?.Invoke(this, eventData);
+        }
+
+        public void OnDrag(PointerEventData eventData)
+        {
+            if (!_hasChampion)
+            {
+                return;
+            }
+
+            DragMoved?.Invoke(this, eventData);
+        }
+
+        public void OnEndDrag(PointerEventData eventData)
+        {
+            if (!_hasChampion)
+            {
+                return;
+            }
+
+            transform.localScale = _defaultScale;
+            DragEnded?.Invoke(this, eventData);
+            EnsureCanvasGroup();
+            _canvasGroup.blocksRaycasts = true;
         }
 
         private void EnsureStarSprite()

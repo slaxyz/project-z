@@ -78,7 +78,19 @@ namespace ProjectZ.UI
         private bool _useManualUi;
         private Transform _manualGridContent;
         private Transform _manualTeamCardsRow;
+        private Transform _manualStartRunCta;
+        private Canvas _manualCanvas;
         private CollectionHeroCarouselController _manualCarouselSource;
+        private CTAView _manualStartRunCtaView;
+        private TeamCardView _draggingTeamCard;
+        private Transform _dragOriginalParent;
+        private GameObject _dragPlaceholder;
+        private int _dragOriginalSiblingIndex;
+        private Vector2 _dragOriginalAnchoredPosition;
+        private Vector2 _dragOriginalSizeDelta;
+        private Vector2 _dragOriginalAnchorMin;
+        private Vector2 _dragOriginalAnchorMax;
+        private Vector2 _dragOriginalPivot;
 
         private Image _playButtonImage;
         private Button _playButton;
@@ -176,8 +188,10 @@ namespace ProjectZ.UI
             _manualGridContent = _manualCarouselSource != null ? _manualCarouselSource.ContentRoot : FindDeepChildByName("Content_Grid");
             var heroSelectorPrefab = _manualCarouselSource != null ? _manualCarouselSource.HeroSelectorPrefab : null;
             _manualTeamCardsRow = FindDeepChildByName("TeamCardsRow");
+            _manualStartRunCta = FindDeepChildByName("CTA_StartRun");
+            _manualCanvas = FindFirstObjectByType<Canvas>();
 
-            if (_manualGridContent == null || heroSelectorPrefab == null || _manualTeamCardsRow == null)
+            if (_manualGridContent == null || heroSelectorPrefab == null || _manualTeamCardsRow == null || _manualStartRunCta == null || _manualCanvas == null)
             {
                 return false;
             }
@@ -192,6 +206,7 @@ namespace ProjectZ.UI
 
             BuildManualChampionGrid(heroSelectorPrefab);
             PrepareManualTeamCards();
+            PrepareManualStartRunCta();
             return true;
         }
 
@@ -279,8 +294,15 @@ namespace ProjectZ.UI
                 }
 
                 var capturedIndex = i;
+                _manualTeamCardViews[i].SlotIndex = i;
                 _manualTeamCardViews[i].Button.onClick.RemoveAllListeners();
                 _manualTeamCardViews[i].Button.onClick.AddListener(() => OnSlotClicked(capturedIndex));
+                _manualTeamCardViews[i].DragStarted -= OnManualTeamCardDragStarted;
+                _manualTeamCardViews[i].DragMoved -= OnManualTeamCardDragged;
+                _manualTeamCardViews[i].DragEnded -= OnManualTeamCardDragEnded;
+                _manualTeamCardViews[i].DragStarted += OnManualTeamCardDragStarted;
+                _manualTeamCardViews[i].DragMoved += OnManualTeamCardDragged;
+                _manualTeamCardViews[i].DragEnded += OnManualTeamCardDragEnded;
             }
         }
 
@@ -557,13 +579,38 @@ namespace ProjectZ.UI
 
             for (var i = 0; i < _slotChampionIds.Length; i++)
             {
+                if (_slotChampionIds[i] != championId)
+                {
+                    continue;
+                }
+
+                _slotChampionIds[i] = string.Empty;
+                var firstEmptySlot = FindFirstEmptySlot();
+                _activeSlotIndex = firstEmptySlot >= 0 ? firstEmptySlot : i;
+                SyncSlotsToRunData();
+                RefreshUI();
+                return;
+            }
+
+            for (var i = 0; i < _slotChampionIds.Length; i++)
+            {
                 if (i != _activeSlotIndex && _slotChampionIds[i] == championId)
                 {
                     _slotChampionIds[i] = string.Empty;
                 }
             }
 
-            _slotChampionIds[_activeSlotIndex] = championId;
+            var insertIndex = string.IsNullOrWhiteSpace(_slotChampionIds[_activeSlotIndex])
+                ? _activeSlotIndex
+                : FindFirstEmptySlot();
+
+            if (insertIndex < 0)
+            {
+                insertIndex = Mathf.Clamp(_activeSlotIndex, 0, _slotChampionIds.Length - 1);
+            }
+
+            _slotChampionIds[insertIndex] = championId;
+            _activeSlotIndex = insertIndex;
             AdvanceActiveSlot();
             SyncSlotsToRunData();
             RefreshUI();
@@ -681,6 +728,7 @@ namespace ProjectZ.UI
         {
             if (_useManualUi)
             {
+                RefreshManualPlayState();
                 return;
             }
 
@@ -692,6 +740,275 @@ namespace ProjectZ.UI
             _helperText.text = canPlay
                 ? "Team ready."
                 : "Choose 3 different champions to start.";
+        }
+
+        private void PrepareManualStartRunCta()
+        {
+            if (_manualStartRunCta == null)
+            {
+                return;
+            }
+
+            _manualStartRunCtaView = _manualStartRunCta.GetComponent<CTAView>();
+            if (_manualStartRunCtaView == null)
+            {
+                _manualStartRunCtaView = _manualStartRunCta.gameObject.AddComponent<CTAView>();
+            }
+
+            _playButton = _manualStartRunCta.GetComponent<Button>();
+            if (_playButton == null)
+            {
+                _playButton = _manualStartRunCta.gameObject.AddComponent<Button>();
+            }
+
+            _playButton.transition = Selectable.Transition.None;
+            _playButton.onClick.RemoveAllListeners();
+            _playButton.onClick.AddListener(OnStartRunClicked);
+
+            _playButtonImage = _manualStartRunCta.GetComponent<Image>();
+            if (_playButtonImage == null)
+            {
+                _playButtonImage = _manualStartRunCta.gameObject.AddComponent<Image>();
+                _playButtonImage.color = new Color(1f, 1f, 1f, 0f);
+            }
+
+            _playButton.targetGraphic = _playButtonImage;
+            _playButtonImage.raycastTarget = true;
+        }
+
+        private void RefreshManualPlayState()
+        {
+            var canPlay = CountFilledSlots() >= 3;
+
+            if (_playButton != null)
+            {
+                _playButton.interactable = canPlay;
+            }
+
+            if (_manualStartRunCtaView != null)
+            {
+                _manualStartRunCtaView.SetInteractable(canPlay);
+            }
+        }
+
+        private int FindFirstEmptySlot()
+        {
+            for (var i = 0; i < _slotChampionIds.Length; i++)
+            {
+                if (string.IsNullOrWhiteSpace(_slotChampionIds[i]))
+                {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+        private void OnStartRunClicked()
+        {
+            if (_manager == null || CountFilledSlots() < 3)
+            {
+                return;
+            }
+
+            _manager.StartRun();
+        }
+
+        private void OnManualTeamCardDragStarted(TeamCardView card, PointerEventData eventData)
+        {
+            if (card == null || !card.HasChampion || _manualCanvas == null)
+            {
+                return;
+            }
+
+            _draggingTeamCard = card;
+
+            var rectTransform = card.transform as RectTransform;
+            if (rectTransform == null)
+            {
+                return;
+            }
+
+            _dragOriginalParent = rectTransform.parent;
+            _dragOriginalSiblingIndex = rectTransform.GetSiblingIndex();
+            _dragOriginalAnchoredPosition = rectTransform.anchoredPosition;
+            _dragOriginalSizeDelta = rectTransform.sizeDelta;
+            _dragOriginalAnchorMin = rectTransform.anchorMin;
+            _dragOriginalAnchorMax = rectTransform.anchorMax;
+            _dragOriginalPivot = rectTransform.pivot;
+
+            CreateDragPlaceholder(card, rectTransform);
+            rectTransform.SetParent(_manualCanvas.transform, true);
+            rectTransform.SetAsLastSibling();
+            UpdateDraggedCardPosition(rectTransform, eventData);
+        }
+
+        private void OnManualTeamCardDragged(TeamCardView card, PointerEventData eventData)
+        {
+            if (_draggingTeamCard != card)
+            {
+                return;
+            }
+
+            var rectTransform = card.transform as RectTransform;
+            if (rectTransform == null)
+            {
+                return;
+            }
+
+            UpdateDraggedCardPosition(rectTransform, eventData);
+        }
+
+        private void OnManualTeamCardDragEnded(TeamCardView card, PointerEventData eventData)
+        {
+            if (_draggingTeamCard != card)
+            {
+                return;
+            }
+
+            RestoreDraggedCard(card);
+            DestroyDragPlaceholder();
+
+            var targetCard = FindDropTarget(eventData);
+            if (targetCard != null && targetCard != card)
+            {
+                SwapOrMoveSlots(card.SlotIndex, targetCard.SlotIndex);
+                SyncSlotsToRunData();
+                RefreshUI();
+            }
+
+            _draggingTeamCard = null;
+        }
+
+        private void RestoreDraggedCard(TeamCardView card)
+        {
+            var rectTransform = card != null ? card.transform as RectTransform : null;
+            if (rectTransform == null || _dragOriginalParent == null)
+            {
+                return;
+            }
+
+            rectTransform.SetParent(_dragOriginalParent, true);
+            rectTransform.SetSiblingIndex(_dragOriginalSiblingIndex);
+            rectTransform.anchorMin = _dragOriginalAnchorMin;
+            rectTransform.anchorMax = _dragOriginalAnchorMax;
+            rectTransform.pivot = _dragOriginalPivot;
+            rectTransform.sizeDelta = _dragOriginalSizeDelta;
+            rectTransform.anchoredPosition = _dragOriginalAnchoredPosition;
+        }
+
+        private void CreateDragPlaceholder(TeamCardView sourceCard, RectTransform sourceRectTransform)
+        {
+            DestroyDragPlaceholder();
+
+            if (_dragOriginalParent == null || sourceRectTransform == null)
+            {
+                return;
+            }
+
+            _dragPlaceholder = Instantiate(sourceCard.gameObject, _dragOriginalParent);
+            _dragPlaceholder.name = sourceCard.name + "_Placeholder";
+            _dragPlaceholder.transform.SetSiblingIndex(_dragOriginalSiblingIndex);
+
+            var placeholderCard = _dragPlaceholder.GetComponent<TeamCardView>();
+            if (placeholderCard != null)
+            {
+                placeholderCard.ShowIdle();
+                placeholderCard.enabled = false;
+            }
+
+            var placeholderButton = _dragPlaceholder.GetComponent<Button>();
+            if (placeholderButton != null)
+            {
+                placeholderButton.interactable = false;
+                placeholderButton.enabled = false;
+            }
+
+            var placeholderCanvasGroup = _dragPlaceholder.GetComponent<CanvasGroup>();
+            if (placeholderCanvasGroup == null)
+            {
+                placeholderCanvasGroup = _dragPlaceholder.AddComponent<CanvasGroup>();
+            }
+
+            placeholderCanvasGroup.blocksRaycasts = false;
+            placeholderCanvasGroup.interactable = false;
+
+            var placeholderRectTransform = _dragPlaceholder.transform as RectTransform;
+            if (placeholderRectTransform != null)
+            {
+                placeholderRectTransform.anchorMin = _dragOriginalAnchorMin;
+                placeholderRectTransform.anchorMax = _dragOriginalAnchorMax;
+                placeholderRectTransform.pivot = _dragOriginalPivot;
+                placeholderRectTransform.sizeDelta = _dragOriginalSizeDelta;
+                placeholderRectTransform.anchoredPosition = _dragOriginalAnchoredPosition;
+                placeholderRectTransform.localScale = sourceCard.DefaultScale;
+            }
+        }
+
+        private void DestroyDragPlaceholder()
+        {
+            if (_dragPlaceholder == null)
+            {
+                return;
+            }
+
+            Destroy(_dragPlaceholder);
+            _dragPlaceholder = null;
+        }
+
+        private void UpdateDraggedCardPosition(RectTransform rectTransform, PointerEventData eventData)
+        {
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                _manualCanvas.transform as RectTransform,
+                eventData.position,
+                eventData.pressEventCamera,
+                out var localPoint);
+
+            rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
+            rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
+            rectTransform.pivot = new Vector2(0.5f, 0.5f);
+            rectTransform.anchoredPosition = localPoint;
+        }
+
+        private TeamCardView FindDropTarget(PointerEventData eventData)
+        {
+            if (eventData == null)
+            {
+                return null;
+            }
+
+            foreach (var hovered in eventData.hovered)
+            {
+                if (hovered == null)
+                {
+                    continue;
+                }
+
+                var targetCard = hovered.GetComponentInParent<TeamCardView>();
+                if (targetCard != null)
+                {
+                    return targetCard;
+                }
+            }
+
+            return null;
+        }
+
+        private void SwapOrMoveSlots(int sourceIndex, int targetIndex)
+        {
+            if (sourceIndex < 0 || sourceIndex >= _slotChampionIds.Length ||
+                targetIndex < 0 || targetIndex >= _slotChampionIds.Length ||
+                sourceIndex == targetIndex)
+            {
+                return;
+            }
+
+            var sourceChampionId = _slotChampionIds[sourceIndex];
+            var targetChampionId = _slotChampionIds[targetIndex];
+
+            _slotChampionIds[targetIndex] = sourceChampionId;
+            _slotChampionIds[sourceIndex] = targetChampionId;
+            _activeSlotIndex = targetIndex;
         }
 
         private int CountFilledSlots()
