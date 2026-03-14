@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System;
 using ProjectZ.Core;
 using ProjectZ.Run;
 using UnityEngine;
@@ -39,7 +40,7 @@ namespace ProjectZ.UI
         private static void EnsureInstance()
         {
             var activeScene = SceneManager.GetActiveScene();
-            if (activeScene.name != GameScenes.TeamSelect)
+            if (!IsSupportedScene(activeScene.name))
             {
                 return;
             }
@@ -56,6 +57,8 @@ namespace ProjectZ.UI
         private readonly List<ChampionGridItemView> _gridItems = new List<ChampionGridItemView>();
         private readonly SlotView[] _slotViews = new SlotView[3];
         private readonly string[] _slotChampionIds = new string[3];
+        private readonly List<HeroSelectorView> _manualHeroViews = new List<HeroSelectorView>();
+        private readonly TeamCardView[] _manualTeamCardViews = new TeamCardView[3];
         private readonly Color _slotIdleColor = new Color(0.14f, 0.16f, 0.2f, 0.96f);
         private readonly Color _slotFilledColor = new Color(0.18f, 0.22f, 0.3f, 0.98f);
         private readonly Color _slotActiveColor = new Color(0.27f, 0.37f, 0.57f, 1f);
@@ -72,11 +75,30 @@ namespace ProjectZ.UI
         private RectTransform _safeAreaRoot;
         private Rect _lastSafeArea;
         private int _activeSlotIndex;
+        private bool _useManualUi;
+        private Transform _manualGridContent;
+        private Transform _manualTeamCardsRow;
+        private CollectionHeroCarouselController _manualCarouselSource;
 
         private Image _playButtonImage;
         private Button _playButton;
         private Text _playButtonText;
         private Text _helperText;
+
+        private void Awake()
+        {
+            if (!IsSupportedScene(SceneManager.GetActiveScene().name))
+            {
+                return;
+            }
+
+            var carousel = FindFirstObjectByType<CollectionHeroCarouselController>();
+            if (carousel != null && FindDeepChildByName("TeamCardsRow") != null)
+            {
+                carousel.enabled = false;
+                _manualCarouselSource = carousel;
+            }
+        }
 
         private void Start()
         {
@@ -88,6 +110,18 @@ namespace ProjectZ.UI
                 return;
             }
 
+            _catalog.Clear();
+            _catalog.AddRange(_manager.GetChampionCatalog().Where(c => c != null && !string.IsNullOrWhiteSpace(c.Id)));
+
+            EnsureEventSystem();
+
+            if (TryBindManualUi())
+            {
+                InitializeSlotsFromRun();
+                RefreshUI();
+                return;
+            }
+
             _font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             if (_font == null)
             {
@@ -96,10 +130,6 @@ namespace ProjectZ.UI
                 return;
             }
 
-            _catalog.Clear();
-            _catalog.AddRange(_manager.GetChampionCatalog().Where(c => c != null && !string.IsNullOrWhiteSpace(c.Id)));
-
-            EnsureEventSystem();
             BuildLayout();
             InitializeSlotsFromRun();
             ApplySafeArea(true);
@@ -108,7 +138,18 @@ namespace ProjectZ.UI
 
         private void Update()
         {
+            if (_useManualUi)
+            {
+                return;
+            }
+
             ApplySafeArea(false);
+        }
+
+        private static bool IsSupportedScene(string sceneName)
+        {
+            return !string.IsNullOrWhiteSpace(sceneName) &&
+                   sceneName.StartsWith(GameScenes.TeamSelect, StringComparison.OrdinalIgnoreCase);
         }
 
         private void InitializeSlotsFromRun()
@@ -127,6 +168,130 @@ namespace ProjectZ.UI
             var count = CountFilledSlots();
             _activeSlotIndex = count >= 3 ? 2 : Mathf.Clamp(count, 0, 2);
             SyncSlotsToRunData();
+        }
+
+        private bool TryBindManualUi()
+        {
+            _manualCarouselSource = FindFirstObjectByType<CollectionHeroCarouselController>();
+            _manualGridContent = _manualCarouselSource != null ? _manualCarouselSource.ContentRoot : FindDeepChildByName("Content_Grid");
+            var heroSelectorPrefab = _manualCarouselSource != null ? _manualCarouselSource.HeroSelectorPrefab : null;
+            _manualTeamCardsRow = FindDeepChildByName("TeamCardsRow");
+
+            if (_manualGridContent == null || heroSelectorPrefab == null || _manualTeamCardsRow == null)
+            {
+                return false;
+            }
+
+            _useManualUi = true;
+
+            if (_manualCarouselSource != null)
+            {
+                _manualCarouselSource.ClearRuntimeItems();
+                _manualCarouselSource.enabled = false;
+            }
+
+            BuildManualChampionGrid(heroSelectorPrefab);
+            PrepareManualTeamCards();
+            return true;
+        }
+
+        private void BuildManualChampionGrid(HeroSelectorView heroSelectorPrefab)
+        {
+            ClearManualHeroGrid();
+
+            foreach (var champion in _catalog)
+            {
+                var view = Instantiate(heroSelectorPrefab, _manualGridContent);
+                view.name = "Hero_" + champion.Id;
+                view.SetShowSelectedRootWhenSelected(true);
+                view.Clicked += OnManualHeroClicked;
+                view.Bind(champion, _manager.IsChampionUnlocked(champion.Id), false);
+                _manualHeroViews.Add(view);
+            }
+        }
+
+        private void ClearManualHeroGrid()
+        {
+            for (var i = _manualHeroViews.Count - 1; i >= 0; i--)
+            {
+                var view = _manualHeroViews[i];
+                if (view != null)
+                {
+                    view.Clicked -= OnManualHeroClicked;
+                }
+            }
+
+            _manualHeroViews.Clear();
+
+            if (_manualGridContent == null)
+            {
+                return;
+            }
+
+            for (var i = _manualGridContent.childCount - 1; i >= 0; i--)
+            {
+                var child = _manualGridContent.GetChild(i);
+                if (child == null)
+                {
+                    continue;
+                }
+
+                Destroy(child.gameObject);
+            }
+        }
+
+        private void PrepareManualTeamCards()
+        {
+            var cards = new List<TeamCardView>();
+            for (var i = 0; i < _manualTeamCardsRow.childCount; i++)
+            {
+                var child = _manualTeamCardsRow.GetChild(i);
+                if (child == null)
+                {
+                    continue;
+                }
+
+                var card = child.GetComponent<TeamCardView>();
+                if (card == null)
+                {
+                    card = child.gameObject.AddComponent<TeamCardView>();
+                }
+
+                cards.Add(card);
+            }
+
+            if (cards.Count > 0)
+            {
+                while (cards.Count < _manualTeamCardViews.Length)
+                {
+                    var clone = Instantiate(cards[0], _manualTeamCardsRow);
+                    clone.name = "TeamCard_" + cards.Count;
+                    cards.Add(clone);
+                }
+            }
+
+            for (var i = 0; i < _manualTeamCardViews.Length; i++)
+            {
+                _manualTeamCardViews[i] = i < cards.Count ? cards[i] : null;
+                if (_manualTeamCardViews[i] == null)
+                {
+                    continue;
+                }
+
+                var capturedIndex = i;
+                _manualTeamCardViews[i].Button.onClick.RemoveAllListeners();
+                _manualTeamCardViews[i].Button.onClick.AddListener(() => OnSlotClicked(capturedIndex));
+            }
+        }
+
+        private void OnManualHeroClicked(HeroSelectorView view)
+        {
+            if (view == null)
+            {
+                return;
+            }
+
+            OnChampionClicked(view.ChampionId);
         }
 
         private void BuildLayout()
@@ -445,6 +610,12 @@ namespace ProjectZ.UI
 
         private void RefreshSlots()
         {
+            if (_useManualUi)
+            {
+                RefreshManualTeamCards();
+                return;
+            }
+
             for (var i = 0; i < _slotViews.Length; i++)
             {
                 var slot = _slotViews[i];
@@ -469,6 +640,12 @@ namespace ProjectZ.UI
 
         private void RefreshGridTiles()
         {
+            if (_useManualUi)
+            {
+                RefreshManualGridTiles();
+                return;
+            }
+
             for (var i = 0; i < _gridItems.Count; i++)
             {
                 var item = _gridItems[i];
@@ -502,6 +679,11 @@ namespace ProjectZ.UI
 
         private void RefreshPlayState()
         {
+            if (_useManualUi)
+            {
+                return;
+            }
+
             var canPlay = _manager.CurrentRun.HasValidTeam();
             _playButton.interactable = canPlay;
             _playButtonImage.color = canPlay ? _playEnabledColor : _playDisabledColor;
@@ -517,8 +699,52 @@ namespace ProjectZ.UI
             return _slotChampionIds.Count(id => !string.IsNullOrWhiteSpace(id));
         }
 
+        private void RefreshManualTeamCards()
+        {
+            for (var i = 0; i < _manualTeamCardViews.Length; i++)
+            {
+                var card = _manualTeamCardViews[i];
+                if (card == null)
+                {
+                    continue;
+                }
+
+                var champion = ChampionCatalog.FindById(_slotChampionIds[i]);
+                if (champion == null)
+                {
+                    card.ShowIdle();
+                    continue;
+                }
+
+                card.Bind(champion);
+            }
+        }
+
+        private void RefreshManualGridTiles()
+        {
+            for (var i = 0; i < _manualHeroViews.Count; i++)
+            {
+                var view = _manualHeroViews[i];
+                if (view == null || view.Champion == null)
+                {
+                    continue;
+                }
+
+                var championId = view.ChampionId;
+                view.Bind(
+                    view.Champion,
+                    _manager.IsChampionUnlocked(championId),
+                    _slotChampionIds.Contains(championId));
+            }
+        }
+
         private void ApplySafeArea(bool force)
         {
+            if (_safeAreaRoot == null)
+            {
+                return;
+            }
+
             var safe = Screen.safeArea;
             if (!force && safe == _lastSafeArea)
             {
@@ -624,6 +850,62 @@ namespace ProjectZ.UI
             }
 
             return Resources.Load<Sprite>("Art/UI/Rarity/" + key);
+        }
+
+        private static Transform FindDeepChildByName(string expectedName)
+        {
+            if (string.IsNullOrWhiteSpace(expectedName))
+            {
+                return null;
+            }
+
+            var roots = SceneManager.GetActiveScene().GetRootGameObjects();
+            for (var i = 0; i < roots.Length; i++)
+            {
+                var root = roots[i];
+                if (root == null)
+                {
+                    continue;
+                }
+
+                var match = FindDeepChildByName(root.transform, expectedName.Trim());
+                if (match != null)
+                {
+                    return match;
+                }
+            }
+
+            return null;
+        }
+
+        private static Transform FindDeepChildByName(Transform root, string expectedName)
+        {
+            if (root == null)
+            {
+                return null;
+            }
+
+            if (root.name.Trim() == expectedName)
+            {
+                return root;
+            }
+
+            for (var i = 0; i < root.childCount; i++)
+            {
+                var child = root.GetChild(i);
+                if (child == null)
+                {
+                    continue;
+                }
+
+                var match = FindDeepChildByName(child, expectedName);
+                if (match != null)
+                {
+                    return match;
+                }
+            }
+
+            return null;
         }
     }
 }

@@ -8,6 +8,7 @@ namespace ProjectZ.UI
     public class HeroSelectorView : MonoBehaviour
     {
         [Header("Layers")]
+        [SerializeField] private GameObject selectedRoot;
         [SerializeField] private Image selectedFrameImage;
         [SerializeField] private Image rarityImage;
         [SerializeField] private Image cardFrameImage;
@@ -18,6 +19,9 @@ namespace ProjectZ.UI
         [Header("Sizes")]
         [SerializeField] private Vector2 defaultSize = new Vector2(120f, 120f);
         [SerializeField] private Vector2 selectedSize = new Vector2(120f, 120f);
+
+        [Header("Optional Scene Rules")]
+        [SerializeField] private bool showSelectedRootWhenSelected;
 
         private ChampionDefinitionAsset _champion;
         private bool _isOwned = true;
@@ -68,8 +72,19 @@ namespace ProjectZ.UI
             RefreshVisuals();
         }
 
+        public void SetShowSelectedRootWhenSelected(bool enabled)
+        {
+            showSelectedRootWhenSelected = enabled;
+            RefreshVisuals();
+        }
+
         private void AutoAssignIfNeeded()
         {
+            if (selectedRoot == null)
+            {
+                selectedRoot = transform.Find("Selected")?.gameObject;
+            }
+
             if (selectedFrameImage == null)
             {
                 selectedFrameImage = transform.Find("SelectedFrame")?.GetComponent<Image>();
@@ -147,6 +162,11 @@ namespace ProjectZ.UI
             if (selectedFrameImage != null)
             {
                 selectedFrameImage.gameObject.SetActive(_isSelected);
+            }
+
+            if (selectedRoot != null)
+            {
+                selectedRoot.SetActive(showSelectedRootWhenSelected && _isSelected);
             }
 
             if (ownershipVisual != null)

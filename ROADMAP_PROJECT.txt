@@ -1,0 +1,308 @@
+PROJECT Z - ROADMAP MASTER
+Last update: 2026-03-14
+
+STATUS LEGEND
+[DONE] finished and usable
+[IN PROGRESS] playable but still moving
+[NEXT] highest priority after current work
+[LATER] important but not now
+[V2] polish pass after the core loop is stable
+
+
+GLOBAL PRODUCT GOAL
+Build the first complete playable loop:
+Home -> Collection -> Team Select -> Board -> Fight -> Result -> Meta progression -> replay
+
+
+CURRENT PRIORITY ORDER
+1. Core gameplay loop first
+2. Meta progression and rewards second
+3. Scene-to-scene UX cleanup third
+4. Lobby visual polish last
+
+Decision:
+Yes, doing gameplay loop first and lobby last is the right call.
+Only keep the lobby functional enough to navigate.
+Do not spend heavy polish time on the lobby before the loop is stable.
+
+
+PHASE 1 - FOUNDATIONS
+[DONE] Scene flow framework
+- Boot
+- Loading
+- State machine
+- Scene transitions
+
+[DONE] Base data layer
+- Champion catalog
+- Hero taxonomy
+- Meta save/load
+- Unlock state storage
+
+[DONE] Collection scene V1
+- Manual Unity UI
+- Hero carousel
+- Selection
+- Owned / not owned state
+- Left showcase binding
+- Right info panel binding
+- Sort popup V1
+
+[IN PROGRESS] Team Select scene
+- Base scene/controller exists
+- Needs final UI/polish pass and validation with real flow
+
+[NEXT] Team Select priority comments
+- "Les fonds des heros non possede ne sont pas en noir et blanc + le cta start run est casse"
+
+[IN PROGRESS] Combat prototype
+- Fight scene exists
+- Fight mock controller exists
+- Enemy catalog / spawn rules exist
+- Needs gameplay validation and full loop integration
+
+[IN PROGRESS] Board / run progression
+- Board scene exists
+- Result scene exists
+- Zone animation / boss celebration exist
+- Needs full end-to-end validation as one stable loop
+
+
+PHASE 2 - FIRST PLAYABLE VERTICAL SLICE
+[NEXT] Make the full run loop stable end to end
+- Enter run from Team Select
+- Start board
+- Launch fight
+- Resolve result
+- Advance node
+- Reach boss flow
+- End run cleanly
+
+[NEXT] Validate team persistence through the run
+- 3 selected heroes stay consistent
+- Run data survives scene changes
+- Rewards and losses return to meta correctly
+
+[NEXT] Validate meta rewards
+- Coins/resources gained after a run
+- Hero unlock flow confirmed
+- Spend loop confirmed
+
+[NEXT] Clean transition UX between scenes
+- Remove leftover dev-only behaviors
+- Make sure each scene has one clear UI path
+- Prevent duplicate UI systems
+
+
+PHASE 3 - CORE UI ORDER
+[DONE] CollectionScene V1
+
+[NEXT] TeamSelect UI final pass
+- Strong readable selection flow
+- Clear 3-slot team confirmation
+- Locked/unlocked readability
+
+[NEXT] BoardScene UI pass
+- Node readability
+- Current position clarity
+- Boss path readability
+
+[NEXT] Fight HUD pass
+- Core readability first
+- Damage / turn / spell clarity
+- No polish obsession yet
+
+[NEXT] Result screen pass
+- Victory / defeat clarity
+- Reward clarity
+- Continue / end run clarity
+
+[LATER] Home / Lobby full visual pass
+- Final key art
+- Better hierarchy
+- Strong entry experience
+
+
+PHASE 4 - META SYSTEMS
+[NEXT] Hero unlock flow validation
+- Cost
+- Unlock feedback
+- Persist after reload
+
+[NEXT] Spell unlock / reward loop
+- Unlock by achievement or purchase
+- Drop during run
+- Add to meta progression properly
+
+[LATER] Economy balancing
+- Reward values
+- Unlock costs
+- Run pacing
+
+
+PHASE 5 - CONTENT / BALANCE
+[LATER] Hero roster balancing
+- Stats
+- Roles
+- Class readability
+
+[LATER] Enemy / boss balancing
+- Spawn cadence
+- Biome identity
+- Boss escalation
+
+[LATER] Reward balancing
+- Progression speed
+- Replay motivation
+
+
+MICRO-INTERACTIONS / ANIMATIONS
+Recommended timing:
+[V2] Start after the first full playable loop is stable.
+
+That means:
+- after Collection / Team Select / Board / Fight / Result are connected cleanly
+- after scene transitions and data persistence are reliable
+- before final promo polish / screenshots / trailer-quality polish
+
+Reason:
+- animations are expensive to tune
+- they are best added once layout and behavior stop moving
+- otherwise they get redone again and again
+
+
+ANIMATION PLAN - V2
+[V2] Buttons and UI response
+- hover / press / release feedback
+- open / close panels
+- selected / deselected card transitions
+
+[V2] Collection micro-interactions
+- hero card selection state
+- sort popup reveal
+- panel front/back switch
+
+[V2] Navigation polish
+- scene entry
+- button call-to-action pulses
+- result screen emphasis
+
+
+HOW WE CAN IMPLEMENT ANIMATIONS
+Recommended production method:
+1. Use small dedicated scripts per component
+2. Drive animation by scale / position / alpha
+3. Prefer a tween tool such as DOTween for speed and clean iteration
+4. Keep animation values exposed in the Inspector so they can be tuned visually
+
+Do not:
+- hard-code huge animation systems too early
+- mix gameplay logic and animation logic in one script
+
+
+ANIMATION EXAMPLES TO KEEP IN MIND
+Marvel Rivals style vibrating duplicate button
+- duplicate the visual 1-2 times behind the button
+- offset them slightly
+- animate tiny position jitter + alpha flicker
+- keep gameplay hitbox only on the main button
+
+Button bounce on click
+- quick scale down
+- quick scale up slightly above normal
+- settle back to 1
+- very short, around 0.12 to 0.18 sec total feel
+
+Collection hero card default <-> selected
+- selected frame fades/scales in
+- card scales from default size to selected size
+- dark overlay fades out when selected
+- keep this very readable and snappy, not floaty
+
+
+IMMEDIATE NEXT STEPS
+1. Stabilize Team Select
+2. Stabilize Board -> Fight -> Result chain
+3. Validate rewards back into meta
+4. Only then start V2 micro-interactions
+
+
+WORKING RULE
+Before starting a new big UI polish pass, always check this file first.
+
+
+WIP SCENE WORKFLOW
+For every new UI scene:
+1. Duplicate the base scene
+2. Rename it with WIP suffix
+3. Build the screen manually with Unity UI
+4. Do not develop the UI in code unless explicitly requested
+
+Always add these Empty GameObjects at scene root when working in a WIP scene:
+- DISABLE_DEBUG_UI
+- DISABLE_LOBBY_UI
+
+Purpose:
+- DISABLE_DEBUG_UI hides the debug overlay
+- DISABLE_LOBBY_UI hides the lobby overlay that can appear on unrecognized WIP scenes
+
+Default workflow with Clement:
+- duplicate scene with WIP suffix
+- add Disable markers
+- create hierarchy manually
+- build UI manually in Unity
+- validate visually
+- only then connect logic if needed
+
+
+==================================================
+OPERATIONAL DASHBOARD
+==================================================
+
+DONE
+- Scene flow framework is in place
+- Champion/meta data layer is in place
+- CollectionScene V1 is done in manual Unity UI
+- Collection hero selection, showcase, info panel, sorting, and back button are working
+
+
+CURRENT
+- Stabilize the playable run loop outside Collection
+- Priority scene now: TeamSelect
+- Goal: clean handoff from TeamSelect into the rest of the run
+
+
+NEXT 3 TASKS
+1. TeamSelect V1 finalization
+- Validate hero selection flow with real data
+- Validate locked/unlocked readability
+- Validate start run entry
+
+2. Board -> Fight -> Result flow validation
+- Confirm one full path works without broken state
+- Confirm node progression
+- Confirm win/loss routing
+
+3. Meta reward validation
+- Confirm rewards come back after run
+- Confirm unlock/spend loop is stable
+- Confirm data persists after scene changes and reload
+
+
+AFTER THAT
+4. Fight HUD pass
+5. Result screen pass
+6. Home/Lobby final pass
+7. V2 micro-interactions and animations
+
+
+DO NOT FOCUS NOW
+- heavy lobby polish
+- fancy transitions between all panels
+- rich micro-animations
+- trailer-level visual polish
+
+
+SHIP RULE FOR V1
+If a feature helps complete the playable loop, it is V1.
+If a feature mainly improves feel, spectacle, or delight, it is V2.
