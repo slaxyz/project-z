@@ -176,7 +176,9 @@ namespace ProjectZ.UI
 
             if (rarityImage != null)
             {
-                var raritySprite = ResolveRaritySprite(_champion);
+                var raritySprite = _isOwned
+                    ? ResolveRaritySprite(_champion)
+                    : ResolveDisabledRaritySprite();
                 rarityImage.sprite = raritySprite;
                 rarityImage.color = raritySprite != null
                     ? Color.white
@@ -257,6 +259,17 @@ namespace ProjectZ.UI
             }
 
             return Resources.Load<Sprite>("Art/UI/Rarity/" + key.ToUpperInvariant());
+        }
+
+        private static Sprite ResolveDisabledRaritySprite()
+        {
+            var sprite = Resources.Load<Sprite>("Art/UI/Rarity/Disable");
+            if (sprite != null)
+            {
+                return sprite;
+            }
+
+            return Resources.Load<Sprite>("Art/UI/Rarity/DISABLE");
         }
     }
 }
