@@ -148,6 +148,7 @@ GameObject:
   - component: {fileID: 6916304064679954961}
   - component: {fileID: 2284033751680660969}
   - component: {fileID: 377154951645640858}
+  - component: {fileID: 1741988637788771001}
   m_Layer: 5
   m_Name: Currency_Coin
   m_TagString: Untagged
@@ -213,3 +214,16 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &1741988637788771001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6609642206920209890}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0dfb7769308f4b0b9ab75e62011f6dc3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ProjectZ.UI.CurrencyCoinView
+  coinValueText: {fileID: 3769236048933800190}

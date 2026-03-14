@@ -12,12 +12,14 @@ namespace ProjectZ.Core
 
         [SerializeField] private ChampionCatalogAsset championCatalog;
         [SerializeField] private RunLoopConfigAsset runLoopConfig;
+        [SerializeField] private ZoneDatabaseAsset zoneDatabase;
         [SerializeField] private CombatSpellLibraryAsset spellLibrary;
         [SerializeField] private EnemyCatalogAsset enemyCatalog;
         [SerializeField] private CombatSpawnRulesAsset spawnRules;
 
         public ChampionCatalogAsset ChampionCatalog => championCatalog;
         public RunLoopConfigAsset RunLoopConfig => runLoopConfig;
+        public ZoneDatabaseAsset ZoneDatabase => zoneDatabase;
         public CombatSpellLibraryAsset SpellLibrary => spellLibrary;
         public EnemyCatalogAsset EnemyCatalog => enemyCatalog;
         public CombatSpawnRulesAsset SpawnRules => spawnRules;

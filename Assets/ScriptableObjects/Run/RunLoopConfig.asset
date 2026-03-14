@@ -13,6 +13,11 @@ MonoBehaviour:
   m_Name: RunLoopConfig
   m_EditorClassIdentifier: Assembly-CSharp::ProjectZ.Run.RunLoopConfigAsset
   zoneTileCounts:
-  - 4
-  - 4
+  - 8
+  - 8
+  - 8
+  zoneIdsInRun:
+  - 1
+  - 2
+  - 3
   victoryCoinReward: 15

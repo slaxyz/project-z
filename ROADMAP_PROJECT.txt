@@ -1,5 +1,5 @@
 PROJECT Z - ROADMAP MASTER
-Last update: 2026-03-14
+Last update: 2026-03-15
 
 STATUS LEGEND
 [DONE] finished and usable
@@ -48,11 +48,16 @@ PHASE 1 - FOUNDATIONS
 - Right info panel binding
 - Sort popup V1
 
-[IN PROGRESS] Team Select scene
-- Base scene/controller exists
-- Needs final UI/polish pass and validation with real flow
+[DONE] Team Select scene
+- Manual Unity UI integrated
+- Hero selection / deselection working
+- Team slot choice working
+- Team card binding working
+- CTA states working
+- Drag and drop reorder working
+- Scene flow entry working
 
-[NEXT] Team Select priority comments
+[LATER] Team Select priority comments
 - "Les fonds des heros non possede ne sont pas en noir et blanc + le cta start run est casse"
 
 [IN PROGRESS] Combat prototype
@@ -97,10 +102,15 @@ PHASE 2 - FIRST PLAYABLE VERTICAL SLICE
 PHASE 3 - CORE UI ORDER
 [DONE] CollectionScene V1
 
-[NEXT] TeamSelect UI final pass
+[DONE] TeamSelect UI final pass
 - Strong readable selection flow
 - Clear 3-slot team confirmation
 - Locked/unlocked readability
+
+[DONE] ZoneAnimation scene pass
+- Validate transition after Team Select
+- Validate visual entry into the run
+- Validate handoff into BoardScene
 
 [NEXT] BoardScene UI pass
 - Node readability
@@ -221,10 +231,10 @@ Collection hero card default <-> selected
 
 
 IMMEDIATE NEXT STEPS
-1. Stabilize Team Select
-2. Stabilize Board -> Fight -> Result chain
-3. Validate rewards back into meta
-4. Only then start V2 micro-interactions
+1. Stabilize Board -> Fight -> Result chain
+2. Validate rewards back into meta
+3. Only then start V2 micro-interactions
+4. [LATER] Add a loading bar with a small animated running character
 
 
 WORKING RULE
@@ -268,25 +278,24 @@ DONE
 
 CURRENT
 - Stabilize the playable run loop outside Collection
-- Priority scene now: TeamSelect
-- Goal: clean handoff from TeamSelect into the rest of the run
+- ZoneAnimation finalized
+- Priority scene now: Board -> Fight -> Result
+- Goal: validate one full path cleanly after ZoneAnimation
 
 
 NEXT 3 TASKS
-1. TeamSelect V1 finalization
-- Validate hero selection flow with real data
-- Validate locked/unlocked readability
-- Validate start run entry
-
-2. Board -> Fight -> Result flow validation
+1. Board -> Fight -> Result flow validation
 - Confirm one full path works without broken state
 - Confirm node progression
 - Confirm win/loss routing
 
-3. Meta reward validation
+2. Meta reward validation
 - Confirm rewards come back after run
 - Confirm unlock/spend loop is stable
 - Confirm data persists after scene changes and reload
+
+3. [LATER] Loading bar polish
+- Add a loading bar with a small animated running character
 
 
 AFTER THAT

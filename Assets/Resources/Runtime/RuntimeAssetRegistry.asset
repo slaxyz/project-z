@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ProjectZ.Core.RuntimeAssetRegistryAsset
   championCatalog: {fileID: 11400000, guid: 6b91609336624c67a0d5857364a087e2, type: 2}
   runLoopConfig: {fileID: 11400000, guid: 9f3b6e4d57d64f7ea74ee14ca2433376, type: 2}
+  zoneDatabase: {fileID: 11400000, guid: 8f4f95d2fa124584aab4f4c9bf19da2b, type: 2}
   spellLibrary: {fileID: 11400000, guid: 95493fd420e4bdf4cb6e454c0f4b7190, type: 2}
   enemyCatalog: {fileID: 11400000, guid: 28014965085f9d34cb06cbad58ce8d51, type: 2}
   spawnRules: {fileID: 11400000, guid: e205d2eac30c1b740ad84b6021bc8ec7, type: 2}

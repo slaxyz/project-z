@@ -15,9 +15,6 @@ EditorBuildSettings:
     path: Assets/Scenes/CollectionScene.unity
     guid: 1422538230524144c9e190e6fbbcb2b3
   - enabled: 1
-    path: Assets/Scenes/TeamSelectScene.unity
-    guid: 241bd7258c351494abbd6ac74e0b7f51
-  - enabled: 1
     path: Assets/Scenes/LoadingScene.unity
     guid: 54a1667d2832741c087cc3bc4cb80286
   - enabled: 1
@@ -35,6 +32,9 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/ResultScene.unity
     guid: d3ca1954942a94e11942a81f51f8b890
+  - enabled: 1
+    path: Assets/Scenes/TeamSelectScene.unity
+    guid: cab916a8223a6a24abaaae10fbddd374
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
   m_UseUCBPForAssetBundles: 0

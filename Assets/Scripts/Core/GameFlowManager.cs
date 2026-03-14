@@ -281,6 +281,7 @@ namespace ProjectZ.Core
             MetaProgression.EnsureCollections();
             MetaProgression.progressionPoints = 0;
             MetaProgression.unlockedChampionIds.Clear();
+            MetaProgression.EnsureDefaultUnlockedChampions(ChampionCatalog.GetDefaultUnlockedChampionIds(3));
 
             SaveMeta();
         }
