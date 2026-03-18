@@ -970,21 +970,105 @@ namespace ProjectZ.Core
                 .ToList();
         }
 
-        private void EnsureChampionSpellLoadoutsInitialized()
+        public void EnsureChampionSpellLoadoutsInitialized()
         {
-            var defaults = GetSpellIndex().Keys.OrderBy(id => id).Take(MaxRunSpells).ToList();
-            foreach (var championId in CurrentRun.selectedChampionIds)
+            var selectedChampionIds = CurrentRun.selectedChampionIds
+                .Where(id => !string.IsNullOrWhiteSpace(id))
+                .Distinct()
+                .Take(3)
+                .ToList();
+
+            var legacyDefaults = BuildLegacyDefaultSpellLoadout();
+            var shouldUpgradeLegacyLoadouts = selectedChampionIds.Count > 0
+                && selectedChampionIds.All(championId => SpellListsMatch(GetExistingChampionSpellIds(championId), legacyDefaults));
+
+            if (shouldUpgradeLegacyLoadouts)
+            {
+                CurrentRun.championSpellLoadouts.Clear();
+            }
+
+            foreach (var championId in selectedChampionIds)
             {
                 var loadout = CurrentRun.GetChampionSpells(championId);
-                if (loadout.Count > 0)
+                if (loadout.Count > 0 && !shouldUpgradeLegacyLoadouts)
                 {
                     continue;
                 }
 
-                loadout.AddRange(defaults);
+                loadout.Clear();
+                loadout.AddRange(BuildDefaultSpellLoadoutForChampion(championId));
             }
 
             RebuildGlobalDeckFromChampionLoadouts();
+        }
+
+        private List<string> BuildLegacyDefaultSpellLoadout()
+        {
+            return GetSpellIndex().Keys
+                .OrderBy(id => id)
+                .Take(MaxRunSpells)
+                .ToList();
+        }
+
+        private List<string> BuildDefaultSpellLoadoutForChampion(string championId)
+        {
+            switch ((championId ?? string.Empty).Trim().ToLowerInvariant())
+            {
+                case "slugger":
+                    return new List<string> { "gritty_embrace", "solar_intake", "sandstorm_burst", "quicksand_sink" };
+                case "ace":
+                    return new List<string> { "refracted_ray", "heat_veil", "blinding_glare", "static_discharge" };
+                case "blaze":
+                    return new List<string> { "searing_blood_jet", "sand_bolt", "spike_eruption", "overload" };
+                case "wrench":
+                    return new List<string> { "solar_intake", "heat_veil", "gritty_embrace", "refracted_ray" };
+                case "crusher":
+                    return new List<string> { "gritty_embrace", "quicksand_sink", "sandstorm_burst", "spike_eruption" };
+                case "sonar":
+                    return new List<string> { "static_discharge", "overload", "blinding_glare", "refracted_ray" };
+                case "phantom":
+                    return new List<string> { "overload", "static_discharge", "quicksand_sink", "blinding_glare" };
+                case "psyche":
+                    return new List<string> { "refracted_ray", "heat_veil", "blinding_glare", "solar_intake" };
+                case "whiplash":
+                    return new List<string> { "sand_bolt", "spike_eruption", "overload", "searing_blood_jet" };
+                case "vortex":
+                    return new List<string> { "solar_intake", "heat_veil", "refracted_ray", "static_discharge" };
+                default:
+                    return BuildLegacyDefaultSpellLoadout();
+            }
+        }
+
+        private List<string> GetExistingChampionSpellIds(string championId)
+        {
+            var loadout = CurrentRun.championSpellLoadouts
+                .FirstOrDefault(entry => entry != null && entry.championId == championId);
+            if (loadout == null || loadout.spellIds == null)
+            {
+                return new List<string>();
+            }
+
+            return loadout.spellIds
+                .Where(id => !string.IsNullOrWhiteSpace(id))
+                .ToList();
+        }
+
+        private static bool SpellListsMatch(IReadOnlyList<string> left, IReadOnlyList<string> right)
+        {
+            if (left == null || right == null || left.Count != right.Count)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < left.Count; i++)
+            {
+                if (!string.Equals(left[i], right[i], System.StringComparison.Ordinal))
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         private void RebuildGlobalDeckFromChampionLoadouts()

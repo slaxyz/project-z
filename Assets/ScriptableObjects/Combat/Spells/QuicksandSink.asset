@@ -15,10 +15,18 @@ MonoBehaviour:
   spellId: quicksand_sink
   displayName: Quicksand Sink
   effectType: 0
-  value: 15
+  value: 3
+  effectLines:
+  - kind: 0
+    amount: 3
+    element: 2
+  - kind: 5
+    amount: 1
+    element: 5
   costs:
   - element: 2
-    amount: 3
+    amount: 2
+  - element: 0
+    amount: 1
   isEnemyUsable: 1
   tags: []
-

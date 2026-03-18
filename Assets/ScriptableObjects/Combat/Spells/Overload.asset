@@ -15,10 +15,13 @@ MonoBehaviour:
   spellId: overload
   displayName: Overload
   effectType: 0
-  value: 6
+  value: 1
+  effectLines:
+  - kind: 7
+    amount: 1
+    element: 3
   costs:
-  - element: 0
-    amount: 2
+  - element: 5
+    amount: 1
   isEnemyUsable: 1
   tags: []
-

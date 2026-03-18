@@ -38,7 +38,7 @@ MonoBehaviour:
       for his powerful batting. During a crucial game under a starlit sky, stardust
       infused him with superhuman strength and agility. Now wielding a stardust-charged
       bat, Slugger defends humanity from Underworld threats with resilience and heroism.
-    baseHp: 100
+    baseHp: 9
     baseAttack: 200
     baseDefense: 200
     baseSpecial: 100
@@ -71,7 +71,7 @@ MonoBehaviour:
       Embracing her new powers, Ace wields a stardust-charged baseball bat against
       Underworld threats, driven by her passion for sportsmanship and determination
       to protect humanity.
-    baseHp: 100
+    baseHp: 9
     baseAttack: 200
     baseDefense: 200
     baseSpecial: 100
@@ -98,7 +98,7 @@ MonoBehaviour:
     shortLore: Jessica Martinez, known as Blaze, was a fearless firefighter whose
       bravery was renowned. Stardust granted her control over fire, which she now
       wields against Underworld threats with unwavering determination.
-    baseHp: 50
+    baseHp: 7
     baseAttack: 150
     baseDefense: 100
     baseSpecial: 100
@@ -127,7 +127,7 @@ MonoBehaviour:
       with a passion for robotics. Stardust granted her technomancy, allowing her
       to control and enhance machines to support allies and dismantle Underworld
       threats effectively.
-    baseHp: 175
+    baseHp: 10
     baseAttack: 150
     baseDefense: 400
     baseSpecial: 125
@@ -154,7 +154,7 @@ MonoBehaviour:
     shortLore: Emily Roberts, known as Crusher, was a heavyweight boxer celebrated
       for his raw strength. Infused with stardust, he gained earth manipulation abilities,
       using them to crush through Underworld foes with relentless force.
-    baseHp: 175
+    baseHp: 10
     baseAttack: 150
     baseDefense: 400
     baseSpecial: 125
@@ -181,7 +181,7 @@ MonoBehaviour:
     shortLore: Elijah Brown, aka Sonar, was a talented musician whose rhythmic skills
       were unparalleled. Stardust infused him with sonic manipulation abilities,
       which he now employs to orchestrate precise attacks against Underworld enemies.
-    baseHp: 50
+    baseHp: 3
     baseAttack: 25
     baseDefense: 100
     baseSpecial: 100
@@ -208,7 +208,7 @@ MonoBehaviour:
     shortLore: Lucas Ivanov, known as Phantom, was a skilled covert operative with
       a knack for stealth. Stardust granted him the power of intangibility, enabling
       him to infiltrate and disrupt Underworld operations unnoticed.
-    baseHp: 75
+    baseHp: 4
     baseAttack: 75
     baseDefense: 125
     baseSpecial: 200
@@ -237,7 +237,7 @@ MonoBehaviour:
       psychic phenomena. After encountering stardust, he gained powerful psychic
       abilities, using them to probe enemy minds, protect allies, and counter Underworld
       psychic threats effectively.
-    baseHp: 75
+    baseHp: 6
     baseAttack: 100
     baseDefense: 100
     baseSpecial: 500
@@ -266,7 +266,7 @@ MonoBehaviour:
       for his daring maneuvers. After encountering stardust, he gained the power
       to manipulate kinetic energy, using it to combat Underworld adversaries with
       unmatched agility.
-    baseHp: 200
+    baseHp: 9
     baseAttack: 150
     baseDefense: 500
     baseSpecial: 100
@@ -293,7 +293,7 @@ MonoBehaviour:
     shortLore: Dr. Natalia Volkova, a physicist fascinated by alternate dimensions,
       gained the ability to manipulate gravity from stardust. As Vortex, she defends
       Earth by controlling gravitational forces against the Underworld's incursions.
-    baseHp: 100
+    baseHp: 3
     baseAttack: 100
     baseDefense: 100
     baseSpecial: 100

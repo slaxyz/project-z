@@ -242,7 +242,10 @@ namespace ProjectZ.Run
                     ChampionClassType.Vanguard,
                     25,
                     "Fallback champion entry.",
-                    100,
+                    c.DisplayName == "Warden" ? 10 :
+                    c.DisplayName == "Arcanist" ? 8 :
+                    c.DisplayName == "Ranger" ? 7 :
+                    c.DisplayName == "Shade" ? 5 : 3,
                     10))
                 .ToList();
         }

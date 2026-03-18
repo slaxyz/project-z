@@ -20,6 +20,8 @@ namespace ProjectZ.EditorTools
         private const string ChampionCatalogPath = "Assets/ScriptableObjects/Run/ChampionCatalog.asset";
         private const string TaxonomyRoot = "Assets/ScriptableObjects/Characters/Taxonomy";
         private const string HeroArtRoot = "Assets/Resources/Art/Characters";
+        private const int MaxBaseHp = 10;
+        private const int MinBaseHp = 3;
 
         private static readonly Dictionary<int, string> RarityNames = new Dictionary<int, string>
         {
@@ -174,7 +176,7 @@ namespace ProjectZ.EditorTools
                         MapChampionClass(effectiveClassName),
                         UnlockCostFromRarity(rarityNum),
                         row.Get("description"),
-                        row.GetInt("HP"),
+                        ResolveBaseHp(effectiveClassName),
                         row.GetInt("atk"),
                         row.GetInt("defense"),
                         row.GetInt("spe"),
@@ -406,15 +408,15 @@ namespace ProjectZ.EditorTools
                 case 1:
                     return ElementType.Fire;
                 case 2:
-                    return ElementType.Earth;
+                    return ElementType.Nature;
                 case 3:
-                    return ElementType.Air;
+                    return ElementType.Water;
                 case 4:
-                    return ElementType.Water;
+                    return ElementType.Poison;
                 case 5:
-                    return ElementType.Earth;
+                    return ElementType.Ground;
                 case 6:
-                    return ElementType.Water;
+                    return ElementType.Mystic;
                 default:
                     return ElementType.Fire;
             }
@@ -438,6 +440,23 @@ namespace ProjectZ.EditorTools
                 default:
                     return ChampionClassType.Vanguard;
             }
+        }
+
+        private static int ResolveBaseHp(string className)
+        {
+            var normalized = (className ?? string.Empty).Trim().ToLowerInvariant();
+            var rank = normalized switch
+            {
+                "tank" => 0,
+                "warrior" => 1,
+                "gunner" => 2,
+                "specialist" => 3,
+                "rogue" => 4,
+                "healer" => 5,
+                _ => 3
+            };
+
+            return Mathf.RoundToInt(Mathf.Lerp(MaxBaseHp, MinBaseHp, rank / 5f));
         }
 
         private static void EnsureFolder(string assetPath)

@@ -15,7 +15,14 @@ MonoBehaviour:
   spellId: sandstorm_burst
   displayName: Sandstorm Burst
   effectType: 0
-  value: 18
+  value: 2
+  effectLines:
+  - kind: 0
+    amount: 2
+    element: 2
+  - kind: 3
+    amount: 1
+    element: 0
   costs:
   - element: 2
     amount: 2
@@ -23,4 +30,3 @@ MonoBehaviour:
     amount: 1
   isEnemyUsable: 1
   tags: []
-

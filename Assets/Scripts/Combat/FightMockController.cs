@@ -12,10 +12,12 @@ namespace ProjectZ.Combat
 {
     public class FightMockController : MonoBehaviour
     {
-        private const int GemsPerTurn = 5;
+        private const string DisableDebugUiMarkerName = "DISABLE_DEBUG_UI";
+        private const int GemsPerTurn = 4;
         private const int MaxRerollsPerTurn = 2;
         private const int CombatLogMaxEntries = 8;
         private const int DefaultCombatsPerZone = 8;
+        private static readonly ElementType[] AllElements = (ElementType[])System.Enum.GetValues(typeof(ElementType));
 
         private readonly System.Random _rng = new System.Random();
         private readonly List<GemSlot> _gems = new List<GemSlot>();
@@ -40,6 +42,78 @@ namespace ProjectZ.Combat
         private EnemyTier? _debugTierOverride;
         private string _debugEnemyIdOverride;
 
+        public bool IsFightResolved => _fightResolved;
+        public int RerollsRemaining => _rerollsRemaining;
+        public int MaxRerolls => MaxRerollsPerTurn;
+        public bool CanRefreshRunes => !_fightResolved && _rerollsRemaining > 0;
+        public int RuneCount => _gems.Count;
+        public string ActiveChampionId
+        {
+            get
+            {
+                if (_champions.Count == 0 || _activeChampionIndex < 0 || _activeChampionIndex >= _champions.Count)
+                {
+                    return string.Empty;
+                }
+
+                var champion = _champions[_activeChampionIndex];
+                return champion != null ? champion.Id : string.Empty;
+            }
+        }
+        
+        public bool TryGetTeamHealthTotals(out int currentHp, out int maxHp)
+        {
+            currentHp = 0;
+            maxHp = 0;
+
+            if (_champions.Count == 0)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < _champions.Count; i++)
+            {
+                var champion = _champions[i];
+                if (champion == null)
+                {
+                    continue;
+                }
+
+                currentHp += champion.CurrentHp;
+                maxHp += champion.MaxHp;
+            }
+
+            return maxHp > 0;
+        }
+
+        public bool TryGetTeamHealthState(out int currentHp, out int maxHp, out int shieldHp)
+        {
+            currentHp = 0;
+            maxHp = 0;
+            shieldHp = 0;
+
+            if (_champions.Count == 0)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < _champions.Count; i++)
+            {
+                var champion = _champions[i];
+                if (champion == null)
+                {
+                    continue;
+                }
+
+                currentHp += champion.CurrentHp;
+                maxHp += champion.MaxHp;
+                shieldHp += champion.Block;
+            }
+
+            shieldHp = Mathf.Clamp(shieldHp, 0, maxHp);
+            return maxHp > 0;
+        }
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void EnsureInstanceOnFightScene()
         {
@@ -60,6 +134,12 @@ namespace ProjectZ.Combat
 
         private void Start()
         {
+            var manager = GameFlowManager.Instance;
+            if (manager != null)
+            {
+                manager.EnsureChampionSpellLoadoutsInitialized();
+            }
+
             BuildChampionStates();
             BuildEnemyDefinitions();
             _enemy = new EnemyCombatState(SelectEnemyDefinition());
@@ -214,8 +294,8 @@ namespace ProjectZ.Combat
                     EnemyTier.Minion,
                     new List<EnemyIntentDefinition>
                     {
-                        new EnemyIntentDefinition("Refracted Ray", Cost(ElementType.Fire, 1, ElementType.Earth, 1), new CardEffect(CardEffectType.Damage, 9)),
-                        new EnemyIntentDefinition("Heat Veil", Cost(ElementType.Earth, 2), new CardEffect(CardEffectType.Shield, 8)),
+                        new EnemyIntentDefinition("Refracted Ray", Cost(ElementType.Fire, 1, ElementType.Mystic, 1), new CardEffect(CardEffectType.Damage, 9)),
+                        new EnemyIntentDefinition("Heat Veil", Cost(ElementType.Mystic, 2), new CardEffect(CardEffectType.Shield, 8)),
                         new EnemyIntentDefinition("Blinding Glare", Cost(ElementType.Fire, 1), new CardEffect(CardEffectType.Damage, 5))
                     }),
                 new EnemyDefinition(
@@ -226,9 +306,9 @@ namespace ProjectZ.Combat
                     EnemyTier.Champion,
                     new List<EnemyIntentDefinition>
                     {
-                        new EnemyIntentDefinition("Gritty Embrace", Cost(ElementType.Earth, 2), new CardEffect(CardEffectType.Damage, 12)),
-                        new EnemyIntentDefinition("Quicksand Sink", Cost(ElementType.Earth, 3), new CardEffect(CardEffectType.Damage, 15)),
-                        new EnemyIntentDefinition("Sandstorm Burst", Cost(ElementType.Earth, 2, ElementType.Fire, 1), new CardEffect(CardEffectType.Damage, 18))
+                        new EnemyIntentDefinition("Gritty Embrace", Cost(ElementType.Ground, 2), new CardEffect(CardEffectType.Damage, 12)),
+                        new EnemyIntentDefinition("Quicksand Sink", Cost(ElementType.Ground, 3), new CardEffect(CardEffectType.Damage, 15)),
+                        new EnemyIntentDefinition("Sandstorm Burst", Cost(ElementType.Ground, 2, ElementType.Fire, 1), new CardEffect(CardEffectType.Damage, 18))
                     }),
                 new EnemyDefinition(
                     "solar_moloch",
@@ -239,8 +319,8 @@ namespace ProjectZ.Combat
                     new List<EnemyIntentDefinition>
                     {
                         new EnemyIntentDefinition("Searing Blood Jet", Cost(ElementType.Fire, 3), new CardEffect(CardEffectType.Damage, 14)),
-                        new EnemyIntentDefinition("Solar Intake", Cost(ElementType.Fire, 2, ElementType.Earth, 1), new CardEffect(CardEffectType.Shield, 12)),
-                        new EnemyIntentDefinition("Spike Eruption", Cost(ElementType.Fire, 2, ElementType.Earth, 2), new CardEffect(CardEffectType.Damage, 22))
+                        new EnemyIntentDefinition("Solar Intake", Cost(ElementType.Fire, 2, ElementType.Ground, 1), new CardEffect(CardEffectType.Shield, 12)),
+                        new EnemyIntentDefinition("Spike Eruption", Cost(ElementType.Fire, 2, ElementType.Ground, 2), new CardEffect(CardEffectType.Damage, 22))
                     }),
                 new EnemyDefinition(
                     "static_skink",
@@ -250,9 +330,9 @@ namespace ProjectZ.Combat
                     EnemyTier.Elite,
                     new List<EnemyIntentDefinition>
                     {
-                        new EnemyIntentDefinition("Static Discharge", Cost(ElementType.Fire, 1), new CardEffect(CardEffectType.Damage, 7)),
-                        new EnemyIntentDefinition("Overload", Cost(ElementType.Fire, 2), new CardEffect(CardEffectType.Damage, 6)),
-                        new EnemyIntentDefinition("Sand Bolt", Cost(ElementType.Fire, 3, ElementType.Earth, 1), new CardEffect(CardEffectType.Damage, 25))
+                        new EnemyIntentDefinition("Toxic Discharge", Cost(ElementType.Poison, 1), new CardEffect(CardEffectType.Damage, 7)),
+                        new EnemyIntentDefinition("Overload", Cost(ElementType.Poison, 2), new CardEffect(CardEffectType.Damage, 6)),
+                        new EnemyIntentDefinition("Sand Bolt", Cost(ElementType.Fire, 3, ElementType.Ground, 1), new CardEffect(CardEffectType.Damage, 25))
                     })
             };
         }
@@ -274,10 +354,12 @@ namespace ProjectZ.Combat
             {
                 var championId = sourceIds[i];
                 var hand = BuildRunHand(championId, i, manager, spellIndex);
+                var championAsset = ChampionCatalog.FindById(championId);
+                var baseHp = championAsset != null ? Mathf.Max(1, championAsset.BaseHp) : 40;
                 _champions.Add(new ChampionCombatState(
                     championId,
                     DisplayNameFor(championId),
-                    40,
+                    baseHp,
                     hand));
             }
 
@@ -332,10 +414,10 @@ namespace ProjectZ.Combat
             {
                 return new List<CardDefinition>
                 {
-                    new CardDefinition("Bulwark Strike", Cost(ElementType.Earth, 2), new CardEffect(CardEffectType.Damage, 10)),
-                    new CardDefinition("Iron Guard", Cost(ElementType.Earth, 1, ElementType.Fire, 1), new CardEffect(CardEffectType.Shield, 9)),
+                    new CardDefinition("Bulwark Strike", Cost(ElementType.Ground, 2), new CardEffect(CardEffectType.Damage, 10)),
+                    new CardDefinition("Iron Guard", Cost(ElementType.Ground, 1, ElementType.Fire, 1), new CardEffect(CardEffectType.Shield, 9)),
                     new CardDefinition("Shield Pulse", Cost(ElementType.Water, 1), new CardEffect(CardEffectType.Shield, 6)),
-                    new CardDefinition("Stand Fast", Cost(ElementType.Earth, 1), new CardEffect(CardEffectType.Heal, 6))
+                    new CardDefinition("Stand Fast", Cost(ElementType.Nature, 1), new CardEffect(CardEffectType.Heal, 6))
                 };
             }
 
@@ -343,19 +425,19 @@ namespace ProjectZ.Combat
             {
                 return new List<CardDefinition>
                 {
-                    new CardDefinition("Arc Bolt", Cost(ElementType.Air, 2), new CardEffect(CardEffectType.Damage, 12)),
+                    new CardDefinition("Arc Bolt", Cost(ElementType.Mystic, 2), new CardEffect(CardEffectType.Damage, 12)),
                     new CardDefinition("Frost Sigil", Cost(ElementType.Water, 2), new CardEffect(CardEffectType.Shield, 7)),
-                    new CardDefinition("Flame Vortex", Cost(ElementType.Fire, 1, ElementType.Air, 1), new CardEffect(CardEffectType.Damage, 14)),
-                    new CardDefinition("Mana Weave", Cost(ElementType.Water, 1, ElementType.Earth, 1), new CardEffect(CardEffectType.Heal, 8))
+                    new CardDefinition("Flame Vortex", Cost(ElementType.Fire, 1, ElementType.Mystic, 1), new CardEffect(CardEffectType.Damage, 14)),
+                    new CardDefinition("Mana Weave", Cost(ElementType.Water, 1, ElementType.Nature, 1), new CardEffect(CardEffectType.Heal, 8))
                 };
             }
 
             return new List<CardDefinition>
             {
-                new CardDefinition("Piercing Shot", Cost(ElementType.Air, 1, ElementType.Fire, 1), new CardEffect(CardEffectType.Damage, 11)),
+                new CardDefinition("Piercing Shot", Cost(ElementType.Poison, 1, ElementType.Fire, 1), new CardEffect(CardEffectType.Damage, 11)),
                 new CardDefinition("Tidal Arrow", Cost(ElementType.Water, 2), new CardEffect(CardEffectType.Damage, 10)),
-                new CardDefinition("Hunter Mark", Cost(ElementType.Earth, 1), new CardEffect(CardEffectType.Shield, 5)),
-                new CardDefinition("Swift Volley", Cost(ElementType.Air, 2), new CardEffect(CardEffectType.Heal, 5))
+                new CardDefinition("Hunter Mark", Cost(ElementType.Ground, 1), new CardEffect(CardEffectType.Shield, 5)),
+                new CardDefinition("Swift Volley", Cost(ElementType.Poison, 1, ElementType.Mystic, 1), new CardEffect(CardEffectType.Heal, 5))
             };
         }
 
@@ -382,6 +464,7 @@ namespace ProjectZ.Combat
             {
                 champion.ResetBlock();
             }
+            EnsureGemSlots();
             RollAllGems();
             RollEnemyGems();
             _lastAction = "New turn started";
@@ -389,10 +472,11 @@ namespace ProjectZ.Combat
 
         private void RollAllGems()
         {
-            _gems.Clear();
-            for (var i = 0; i < GemsPerTurn; i++)
+            EnsureGemSlots();
+
+            foreach (var gem in _gems)
             {
-                _gems.Add(new GemSlot((ElementType)_rng.Next(0, 4)));
+                gem.ResetForTurn(GetRandomElement());
             }
         }
 
@@ -411,13 +495,7 @@ namespace ProjectZ.Combat
 
         private Dictionary<ElementType, int> CountAvailableGems()
         {
-            var result = new Dictionary<ElementType, int>
-            {
-                { ElementType.Fire, 0 },
-                { ElementType.Water, 0 },
-                { ElementType.Earth, 0 },
-                { ElementType.Air, 0 }
-            };
+            var result = CreateElementCountMap();
 
             foreach (var gem in _gems)
             {
@@ -432,13 +510,7 @@ namespace ProjectZ.Combat
 
         private Dictionary<ElementType, int> CountUnavailableGems()
         {
-            var result = new Dictionary<ElementType, int>
-            {
-                { ElementType.Fire, 0 },
-                { ElementType.Water, 0 },
-                { ElementType.Earth, 0 },
-                { ElementType.Air, 0 }
-            };
+            var result = CreateElementCountMap();
 
             foreach (var gem in _gems)
             {
@@ -456,19 +528,13 @@ namespace ProjectZ.Combat
             _enemyGems.Clear();
             for (var i = 0; i < GemsPerTurn; i++)
             {
-                _enemyGems.Add(new GemSlot((ElementType)_rng.Next(0, 4)));
+                _enemyGems.Add(new GemSlot(GetRandomElement()));
             }
         }
 
         private Dictionary<ElementType, int> CountEnemyAvailableGems()
         {
-            var result = new Dictionary<ElementType, int>
-            {
-                { ElementType.Fire, 0 },
-                { ElementType.Water, 0 },
-                { ElementType.Earth, 0 },
-                { ElementType.Air, 0 }
-            };
+            var result = CreateElementCountMap();
 
             foreach (var gem in _enemyGems)
             {
@@ -496,8 +562,84 @@ namespace ProjectZ.Combat
             }
 
             _rerollsRemaining--;
-            RollAllGems();
-            _lastAction = "Rerolled gems";
+            foreach (var gem in _gems)
+            {
+                if (gem.IsLocked)
+                {
+                    continue;
+                }
+
+                gem.Reroll(GetRandomElement());
+            }
+
+            _lastAction = "Rerolled unlocked runes";
+        }
+
+        public bool RequestRefreshRunes()
+        {
+            var before = _rerollsRemaining;
+            RerollGems();
+            return _rerollsRemaining != before;
+        }
+
+        public bool TryToggleRuneLock(int index)
+        {
+            if (_fightResolved || index < 0 || index >= _gems.Count)
+            {
+                return false;
+            }
+
+            var gem = _gems[index];
+            var isLocked = gem.ToggleLock();
+            _lastAction = "Rune " + (index + 1) + " " + (isLocked ? "locked" : "unlocked");
+            return true;
+        }
+
+        public bool TryGetRuneState(int index, out ElementType element, out bool isLocked, out bool isAvailable)
+        {
+            element = default;
+            isLocked = false;
+            isAvailable = false;
+
+            if (index < 0 || index >= _gems.Count)
+            {
+                return false;
+            }
+
+            var gem = _gems[index];
+            element = gem.Element;
+            isLocked = gem.IsLocked;
+            isAvailable = gem.IsAvailable;
+            return true;
+        }
+
+        private void EnsureGemSlots()
+        {
+            if (_gems.Count > GemsPerTurn)
+            {
+                _gems.RemoveRange(GemsPerTurn, _gems.Count - GemsPerTurn);
+            }
+
+            while (_gems.Count < GemsPerTurn)
+            {
+                _gems.Add(new GemSlot(GetRandomElement()));
+            }
+        }
+
+        private ElementType GetRandomElement()
+        {
+            return AllElements[_rng.Next(0, AllElements.Length)];
+        }
+
+        private static Dictionary<ElementType, int> CreateElementCountMap()
+        {
+            var result = new Dictionary<ElementType, int>();
+            foreach (var element in AllElements)
+            {
+                result[element] = 0;
+            }
+
+            return result;
         }
 
         private void EndTurn()
@@ -1168,8 +1310,18 @@ namespace ProjectZ.Combat
             TryResolveFight();
         }
 
+        public void RequestEndTurn()
+        {
+            EndTurn();
+        }
+
         private void OnGUI()
         {
+            if (GameObject.Find(DisableDebugUiMarkerName) != null)
+            {
+                return;
+            }
+
             var manager = GameFlowManager.Instance;
             if (manager == null)
             {
@@ -1313,12 +1465,16 @@ namespace ProjectZ.Combat
             {
                 case ElementType.Fire:
                     return "Fire";
+                case ElementType.Nature:
+                    return "Nature";
                 case ElementType.Water:
                     return "Water";
-                case ElementType.Earth:
-                    return "Earth";
-                case ElementType.Air:
-                    return "Air";
+                case ElementType.Poison:
+                    return "Poison";
+                case ElementType.Ground:
+                    return "Ground";
+                case ElementType.Mystic:
+                    return "Mystic";
                 default:
                     return "Unknown";
             }
@@ -1349,8 +1505,33 @@ namespace ProjectZ.Combat
                 IsAvailable = true;
             }
 
-            public ElementType Element { get; }
+            public ElementType Element { get; private set; }
             public bool IsAvailable { get; set; }
+            public bool IsLocked { get; private set; }
+
+            public void ResetForTurn(ElementType element)
+            {
+                Element = element;
+                IsAvailable = true;
+                IsLocked = false;
+            }
+
+            public void Reroll(ElementType element)
+            {
+                if (IsLocked)
+                {
+                    return;
+                }
+
+                Element = element;
+                IsAvailable = true;
+            }
+
+            public bool ToggleLock()
+            {
+                IsLocked = !IsLocked;
+                return IsLocked;
+            }
         }
     }
 }

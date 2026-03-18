@@ -15,7 +15,14 @@ MonoBehaviour:
   spellId: refracted_ray
   displayName: Refracted Ray
   effectType: 0
-  value: 9
+  value: 2
+  effectLines:
+  - kind: 0
+    amount: 2
+    element: 0
+  - kind: 4
+    amount: 1
+    element: 3
   costs:
   - element: 0
     amount: 1

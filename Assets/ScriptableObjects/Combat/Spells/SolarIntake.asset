@@ -15,12 +15,18 @@ MonoBehaviour:
   spellId: solar_intake
   displayName: Solar Intake
   effectType: 1
-  value: 12
+  value: 2
+  effectLines:
+  - kind: 1
+    amount: 2
+    element: 0
+  - kind: 2
+    amount: 1
+    element: 2
   costs:
   - element: 0
-    amount: 2
-  - element: 2
+    amount: 1
+  - element: 4
     amount: 1
   isEnemyUsable: 1
   tags: []
-

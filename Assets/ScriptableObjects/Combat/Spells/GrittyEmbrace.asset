@@ -15,10 +15,13 @@ MonoBehaviour:
   spellId: gritty_embrace
   displayName: Gritty Embrace
   effectType: 0
-  value: 12
+  value: 2
+  effectLines:
+  - kind: 0
+    amount: 2
+    element: 2
   costs:
   - element: 2
     amount: 2
   isEnemyUsable: 1
   tags: []
-

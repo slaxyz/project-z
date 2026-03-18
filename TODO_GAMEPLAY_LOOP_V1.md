@@ -46,8 +46,15 @@
 - [x] Add branch system after step 2.
 
 ## Vision V2 Validation
-- [ ] Last tile of each zone always spawns a boss.
-- [ ] Event tile grants coins and advances correctly.
-- [ ] Shop tile shows 3 spells and supports buy/skip.
-- [ ] Choosing reward spell with full deck requires selecting a spell to replace.
-- [ ] Boss victory shows celebration screen before next board flow.
+- [x] Last tile of each zone always spawns a boss.
+- [x] Event tile grants coins and advances correctly.
+- [x] Shop tile shows 3 spells and supports buy/skip.
+- [x] Choosing reward spell with full deck requires selecting a spell to replace.
+- [x] Boss victory shows celebration screen before next board flow.
+
+## FightScene V1 Next Steps
+- [ ] Configure the enemy setup for the fight scene.
+- [ ] Make spells consume gems when played.
+- [ ] Make spells deal damage.
+- [ ] Clamp the spell spawn to a maximum of 4 visible spells.
+- [ ] After `End Turn`, refresh spells. If there are more than 4 available, draw 4 at random.

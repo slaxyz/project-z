@@ -11,6 +11,7 @@ namespace ProjectZ.Combat
         [SerializeField] private string displayName = "Spell";
         [SerializeField] private CardEffectType effectType = CardEffectType.Damage;
         [SerializeField] private int value = 0;
+        [SerializeField] private List<SpellEffectLineDefinition> effectLines = new List<SpellEffectLineDefinition>();
         [SerializeField] private List<ElementCostEntry> costs = new List<ElementCostEntry>();
         [SerializeField] private bool isEnemyUsable = true;
         [SerializeField] private List<string> tags = new List<string>();
@@ -18,7 +19,9 @@ namespace ProjectZ.Combat
         public string SpellId => spellId;
         public string DisplayName => displayName;
         public bool IsEnemyUsable => isEnemyUsable;
+        public CardEffectType EffectType => effectType;
         public int Value => value;
+        public IReadOnlyList<SpellEffectLineDefinition> EffectLines => effectLines;
         public int CostEntriesCount => costs != null ? costs.Count : 0;
 
         public bool IsValidForEnemy()

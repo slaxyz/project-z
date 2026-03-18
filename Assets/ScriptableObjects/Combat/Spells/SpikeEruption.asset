@@ -15,12 +15,18 @@ MonoBehaviour:
   spellId: spike_eruption
   displayName: Spike Eruption
   effectType: 0
-  value: 22
+  value: 3
+  effectLines:
+  - kind: 0
+    amount: 3
+    element: 2
+  - kind: 4
+    amount: 1
+    element: 0
   costs:
   - element: 0
-    amount: 2
+    amount: 1
   - element: 2
     amount: 2
   isEnemyUsable: 1
   tags: []
-

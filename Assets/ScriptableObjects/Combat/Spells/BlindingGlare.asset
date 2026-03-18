@@ -15,10 +15,13 @@ MonoBehaviour:
   spellId: blinding_glare
   displayName: Blinding Glare
   effectType: 0
-  value: 5
+  value: 1
+  effectLines:
+  - kind: 6
+    amount: 1
+    element: 4
   costs:
   - element: 0
     amount: 1
   isEnemyUsable: 1
   tags: []
-

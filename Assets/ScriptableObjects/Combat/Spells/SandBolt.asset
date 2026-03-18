@@ -15,12 +15,18 @@ MonoBehaviour:
   spellId: sand_bolt
   displayName: Sand Bolt
   effectType: 0
-  value: 25
+  value: 3
+  effectLines:
+  - kind: 0
+    amount: 3
+    element: 2
+  - kind: 3
+    amount: 1
+    element: 0
   costs:
   - element: 0
-    amount: 3
+    amount: 2
   - element: 2
     amount: 1
   isEnemyUsable: 1
   tags: []
-

@@ -15,10 +15,16 @@ MonoBehaviour:
   spellId: searing_blood_jet
   displayName: Searing Blood Jet
   effectType: 0
-  value: 14
+  value: 3
+  effectLines:
+  - kind: 0
+    amount: 3
+    element: 0
+  - kind: 3
+    amount: 1
+    element: 0
   costs:
   - element: 0
     amount: 3
   isEnemyUsable: 1
   tags: []
-

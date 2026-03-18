@@ -2,9 +2,9 @@
 
 - [x] BG
 - [x] Top Bar
-- [ ] HeroShowcase_Left
-- [ ] InfoPanel_Right
-- [ ] BottomCarousel
+- [x] HeroShowcase_Left
+- [x] InfoPanel_Right
+- [x] BottomCarousel
 
 ## BG
 
@@ -25,18 +25,18 @@
 - [x] Import `hero_showcase_border.png`
 - [x] Import `hero_showcase_mask.png`
 - [x] Install `SoftMaskForUGUI`
-- [ ] Build `HeroShowcase_Left` root
-- [ ] Build `Border`
-- [ ] Build `ArtMask`
-- [ ] Place `SplashArt`
-- [ ] Add `ClassBadge` prefab
-- [ ] Add `TypeBadge` prefab
-- [ ] Build `Stars`
-- [ ] Import and place `hero_showcase_logo.png`
+- [x] Build `HeroShowcase_Left` root
+- [x] Build `Border`
+- [x] Build `ArtMask`
+- [x] Place `SplashArt`
+- [x] Add `ClassBadge` prefab
+- [x] Add `TypeBadge` prefab
+- [x] Build `Stars`
+- [x] Import and place `hero_showcase_logo.png`
 
 ## Naming
 
 - [x] UI-specific card assets go in `Assets/Resources/Art/UI/CollectionScene`
 - [x] Hero-specific splashes stay in `Assets/Resources/Art/Characters/<hero_id>/`
-- [ ] Export `hero_showcase_logo.png`
-- [ ] Keep hero splash naming as `<hero_id>_splash.png`
+- [x] Export `hero_showcase_logo.png`
+- [x] Keep hero splash naming as `<hero_id>_splash.png`
