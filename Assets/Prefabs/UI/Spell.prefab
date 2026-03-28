@@ -558,6 +558,30 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 8101666063763422410, guid: 9b3ff5fed24b30e4e8bca34002915a64, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8101666063763422410, guid: 9b3ff5fed24b30e4e8bca34002915a64, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8101666063763422410, guid: 9b3ff5fed24b30e4e8bca34002915a64, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8101666063763422410, guid: 9b3ff5fed24b30e4e8bca34002915a64, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8101666063763422410, guid: 9b3ff5fed24b30e4e8bca34002915a64, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8101666063763422410, guid: 9b3ff5fed24b30e4e8bca34002915a64, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 8499149194962298068, guid: 9b3ff5fed24b30e4e8bca34002915a64, type: 3}
       propertyPath: m_AnchorMax.x
       value: 0
@@ -632,7 +656,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8920104017689564947, guid: 9b3ff5fed24b30e4e8bca34002915a64, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 55.045
+      value: 47.864998
       objectReference: {fileID: 0}
     - target: {fileID: 8920104017689564947, guid: 9b3ff5fed24b30e4e8bca34002915a64, type: 3}
       propertyPath: m_AnchoredPosition.y
@@ -669,6 +693,10 @@ PrefabInstance:
     - target: {fileID: 3453158666684399326, guid: f1dba236d10d4ac469595dbe8a74949e, type: 3}
       propertyPath: m_Name
       value: Rune_slot (3)
+      objectReference: {fileID: 0}
+    - target: {fileID: 3453158666684399326, guid: f1dba236d10d4ac469595dbe8a74949e, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4031545423469665934, guid: f1dba236d10d4ac469595dbe8a74949e, type: 3}
       propertyPath: m_Pivot.x
@@ -772,6 +800,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Rune_slot (2)
       objectReference: {fileID: 0}
+    - target: {fileID: 3453158666684399326, guid: f1dba236d10d4ac469595dbe8a74949e, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4031545423469665934, guid: f1dba236d10d4ac469595dbe8a74949e, type: 3}
       propertyPath: m_Pivot.x
       value: 0
@@ -873,6 +905,10 @@ PrefabInstance:
     - target: {fileID: 3453158666684399326, guid: f1dba236d10d4ac469595dbe8a74949e, type: 3}
       propertyPath: m_Name
       value: Rune_slot (1)
+      objectReference: {fileID: 0}
+    - target: {fileID: 3453158666684399326, guid: f1dba236d10d4ac469595dbe8a74949e, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4031545423469665934, guid: f1dba236d10d4ac469595dbe8a74949e, type: 3}
       propertyPath: m_Pivot.x
@@ -1056,6 +1092,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 8601898252558413899, guid: f1dba236d10d4ac469595dbe8a74949e, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: ce7a248c298e41740a87de585cb2d078, type: 3}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

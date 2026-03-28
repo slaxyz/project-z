@@ -15,11 +15,13 @@ MonoBehaviour:
   spellId: elder_moon
   displayName: Elder Moon
   effectType: 2
-  value: 14
+  value: 4
   effectLines:
   - kind: 1
-    amount: 14
-    duration: 2
+    amount: 4
+    element: 3
+  - kind: 2
+    amount: 1
     element: 3
   costs:
   - element: 3

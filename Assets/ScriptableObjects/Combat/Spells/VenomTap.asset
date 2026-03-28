@@ -15,11 +15,10 @@ MonoBehaviour:
   spellId: venom_tap
   displayName: Venom Tap
   effectType: 0
-  value: 4
+  value: 1
   effectLines:
   - kind: 0
-    amount: 4
-    duration: 2
+    amount: 1
     element: 5
   costs:
   - element: 5

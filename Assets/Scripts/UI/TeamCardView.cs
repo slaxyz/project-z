@@ -25,7 +25,6 @@ namespace ProjectZ.UI
         [SerializeField] private TMP_Text passiveLabel;
         [SerializeField] private Transform starsRoot;
         [SerializeField] private Vector2 starSize = new Vector2(32f, 32f);
-        [SerializeField] private bool typeBadgeUsesSpiral = true;
 
         [Header("Interaction")]
         [SerializeField] private Button button;
@@ -118,7 +117,7 @@ namespace ProjectZ.UI
 
             if (typeBadgeView != null)
             {
-                typeBadgeView.SetType(champion.TypeDefinition, typeBadgeUsesSpiral);
+                typeBadgeView.SetType(champion.TypeDefinition);
             }
 
             if (heroNameLabel != null)

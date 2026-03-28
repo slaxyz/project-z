@@ -15,10 +15,10 @@ MonoBehaviour:
   spellId: tidal_flick
   displayName: Tidal Flick
   effectType: 0
-  value: 5
+  value: 2
   effectLines:
   - kind: 0
-    amount: 5
+    amount: 2
     duration: 2
     element: 1
   costs:

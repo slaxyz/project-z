@@ -38,7 +38,6 @@ namespace ProjectZ.Combat
         public HeroTypeDefinitionAsset TypeDefinition { get; }
         public int ArtIndex { get; }
         public int ZoneNumber => (int)Biome + 1;
-        public ElementType PrimaryElement => ResolvePrimaryElement();
 
         public Sprite ZoneBackgroundSprite
         {
@@ -66,31 +65,6 @@ namespace ProjectZ.Combat
                 _runtimeSplashCache = Resources.Load<Sprite>("Art/UI/Monster/Zone" + ZoneNumber + "/" + ArtIndex);
                 return _runtimeSplashCache;
             }
-        }
-
-        private ElementType ResolvePrimaryElement()
-        {
-            if (Intents == null || Intents.Count == 0)
-            {
-                return ElementType.Fire;
-            }
-
-            foreach (var intent in Intents)
-            {
-                if (intent == null || intent.Cost == null)
-                {
-                    continue;
-                }
-
-                if (!intent.Cost.TryGetPrimaryElement(out var element))
-                {
-                    continue;
-                }
-
-                return element;
-            }
-
-            return ElementType.Fire;
         }
     }
 }

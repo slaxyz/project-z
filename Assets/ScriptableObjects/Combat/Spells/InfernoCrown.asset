@@ -15,16 +15,17 @@ MonoBehaviour:
   spellId: inferno_crown
   displayName: Inferno Crown
   effectType: 0
-  value: 15
+  value: 5
   effectLines:
   - kind: 0
-    amount: 15
+    amount: 5
     duration: 2
     element: 0
   - kind: 3
     amount: 1
     duration: 3
     element: 0
+    statusIconResource: 4_abnormal Burned
   costs:
   - element: 0
     amount: 4

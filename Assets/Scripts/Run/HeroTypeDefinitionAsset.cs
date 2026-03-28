@@ -1,3 +1,4 @@
+using ProjectZ.Combat;
 using UnityEngine;
 
 namespace ProjectZ.Run
@@ -6,7 +7,14 @@ namespace ProjectZ.Run
     public class HeroTypeDefinitionAsset : HeroKeyedDefinitionAsset
     {
         [System.NonSerialized] private Sprite _runtimeDefaultBadgeCache;
-        [System.NonSerialized] private Sprite _runtimeGemBadgeCache;
+
+        public ElementType Element
+        {
+            get
+            {
+                return ResolveElementFromNumericId(ExtractNumericTypeId(Id));
+            }
+        }
 
         public Sprite DefaultBadgeSprite
         {
@@ -28,23 +36,17 @@ namespace ProjectZ.Run
             }
         }
 
-        public Sprite GemBadgeSprite
+        public Sprite RuntimeIcon
         {
             get
             {
-                if (_runtimeGemBadgeCache != null)
-                {
-                    return _runtimeGemBadgeCache;
-                }
-
                 var numericId = ExtractNumericTypeId(Id);
                 if (numericId <= 0)
                 {
-                    return null;
+                    return Icon;
                 }
 
-                _runtimeGemBadgeCache = Resources.Load<Sprite>("Art/UI/TypeSpirals/" + numericId);
-                return _runtimeGemBadgeCache;
+                return Resources.Load<Sprite>("Art/UI/TypeIcons/" + numericId) ?? Icon;
             }
         }
 
@@ -62,6 +64,27 @@ namespace ProjectZ.Run
             }
 
             return int.TryParse(parts[parts.Length - 1], out var parsed) ? parsed : -1;
+        }
+
+        private static ElementType ResolveElementFromNumericId(int numericId)
+        {
+            switch (numericId)
+            {
+                case 1:
+                    return ElementType.Fire;
+                case 2:
+                    return ElementType.Nature;
+                case 3:
+                    return ElementType.Poison;
+                case 4:
+                    return ElementType.Water;
+                case 5:
+                    return ElementType.Ground;
+                case 6:
+                    return ElementType.Mystic;
+                default:
+                    return ElementType.Fire;
+            }
         }
     }
 }

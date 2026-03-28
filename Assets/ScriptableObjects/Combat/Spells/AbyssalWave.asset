@@ -15,11 +15,10 @@ MonoBehaviour:
   spellId: abyssal_wave
   displayName: Abyssal Wave
   effectType: 0
-  value: 12
+  value: 5
   effectLines:
   - kind: 0
-    amount: 12
-    duration: 2
+    amount: 5
     element: 1
   costs:
   - element: 1

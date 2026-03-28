@@ -22,6 +22,7 @@ namespace ProjectZ.Combat
         public int amount = 1;
         public int duration = 2;
         public ElementType element = ElementType.Fire;
+        public string statusIconResource = "4_abnormal Burned";
 
         public bool UsesElement
         {

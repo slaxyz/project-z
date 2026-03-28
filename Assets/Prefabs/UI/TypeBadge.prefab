@@ -128,7 +128,6 @@ MonoBehaviour:
   backgroundLayer: {fileID: 7037509436422701256}
   iconLayer: {fileID: 1857152398528699540}
   previewType: {fileID: 11400000, guid: 4699670a6a48edd46b74d5295613bed8, type: 2}
-  previewAsGem: 1
   applyOnStart: 1
 --- !u!1 &7561939878228099027
 GameObject:

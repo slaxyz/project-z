@@ -15,11 +15,10 @@ MonoBehaviour:
   spellId: toxic_burst
   displayName: Toxic Burst
   effectType: 0
-  value: 10
+  value: 3
   effectLines:
   - kind: 0
-    amount: 10
-    duration: 2
+    amount: 3
     element: 5
   costs:
   - element: 5

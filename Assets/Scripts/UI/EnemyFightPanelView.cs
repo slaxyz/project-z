@@ -2,7 +2,6 @@ using ProjectZ.Combat;
 using ProjectZ.Core;
 using TMPro;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace ProjectZ.UI
@@ -10,7 +9,6 @@ namespace ProjectZ.UI
     [DisallowMultipleComponent]
     public sealed class EnemyFightPanelView : MonoBehaviour
     {
-        private static bool _sceneHookRegistered;
         [SerializeField] private RectTransform rightEnemyPanelRoot;
         [SerializeField] private RectTransform enemyHudRoot;
         [SerializeField] private Image zoneBackgroundImage;
@@ -21,40 +19,7 @@ namespace ProjectZ.UI
 
         private FightMockController _fight;
         private TeamHudHealthBarView _enemyHealthBarView;
-        private string _lastEnemyId;
-
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-        private static void RegisterSceneHook()
-        {
-            if (_sceneHookRegistered)
-            {
-                return;
-            }
-
-            SceneManager.sceneLoaded += HandleSceneLoaded;
-            _sceneHookRegistered = true;
-        }
-
-        private static void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
-        {
-            if (scene.name != GameScenes.Fight)
-            {
-                return;
-            }
-
-            if (FindFirstObjectByType<EnemyFightPanelView>() != null)
-            {
-                return;
-            }
-
-            var host = GameObject.Find("Fight_UI_Manual");
-            if (host == null)
-            {
-                host = new GameObject("EnemyFightPanelView");
-            }
-
-            host.AddComponent<EnemyFightPanelView>();
-        }
+        private string _lastEnemySignature;
 
         private void Awake()
         {
@@ -155,7 +120,16 @@ namespace ProjectZ.UI
                 return;
             }
 
-            if (_lastEnemyId == enemy.Id)
+            var enemySignature = BuildEnemySignature(enemy);
+            if (typeBadgeView != null)
+            {
+                typeBadgeView.SetType(enemy.TypeDefinition);
+            }
+
+            ApplyText(enemyNameMainText, enemy.DisplayName);
+            ApplyText(enemyNameShadowText, enemy.DisplayName);
+
+            if (_lastEnemySignature == enemySignature)
             {
                 return;
             }
@@ -163,15 +137,7 @@ namespace ProjectZ.UI
             ApplySprite(zoneBackgroundImage, enemy.ZoneBackgroundSprite, preserveAspect: false);
             ApplySprite(splashImage, enemy.SplashSprite, preserveAspect: true);
 
-            if (typeBadgeView != null)
-            {
-                typeBadgeView.SetType(enemy.TypeDefinition, false);
-            }
-
-            ApplyText(enemyNameMainText, enemy.DisplayName);
-            ApplyText(enemyNameShadowText, enemy.DisplayName);
-
-            _lastEnemyId = enemy.Id;
+            _lastEnemySignature = enemySignature;
         }
 
         private void ClearVisuals()
@@ -181,12 +147,23 @@ namespace ProjectZ.UI
 
             if (typeBadgeView != null)
             {
-                typeBadgeView.SetType(null, false);
+                typeBadgeView.SetType(null);
             }
 
             ApplyText(enemyNameMainText, string.Empty);
             ApplyText(enemyNameShadowText, string.Empty);
-            _lastEnemyId = null;
+            _lastEnemySignature = null;
+        }
+
+        private static string BuildEnemySignature(EnemyDefinition enemy)
+        {
+            if (enemy == null)
+            {
+                return null;
+            }
+
+            var typeId = enemy.TypeDefinition != null ? enemy.TypeDefinition.Id : string.Empty;
+            return enemy.Id + "|" + typeId;
         }
 
         private static void ApplyText(TMP_Text target, string value)
@@ -235,6 +212,25 @@ namespace ProjectZ.UI
         }
 
         private static Transform FindDeepChild(RectTransform root, string targetName)
+        {
+            if (root == null)
+            {
+                return null;
+            }
+
+            var children = root.GetComponentsInChildren<Transform>(true);
+            for (var i = 0; i < children.Length; i++)
+            {
+                if (children[i] != null && children[i].name == targetName)
+                {
+                    return children[i];
+                }
+            }
+
+            return null;
+        }
+
+        private static Transform FindDeepChild(Transform root, string targetName)
         {
             if (root == null)
             {

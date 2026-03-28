@@ -15,11 +15,10 @@ MonoBehaviour:
   spellId: plague_funnel
   displayName: Plague Funnel
   effectType: 0
-  value: 16
+  value: 5
   effectLines:
   - kind: 0
-    amount: 16
-    duration: 2
+    amount: 5
     element: 5
   costs:
   - element: 5

@@ -15,11 +15,10 @@ MonoBehaviour:
   spellId: bark_shell
   displayName: Bark Shell
   effectType: 1
-  value: 5
+  value: 2
   effectLines:
   - kind: 2
-    amount: 5
-    duration: 2
+    amount: 2
     element: 4
   costs:
   - element: 4

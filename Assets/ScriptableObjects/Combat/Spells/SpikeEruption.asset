@@ -14,14 +14,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ProjectZ.Combat.CombatSpellAsset
   spellId: spike_eruption
   displayName: Spike Eruption
-  effectType: 1
+  effectType: 0
   value: 2
   effectLines:
-  - kind: 2
+  - kind: 0
     amount: 2
+    element: 4
+  - kind: 2
+    amount: 1
     element: 4
   costs:
   - element: 4
-    amount: 2
+    amount: 3
   isEnemyUsable: 1
   tags: []

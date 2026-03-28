@@ -15,11 +15,10 @@ MonoBehaviour:
   spellId: surge_volley
   displayName: Surge Volley
   effectType: 0
-  value: 8
+  value: 3
   effectLines:
   - kind: 0
-    amount: 8
-    duration: 2
+    amount: 3
     element: 1
   costs:
   - element: 1

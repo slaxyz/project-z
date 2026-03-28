@@ -19,7 +19,6 @@ namespace ProjectZ.UI
 
         [Header("Stars")]
         [SerializeField] private Vector2 starSize = new Vector2(32f, 32f);
-        [SerializeField] private bool typeBadgeUsesSpiral = true;
 
         private readonly List<Image> _stars = new List<Image>();
         private Sprite _starSprite;
@@ -80,7 +79,7 @@ namespace ProjectZ.UI
 
             if (typeBadgeView != null)
             {
-                typeBadgeView.SetType(champion.TypeDefinition, typeBadgeUsesSpiral);
+                typeBadgeView.SetType(champion.TypeDefinition);
             }
 
             RefreshStars(champion.TierStars);
@@ -186,7 +185,7 @@ namespace ProjectZ.UI
 
             if (typeBadgeView != null)
             {
-                typeBadgeView.SetType(null, typeBadgeUsesSpiral);
+                typeBadgeView.SetType(null);
             }
 
             RefreshStars(0);

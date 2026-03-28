@@ -139,6 +139,28 @@ namespace ProjectZ.Combat
             return definition != null;
         }
 
+        public bool TryGetEnemyStatusEffects(out List<EnemyStatusEffectState> statusEffects)
+        {
+            statusEffects = new List<EnemyStatusEffectState>();
+            if (_enemy == null)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < _enemy.StatusEffects.Count; i++)
+            {
+                var status = _enemy.StatusEffects[i];
+                if (status == null)
+                {
+                    continue;
+                }
+
+                statusEffects.Add(status);
+            }
+
+            return true;
+        }
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void EnsureInstanceOnFightScene()
         {
@@ -319,7 +341,7 @@ namespace ProjectZ.Combat
                     continue;
                 }
 
-                var primaryElement = enemy.PrimaryElement;
+                var primaryElement = enemy.TypeDefinition != null ? enemy.TypeDefinition.Element : ElementType.Fire;
                 var normalized = new List<EnemyIntentDefinition>();
                 var seenSpellIds = new HashSet<string>();
 
@@ -1067,7 +1089,7 @@ namespace ProjectZ.Combat
                     case SpellEffectKind.Burn:
                         if (_enemy != null)
                         {
-                            var appliedBurn = _enemy.AddBurn(line.amount, line.duration);
+                            var appliedBurn = _enemy.AddBurn(line.amount, line.duration, line.statusIconResource);
                             effectResults.Add(appliedBurn + " burn");
                         }
                         break;
@@ -1700,7 +1722,9 @@ namespace ProjectZ.Combat
         {
             if (_enemy != null && _enemy.Definition != null)
             {
-                return _enemy.Definition.PrimaryElement;
+                return _enemy.Definition.TypeDefinition != null
+                    ? _enemy.Definition.TypeDefinition.Element
+                    : ElementType.Fire;
             }
 
             return ElementType.Fire;
@@ -2007,6 +2031,7 @@ namespace ProjectZ.Combat
             {
                 Element = element;
                 IsAvailable = true;
+                IsLocked = false;
             }
 
             public bool ToggleLock()

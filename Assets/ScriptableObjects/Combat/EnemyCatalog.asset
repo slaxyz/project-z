@@ -18,7 +18,7 @@ MonoBehaviour:
     maxHp: 18
     biome: 0
     tier: 0
-    typeDefinition: {fileID: 11400000, guid: 5cdd169318a575648bf2b2556b206660, type: 2}
+    typeDefinition: {fileID: 11400000, guid: af5071e687758154d9a0aa8a5605ef0b, type: 2}
     artIndex: 1
     intents:
     - spellId: refracted_ray
@@ -32,7 +32,7 @@ MonoBehaviour:
     maxHp: 24
     biome: 0
     tier: 1
-    typeDefinition: {fileID: 11400000, guid: 4699670a6a48edd46b74d5295613bed8, type: 2}
+    typeDefinition: {fileID: 11400000, guid: 8672429ada98c294fb986864846a6c6f, type: 2}
     artIndex: 2
     intents:
     - spellId: static_discharge

@@ -13,7 +13,6 @@ namespace ProjectZ.UI
 
         [Header("Preview")]
         [SerializeField] private HeroTypeDefinitionAsset previewType;
-        [SerializeField] private bool previewAsGem = true;
         [SerializeField] private bool applyOnStart = true;
 
         private void Start()
@@ -25,7 +24,7 @@ namespace ProjectZ.UI
                 return;
             }
 
-            SetType(previewType, previewAsGem);
+            SetType(previewType);
         }
 
         private void OnEnable()
@@ -37,7 +36,7 @@ namespace ProjectZ.UI
                 return;
             }
 
-            SetType(previewType, previewAsGem);
+            SetType(previewType);
         }
 
         private void OnValidate()
@@ -49,7 +48,7 @@ namespace ProjectZ.UI
                 return;
             }
 
-            SetType(previewType, previewAsGem);
+            SetType(previewType);
         }
 
         private void Reset()
@@ -57,7 +56,7 @@ namespace ProjectZ.UI
             AutoAssignIfNeeded();
         }
 
-        public void SetType(HeroTypeDefinitionAsset typeDefinition, bool showSpiral)
+        public void SetType(HeroTypeDefinitionAsset typeDefinition)
         {
             AutoAssignIfNeeded();
 
@@ -69,19 +68,16 @@ namespace ProjectZ.UI
 
             if (backgroundLayer != null)
             {
-                var backgroundSprite = showSpiral
-                    ? (typeDefinition.GemBadgeSprite != null ? typeDefinition.GemBadgeSprite : typeDefinition.DefaultBadgeSprite)
-                    : typeDefinition.DefaultBadgeSprite;
-
-                backgroundLayer.sprite = backgroundSprite;
+                backgroundLayer.sprite = typeDefinition.DefaultBadgeSprite;
                 backgroundLayer.color = backgroundLayer.sprite != null ? Color.white : Color.clear;
                 backgroundLayer.preserveAspect = true;
             }
 
             if (iconLayer != null)
             {
-                iconLayer.sprite = typeDefinition.Icon;
-                iconLayer.color = typeDefinition.Icon != null ? Color.white : Color.clear;
+                var iconSprite = typeDefinition.RuntimeIcon;
+                iconLayer.sprite = iconSprite;
+                iconLayer.color = iconSprite != null ? Color.white : Color.clear;
                 iconLayer.preserveAspect = true;
             }
         }
@@ -106,6 +102,10 @@ namespace ProjectZ.UI
             if (backgroundLayer == null)
             {
                 backgroundLayer = transform.Find("BG")?.GetComponent<Image>();
+                if (backgroundLayer == null)
+                {
+                    backgroundLayer = transform.Find("Fill")?.GetComponent<Image>();
+                }
                 if (backgroundLayer == null)
                 {
                     backgroundLayer = GetComponent<Image>();

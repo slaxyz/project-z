@@ -15,11 +15,10 @@ MonoBehaviour:
   spellId: moonwell_rite
   displayName: Moonwell Rite
   effectType: 2
-  value: 9
+  value: 3
   effectLines:
   - kind: 1
-    amount: 9
-    duration: 2
+    amount: 3
     element: 3
   costs:
   - element: 3

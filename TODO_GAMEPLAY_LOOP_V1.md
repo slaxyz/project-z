@@ -53,8 +53,8 @@
 - [x] Boss victory shows celebration screen before next board flow.
 
 ## FightScene V1 Next Steps
-- [ ] Configure the enemy setup for the fight scene.
-- [ ] Make spells consume gems when played.
-- [ ] Make spells deal damage.
-- [ ] Clamp the spell spawn to a maximum of 4 visible spells.
-- [ ] After `End Turn`, refresh spells. If there are more than 4 available, draw 4 at random.
+- [x] Configure the enemy setup for the fight scene.
+- [x] Make spells consume gems when played.
+- [x] Make spells deal damage.
+- [x] Clamp the spell spawn to a maximum of 4 visible spells.
+- [x] After `End Turn`, refresh spells. If there are more than 4 available, draw 4 at random.

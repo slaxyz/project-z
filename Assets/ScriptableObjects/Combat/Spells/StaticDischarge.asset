@@ -22,6 +22,6 @@ MonoBehaviour:
     element: 1
   costs:
   - element: 1
-    amount: 2
+    amount: 1
   isEnemyUsable: 1
   tags: []

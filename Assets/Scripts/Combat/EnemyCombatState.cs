@@ -16,22 +16,45 @@ namespace ProjectZ.Combat
         public int MaxHp { get; }
         public int CurrentHp { get; private set; }
         public int Block { get; private set; }
-        public int BurnStackCount => _burnStacks.Count;
+        public int BurnStackCount
+        {
+            get
+            {
+                var burnCount = 0;
+                for (var i = 0; i < _statusEffects.Count; i++)
+                {
+                    if (_statusEffects[i] != null && _statusEffects[i].Kind == EnemyStatusEffectKind.Burn)
+                    {
+                        burnCount++;
+                    }
+                }
+
+                return burnCount;
+            }
+        }
+        public IReadOnlyList<EnemyStatusEffectState> StatusEffects => _statusEffects;
         public bool IsAlive => CurrentHp > 0;
 
-        private readonly List<BurnStack> _burnStacks = new List<BurnStack>();
+        private const int MaxBurnStacks = 10;
+        private readonly List<EnemyStatusEffectState> _statusEffects = new List<EnemyStatusEffectState>();
 
         public void BeginTurn()
         {
-            for (var i = _burnStacks.Count - 1; i >= 0; i--)
+            for (var i = _statusEffects.Count - 1; i >= 0; i--)
             {
-                _burnStacks[i].TurnsRemaining--;
-                if (_burnStacks[i].TurnsRemaining > 0)
+                var status = _statusEffects[i];
+                if (status == null)
+                {
+                    _statusEffects.RemoveAt(i);
+                    continue;
+                }
+
+                if (!status.Tick())
                 {
                     continue;
                 }
 
-                _burnStacks.RemoveAt(i);
+                _statusEffects.RemoveAt(i);
             }
         }
 
@@ -71,7 +94,7 @@ namespace ProjectZ.Combat
             return previousHp - CurrentHp;
         }
 
-        public int AddBurn(int stackCount, int duration)
+        public int AddBurn(int stackCount, int duration, string iconResource = "4_abnormal Burned")
         {
             if (stackCount <= 0 || !IsAlive)
             {
@@ -80,9 +103,13 @@ namespace ProjectZ.Combat
 
             var applied = 0;
             var turns = Mathf.Max(2, duration);
-            for (var i = 0; i < stackCount && _burnStacks.Count < 10; i++)
+            for (var i = 0; i < stackCount && BurnStackCount < MaxBurnStacks; i++)
             {
-                _burnStacks.Add(new BurnStack(turns));
+                _statusEffects.Add(new EnemyStatusEffectState(
+                    EnemyStatusEffectKind.Burn,
+                    turns,
+                    string.IsNullOrWhiteSpace(iconResource) ? "4_abnormal Burned" : iconResource,
+                    ElementType.Fire));
                 applied++;
             }
 
@@ -119,16 +146,6 @@ namespace ProjectZ.Combat
         public void ResetBlock()
         {
             Block = 0;
-        }
-
-        private sealed class BurnStack
-        {
-            public BurnStack(int turnsRemaining)
-            {
-                TurnsRemaining = turnsRemaining;
-            }
-
-            public int TurnsRemaining { get; set; }
         }
     }
 }
