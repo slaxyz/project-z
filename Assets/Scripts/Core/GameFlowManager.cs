@@ -772,6 +772,12 @@ namespace ProjectZ.Core
                 return false;
             }
 
+            if (!DoesSpellMatchChampionElement(championId, _pendingReplacementIncomingSpellId))
+            {
+                message = "Spell type does not match this champion.";
+                return false;
+            }
+
             _pendingReplacementTargetChampionId = championId;
             PersistRunProgress();
             message = "Choose spell to replace.";
@@ -827,6 +833,14 @@ namespace ProjectZ.Core
             if (!championSpells.Contains(spellToReplaceId))
             {
                 message = "Selected champion does not own this spell.";
+                return false;
+            }
+
+            if (!DoesSpellMatchChampionElement(_pendingReplacementTargetChampionId, _pendingReplacementIncomingSpellId))
+            {
+                message = "Spell type does not match this champion.";
+                ClearPendingReplacement();
+                PersistRunProgress();
                 return false;
             }
 
@@ -964,8 +978,16 @@ namespace ProjectZ.Core
         private List<string> BuildAvailableRunSpellIds()
         {
             var index = GetSpellIndex();
+            var selectedElements = CurrentRun.selectedChampionIds
+                .Select(GetChampionElement)
+                .Where(element => element.HasValue)
+                .Select(element => element.Value)
+                .Distinct()
+                .ToHashSet();
+
             return index.Keys
                 .Where(id => !CurrentRun.deckCardIds.Contains(id))
+                .Where(id => selectedElements.Count == 0 || selectedElements.Any(element => DoesSpellMatchElement(id, element)))
                 .OrderBy(id => id)
                 .ToList();
         }
@@ -990,13 +1012,17 @@ namespace ProjectZ.Core
             foreach (var championId in selectedChampionIds)
             {
                 var loadout = CurrentRun.GetChampionSpells(championId);
-                if (loadout.Count > 0 && !shouldUpgradeLegacyLoadouts)
+                var nextLoadout = shouldUpgradeLegacyLoadouts || loadout.Count == 0
+                    ? BuildDefaultSpellLoadoutForChampion(championId)
+                    : BuildSanitizedChampionLoadout(championId, loadout);
+
+                if (SpellListsMatch(loadout, nextLoadout))
                 {
                     continue;
                 }
 
                 loadout.Clear();
-                loadout.AddRange(BuildDefaultSpellLoadoutForChampion(championId));
+                loadout.AddRange(nextLoadout);
             }
 
             RebuildGlobalDeckFromChampionLoadouts();
@@ -1012,31 +1038,66 @@ namespace ProjectZ.Core
 
         private List<string> BuildDefaultSpellLoadoutForChampion(string championId)
         {
-            switch ((championId ?? string.Empty).Trim().ToLowerInvariant())
+            return BuildAllowedSpellIdsForChampion(championId)
+                .Take(MaxRunSpells)
+                .ToList();
+        }
+
+        private List<string> BuildSanitizedChampionLoadout(string championId, IEnumerable<string> existingSpellIds)
+        {
+            var sanitized = FilterSpellIdsForChampion(championId, existingSpellIds);
+            foreach (var spellId in BuildAllowedSpellIdsForChampion(championId))
             {
-                case "slugger":
-                    return new List<string> { "gritty_embrace", "solar_intake", "sandstorm_burst", "quicksand_sink" };
-                case "ace":
-                    return new List<string> { "refracted_ray", "heat_veil", "blinding_glare", "static_discharge" };
-                case "blaze":
-                    return new List<string> { "searing_blood_jet", "sand_bolt", "spike_eruption", "overload" };
-                case "wrench":
-                    return new List<string> { "solar_intake", "heat_veil", "gritty_embrace", "refracted_ray" };
-                case "crusher":
-                    return new List<string> { "gritty_embrace", "quicksand_sink", "sandstorm_burst", "spike_eruption" };
-                case "sonar":
-                    return new List<string> { "static_discharge", "overload", "blinding_glare", "refracted_ray" };
-                case "phantom":
-                    return new List<string> { "overload", "static_discharge", "quicksand_sink", "blinding_glare" };
-                case "psyche":
-                    return new List<string> { "refracted_ray", "heat_veil", "blinding_glare", "solar_intake" };
-                case "whiplash":
-                    return new List<string> { "sand_bolt", "spike_eruption", "overload", "searing_blood_jet" };
-                case "vortex":
-                    return new List<string> { "solar_intake", "heat_veil", "refracted_ray", "static_discharge" };
-                default:
-                    return BuildLegacyDefaultSpellLoadout();
+                if (sanitized.Count >= MaxRunSpells)
+                {
+                    break;
+                }
+
+                if (!sanitized.Contains(spellId))
+                {
+                    sanitized.Add(spellId);
+                }
             }
+
+            return sanitized;
+        }
+
+        private List<string> FilterSpellIdsForChampion(string championId, IEnumerable<string> spellIds)
+        {
+            var filtered = new List<string>();
+            if (spellIds == null)
+            {
+                return filtered;
+            }
+
+            foreach (var spellId in spellIds)
+            {
+                if (string.IsNullOrWhiteSpace(spellId) || filtered.Contains(spellId))
+                {
+                    continue;
+                }
+
+                if (DoesSpellMatchChampionElement(championId, spellId))
+                {
+                    filtered.Add(spellId);
+                }
+            }
+
+            return filtered;
+        }
+
+        private List<string> BuildAllowedSpellIdsForChampion(string championId)
+        {
+            var championElement = GetChampionElement(championId);
+            if (!championElement.HasValue)
+            {
+                return new List<string>();
+            }
+
+            return GetSpellIndex().Keys
+                .Where(id => DoesSpellMatchElement(id, championElement.Value))
+                .OrderBy(id => id)
+                .ToList();
         }
 
         private List<string> GetExistingChampionSpellIds(string championId)
@@ -1068,6 +1129,60 @@ namespace ProjectZ.Core
                 }
             }
 
+            return true;
+        }
+
+        private ElementType? GetChampionElement(string championId)
+        {
+            if (string.IsNullOrWhiteSpace(championId))
+            {
+                return null;
+            }
+
+            var champion = ChampionCatalog.FindById(championId);
+            return champion != null ? champion.Element : null;
+        }
+
+        private bool DoesSpellMatchChampionElement(string championId, string spellId)
+        {
+            var championElement = GetChampionElement(championId);
+            return championElement.HasValue && DoesSpellMatchElement(spellId, championElement.Value);
+        }
+
+        private bool DoesSpellMatchElement(string spellId, ElementType expectedElement)
+        {
+            return TryGetSpellElement(spellId, out var spellElement) && spellElement == expectedElement;
+        }
+
+        private bool TryGetSpellElement(string spellId, out ElementType spellElement)
+        {
+            spellElement = default;
+            var spell = FindSpellById(spellId);
+            if (spell == null || spell.CostEntries == null || spell.CostEntries.Count == 0)
+            {
+                return false;
+            }
+
+            var firstCost = spell.CostEntries.FirstOrDefault(cost => cost != null && cost.amount > 0);
+            if (firstCost == null)
+            {
+                return false;
+            }
+
+            foreach (var cost in spell.CostEntries)
+            {
+                if (cost == null || cost.amount <= 0)
+                {
+                    continue;
+                }
+
+                if (cost.element != firstCost.element)
+                {
+                    return false;
+                }
+            }
+
+            spellElement = firstCost.element;
             return true;
         }
 
@@ -1265,7 +1380,7 @@ namespace ProjectZ.Core
             if (!string.IsNullOrWhiteSpace(_pendingReplacementTargetChampionId))
             {
                 var spells = CurrentRun.GetChampionSpells(_pendingReplacementTargetChampionId);
-                if (spells == null || spells.Count == 0)
+                if (spells == null || spells.Count == 0 || !DoesSpellMatchChampionElement(_pendingReplacementTargetChampionId, _pendingReplacementIncomingSpellId))
                 {
                     _pendingReplacementTargetChampionId = null;
                 }

@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ProjectZ.Combat.CombatSpawnRulesAsset
   biomeRules:
   - biome: 0
-    combatsPerZone: 8
+    combatsPerZone: 6
     nodeRules:
     - minNodeIndex: 0
       maxNodeIndex: 0
@@ -24,26 +24,47 @@ MonoBehaviour:
       - tier: 1
         weight: 30
     - minNodeIndex: 1
-      maxNodeIndex: 2
+      maxNodeIndex: 4
       tierWeights:
       - tier: 1
         weight: 60
       - tier: 2
         weight: 40
   - biome: 1
-    combatsPerZone: 8
+    combatsPerZone: 6
     nodeRules:
-    - minNodeIndex: 3
-      maxNodeIndex: 3
+    - minNodeIndex: 0
+      maxNodeIndex: 1
       tierWeights:
+      - tier: 0
+        weight: 35
+      - tier: 1
+        weight: 45
       - tier: 2
-        weight: 60
-      - tier: 3
-        weight: 40
-    - minNodeIndex: 4
-      maxNodeIndex: 999
+        weight: 20
+    - minNodeIndex: 2
+      maxNodeIndex: 4
       tierWeights:
-      - tier: 3
-        weight: 70
-      - tier: 4
+      - tier: 1
+        weight: 35
+      - tier: 2
+        weight: 65
+  - biome: 2
+    combatsPerZone: 6
+    nodeRules:
+    - minNodeIndex: 0
+      maxNodeIndex: 1
+      tierWeights:
+      - tier: 0
+        weight: 25
+      - tier: 1
+        weight: 35
+      - tier: 2
+        weight: 40
+    - minNodeIndex: 2
+      maxNodeIndex: 4
+      tierWeights:
+      - tier: 1
         weight: 30
+      - tier: 2
+        weight: 70

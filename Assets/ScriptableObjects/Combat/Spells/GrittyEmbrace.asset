@@ -14,14 +14,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ProjectZ.Combat.CombatSpellAsset
   spellId: gritty_embrace
   displayName: Gritty Embrace
-  effectType: 0
+  effectType: 1
   value: 2
   effectLines:
-  - kind: 0
+  - kind: 2
     amount: 2
-    element: 2
+    element: 4
   costs:
-  - element: 2
+  - element: 4
     amount: 2
   isEnemyUsable: 1
   tags: []

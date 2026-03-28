@@ -13,17 +13,30 @@ namespace ProjectZ.UI
     {
         private const int MaxDisplayedSpells = 6;
 
+        private static bool _sceneHookRegistered;
         private static Dictionary<string, CombatSpellAsset> _spellIndexCache;
         private readonly List<GameObject> _runtimeInstances = new List<GameObject>();
         private RectTransform _templateRoot;
         private HeroSwitchPanelView _heroSwitchPanel;
+        private FightMockController _fight;
         private string _lastChampionId = string.Empty;
         private string _lastSpellSignature = string.Empty;
 
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-        private static void Bootstrap()
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        private static void RegisterSceneHook()
         {
-            if (SceneManager.GetActiveScene().name != GameScenes.Fight)
+            if (_sceneHookRegistered)
+            {
+                return;
+            }
+
+            SceneManager.sceneLoaded += HandleSceneLoaded;
+            _sceneHookRegistered = true;
+        }
+
+        private static void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            if (scene.name != GameScenes.Fight)
             {
                 return;
             }
@@ -42,6 +55,7 @@ namespace ProjectZ.UI
             CacheTemplate();
             CacheSpellIndex();
             CacheHeroSwitchPanel();
+            CacheFightController();
             RefreshIfNeeded(force: true);
         }
 
@@ -50,6 +64,7 @@ namespace ProjectZ.UI
             CacheTemplate();
             CacheSpellIndex();
             CacheHeroSwitchPanel();
+            CacheFightController();
             RefreshIfNeeded(force: true);
         }
 
@@ -155,6 +170,15 @@ namespace ProjectZ.UI
                 return new List<string>();
             }
 
+            CacheFightController();
+            if (_fight != null && _fight.TryGetChampionHandSpellIds(championId, out var runtimeHandSpellIds))
+            {
+                return runtimeHandSpellIds
+                    .Where(id => !string.IsNullOrWhiteSpace(id))
+                    .Take(MaxDisplayedSpells)
+                    .ToList();
+            }
+
             var manager = GameFlowManager.Instance;
             if (manager == null)
             {
@@ -196,8 +220,55 @@ namespace ProjectZ.UI
                     effectView.SetSpell(spellAsset);
                 }
 
+                BindSpellClick(instance, spellAsset);
+
                 SetUiVisibility(instance, true);
             }
+        }
+
+        private void BindSpellClick(GameObject instance, CombatSpellAsset spellAsset)
+        {
+            if (instance == null || spellAsset == null)
+            {
+                return;
+            }
+
+            CacheFightController();
+
+            var overlay = FindOrCreateClickOverlay(instance.transform);
+            var button = overlay.GetComponent<Button>();
+            if (button == null)
+            {
+                button = overlay.AddComponent<Button>();
+                button.transition = Selectable.Transition.None;
+            }
+
+            var targetGraphic = overlay.GetComponent<Image>();
+            if (targetGraphic == null)
+            {
+                targetGraphic = overlay.AddComponent<Image>();
+            }
+
+            StretchRect(overlay.GetComponent<RectTransform>());
+            targetGraphic.color = new Color(1f, 1f, 1f, 0f);
+            targetGraphic.raycastTarget = true;
+            button.targetGraphic = targetGraphic;
+            button.onClick.RemoveAllListeners();
+
+            var capturedSpellId = spellAsset.SpellId;
+            button.onClick.AddListener(() => HandleSpellClicked(capturedSpellId));
+        }
+
+        private void HandleSpellClicked(string spellId)
+        {
+            CacheFightController();
+            if (_fight == null)
+            {
+                return;
+            }
+
+            _fight.TryPlaySpellById(spellId);
+            RefreshIfNeeded(force: true);
         }
 
         private void CacheHeroSwitchPanel()
@@ -217,6 +288,50 @@ namespace ProjectZ.UI
             _heroSwitchPanel.SelectionChanged += HandleHeroSelectionChanged;
         }
 
+        private void CacheFightController()
+        {
+            if (_fight != null)
+            {
+                return;
+            }
+
+            _fight = FindFirstObjectByType<FightMockController>();
+        }
+
+        private static GameObject FindOrCreateClickOverlay(Transform parent)
+        {
+            if (parent == null)
+            {
+                return null;
+            }
+
+            var existing = parent.Find("SpellClickTarget");
+            if (existing != null)
+            {
+                existing.SetAsLastSibling();
+                return existing.gameObject;
+            }
+
+            var overlay = new GameObject("SpellClickTarget", typeof(RectTransform), typeof(CanvasRenderer));
+            overlay.transform.SetParent(parent, false);
+            overlay.transform.SetAsLastSibling();
+            return overlay;
+        }
+
+        private static void StretchRect(RectTransform rect)
+        {
+            if (rect == null)
+            {
+                return;
+            }
+
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
+            rect.pivot = new Vector2(0.5f, 0.5f);
+        }
+
         private void UnhookHeroSwitchPanel()
         {
             if (_heroSwitchPanel == null)
@@ -229,6 +344,15 @@ namespace ProjectZ.UI
 
         private void HandleHeroSelectionChanged(HeroSwitchSlotView slot)
         {
+            if (slot != null)
+            {
+                CacheFightController();
+                if (_fight != null && !string.IsNullOrWhiteSpace(slot.ChampionId))
+                {
+                    _fight.TrySetActiveChampion(slot.ChampionId);
+                }
+            }
+
             RefreshIfNeeded(force: true);
         }
 

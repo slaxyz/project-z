@@ -17,11 +17,11 @@ MonoBehaviour:
   effectType: 0
   value: 1
   effectLines:
-  - kind: 6
+  - kind: 0
     amount: 1
-    element: 4
+    element: 2
   costs:
-  - element: 0
+  - element: 2
     amount: 1
   isEnemyUsable: 1
   tags: []

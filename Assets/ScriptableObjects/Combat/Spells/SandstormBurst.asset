@@ -20,13 +20,8 @@ MonoBehaviour:
   - kind: 0
     amount: 2
     element: 2
-  - kind: 3
-    amount: 1
-    element: 0
   costs:
   - element: 2
     amount: 2
-  - element: 0
-    amount: 1
   isEnemyUsable: 1
   tags: []

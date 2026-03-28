@@ -17,9 +17,9 @@ MonoBehaviour:
   effectType: 0
   value: 1
   effectLines:
-  - kind: 7
+  - kind: 0
     amount: 1
-    element: 3
+    element: 5
   costs:
   - element: 5
     amount: 1

@@ -18,6 +18,8 @@ namespace ProjectZ.UI
 
         private void Start()
         {
+            AutoAssignIfNeeded();
+
             if (!applyOnStart)
             {
                 return;
@@ -28,6 +30,8 @@ namespace ProjectZ.UI
 
         private void OnEnable()
         {
+            AutoAssignIfNeeded();
+
             if (!applyOnStart)
             {
                 return;
@@ -38,6 +42,8 @@ namespace ProjectZ.UI
 
         private void OnValidate()
         {
+            AutoAssignIfNeeded();
+
             if (!applyOnStart)
             {
                 return;
@@ -46,8 +52,15 @@ namespace ProjectZ.UI
             SetType(previewType, previewAsGem);
         }
 
+        private void Reset()
+        {
+            AutoAssignIfNeeded();
+        }
+
         public void SetType(HeroTypeDefinitionAsset typeDefinition, bool showSpiral)
         {
+            AutoAssignIfNeeded();
+
             if (typeDefinition == null)
             {
                 ClearVisual();
@@ -85,6 +98,23 @@ namespace ProjectZ.UI
             {
                 iconLayer.sprite = null;
                 iconLayer.color = Color.clear;
+            }
+        }
+
+        private void AutoAssignIfNeeded()
+        {
+            if (backgroundLayer == null)
+            {
+                backgroundLayer = transform.Find("BG")?.GetComponent<Image>();
+                if (backgroundLayer == null)
+                {
+                    backgroundLayer = GetComponent<Image>();
+                }
+            }
+
+            if (iconLayer == null)
+            {
+                iconLayer = transform.Find("Icon")?.GetComponent<Image>();
             }
         }
     }

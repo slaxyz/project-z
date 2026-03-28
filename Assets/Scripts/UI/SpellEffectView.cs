@@ -11,6 +11,8 @@ namespace ProjectZ.UI
     {
         private static readonly Dictionary<int, Sprite> BackgroundCache = new Dictionary<int, Sprite>();
         private static readonly Dictionary<int, Sprite> IconCache = new Dictionary<int, Sprite>();
+        private static readonly Dictionary<string, Sprite> RuneBackgroundCache = new Dictionary<string, Sprite>();
+        private static readonly Dictionary<string, Sprite> StatBadgeCache = new Dictionary<string, Sprite>();
 
         [Header("Data")]
         [SerializeField] private CombatSpellAsset spell;
@@ -89,6 +91,7 @@ namespace ProjectZ.UI
                 if (sourceLines == null || sourceLines.Count == 0)
                 {
                     ApplyLegacyLine(root);
+                    RefreshRuneCosts();
                     return;
                 }
 
@@ -112,6 +115,8 @@ namespace ProjectZ.UI
                     row.gameObject.SetActive(true);
                     ApplyLineToRow(row, sourceLines[i]);
                 }
+
+                RefreshRuneCosts();
             }
             finally
             {
@@ -155,6 +160,183 @@ namespace ProjectZ.UI
             linesRoot = rootGo.GetComponent<RectTransform>();
             SetupRootLayout(linesRoot);
             return linesRoot;
+        }
+
+        private void RefreshRuneCosts()
+        {
+            var runesRoot = EnsureRunesRoot();
+            if (runesRoot == null)
+            {
+                return;
+            }
+
+            var runeSequence = ResolveRuneCostSequence();
+            EnsureRuneSlotCount(runesRoot, runeSequence.Count);
+
+            var runeSlots = CollectRuneSlots(runesRoot);
+            for (var i = 0; i < runeSlots.Count; i++)
+            {
+                var slot = runeSlots[i];
+                if (slot == null)
+                {
+                    continue;
+                }
+
+                var isActive = i < runeSequence.Count;
+                slot.gameObject.SetActive(isActive);
+                if (!isActive)
+                {
+                    continue;
+                }
+
+                var background = FindImage(slot, "BG");
+                if (background == null)
+                {
+                    background = slot.GetComponentInChildren<Image>(true);
+                }
+
+                if (background != null)
+                {
+                    var element = runeSequence[i];
+                    background.sprite = LoadRuneBackgroundSprite(element);
+                    background.color = background.sprite != null ? Color.white : Color.clear;
+                    background.preserveAspect = true;
+                }
+            }
+        }
+
+        private RectTransform EnsureRunesRoot()
+        {
+            var current = transform != null ? transform.parent : null;
+            while (current != null)
+            {
+                var existingRoot = current.Find("Runes_content");
+                if (existingRoot is RectTransform existingRect)
+                {
+                    return existingRect;
+                }
+
+                current = current.parent;
+            }
+
+            return null;
+        }
+
+        private IReadOnlyList<ElementType> ResolveRuneCostSequence()
+        {
+            if (spell == null)
+            {
+                return new List<ElementType>();
+            }
+
+            return spell.BuildRuneCostSequence();
+        }
+
+        private void EnsureRuneSlotCount(RectTransform root, int desiredCount)
+        {
+            if (root == null || desiredCount <= 0)
+            {
+                return;
+            }
+
+            var slots = CollectRuneSlots(root);
+            if (slots.Count == 0)
+            {
+                CreateRuntimeRuneSlot(root);
+                slots = CollectRuneSlots(root);
+            }
+
+            while (slots.Count < desiredCount)
+            {
+                var template = slots[0];
+                var clone = Instantiate(template.gameObject, root, false);
+                clone.name = "Rune_slot_" + slots.Count;
+                clone.SetActive(true);
+                slots = CollectRuneSlots(root);
+            }
+        }
+
+        private static List<RectTransform> CollectRuneSlots(Transform root)
+        {
+            var slots = new List<RectTransform>();
+            if (root == null)
+            {
+                return slots;
+            }
+
+            for (var i = 0; i < root.childCount; i++)
+            {
+                var child = root.GetChild(i) as RectTransform;
+                if (child == null)
+                {
+                    continue;
+                }
+
+                if (child.name.StartsWith("Rune_slot"))
+                {
+                    slots.Add(child);
+                }
+            }
+
+            return slots;
+        }
+
+        private static RectTransform CreateRuntimeRuneSlot(RectTransform root)
+        {
+            if (root == null)
+            {
+                return null;
+            }
+
+            var slotGo = new GameObject("Rune_slot_0", typeof(RectTransform), typeof(CanvasRenderer));
+            slotGo.transform.SetParent(root, false);
+
+            var slotRect = slotGo.GetComponent<RectTransform>();
+            slotRect.anchorMin = new Vector2(0.5f, 0.5f);
+            slotRect.anchorMax = new Vector2(0.5f, 0.5f);
+            slotRect.pivot = new Vector2(0.5f, 0.5f);
+            slotRect.sizeDelta = new Vector2(20f, 20f);
+
+            var bgGo = new GameObject("BG", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            bgGo.transform.SetParent(slotGo.transform, false);
+            var bgRect = bgGo.GetComponent<RectTransform>();
+            StretchRect(bgRect);
+
+            return slotRect;
+        }
+
+        private static Sprite LoadRuneBackgroundSprite(ElementType element)
+        {
+            var spriteName = ResolveRuneSpriteName(element);
+            if (RuneBackgroundCache.TryGetValue(spriteName, out var cachedSprite))
+            {
+                return cachedSprite;
+            }
+
+            var sprite = Resources.Load<Sprite>("Art/UI/FightScene/Runes/" + spriteName);
+            RuneBackgroundCache[spriteName] = sprite;
+            return sprite;
+        }
+
+        private static string ResolveRuneSpriteName(ElementType element)
+        {
+            switch (element)
+            {
+                case ElementType.Fire:
+                    return "Fire";
+                case ElementType.Water:
+                    return "Water";
+                case ElementType.Nature:
+                    return "Nature";
+                case ElementType.Poison:
+                    return "Poison";
+                case ElementType.Mystic:
+                    return "Mystic";
+                case ElementType.Ground:
+                    return "Normal";
+                default:
+                    return "Normal";
+            }
         }
 
         private void SetupRootLayout(RectTransform root)
@@ -284,6 +466,7 @@ namespace ProjectZ.UI
 
             BuildRuntimeLabel(rowGo.transform, "Text_Label", labelColor, labelFontSize);
             BuildRuntimeBadge(rowGo.transform);
+            BuildRuntimeStatBadge(rowGo.transform);
             BuildRuntimeAmount(rowGo.transform, "Text_Value", valueColor, valueFontSize);
 
             return rowGo.GetComponent<RectTransform>();
@@ -299,7 +482,9 @@ namespace ProjectZ.UI
             var label = FindText(row, "Text_Label");
             var amount = FindText(row, "Text_Value");
             var badge = FindChild(row, "ElementBadge");
+            var statBadge = FindChild(row, "ElementBadgeStat");
             var isElementLine = line.UsesElement;
+            var isSupportLine = IsSupportLine(line);
             var isTrailing = line.UsesTrailingElement;
             var visualId = line.UsesFixedNeutralElement ? freezeNeutralVisualId : ResolveVisualId(line.element);
             var amountColor = ResolveAmountColor(line);
@@ -369,6 +554,34 @@ namespace ProjectZ.UI
                     }
                 }
             }
+
+            if (statBadge != null)
+            {
+                statBadge.gameObject.SetActive(isSupportLine);
+                if (isSupportLine)
+                {
+                    var background = FindImage(statBadge, "BG");
+                    if (background != null)
+                    {
+                        background.sprite = LoadStatBadgeSprite(line.kind);
+                        background.color = background.sprite != null ? Color.white : Color.clear;
+                        background.preserveAspect = true;
+                    }
+
+                    var layout = statBadge.GetComponent<LayoutElement>();
+                    if (layout == null)
+                    {
+                        layout = statBadge.gameObject.AddComponent<LayoutElement>();
+                    }
+
+                    layout.preferredWidth = badgeSize;
+                    layout.preferredHeight = badgeSize;
+                    layout.minWidth = badgeSize;
+                    layout.minHeight = badgeSize;
+                    layout.flexibleWidth = 0f;
+                    layout.flexibleHeight = 0f;
+                }
+            }
         }
 
         private void ApplyLabelAndAmount(
@@ -389,6 +602,7 @@ namespace ProjectZ.UI
             var label = FindText(row, "Text_Label");
             var amount = FindText(row, "Text_Value");
             var badge = FindChild(row, "ElementBadge");
+            var statBadge = FindChild(row, "ElementBadgeStat");
 
             if (label != null)
             {
@@ -437,6 +651,16 @@ namespace ProjectZ.UI
                     }
                 }
             }
+
+            if (statBadge != null)
+            {
+                statBadge.gameObject.SetActive(false);
+            }
+        }
+
+        private static bool IsSupportLine(SpellEffectLineDefinition line)
+        {
+            return line != null && (line.kind == SpellEffectKind.Heal || line.kind == SpellEffectKind.Shield);
         }
 
         private static void BuildRuntimeLabel(Transform parent, string name, Color color, float fontSize)
@@ -501,6 +725,24 @@ namespace ProjectZ.UI
             iconRect.pivot = new Vector2(0.5f, 0.5f);
             iconRect.sizeDelta = new Vector2(28f, 28f);
             iconRect.anchoredPosition = Vector2.zero;
+        }
+
+        private static void BuildRuntimeStatBadge(Transform parent)
+        {
+            var go = new GameObject("ElementBadgeStat", typeof(RectTransform));
+            go.transform.SetParent(parent, false);
+            go.SetActive(false);
+
+            var layout = go.AddComponent<LayoutElement>();
+            layout.preferredWidth = 48f;
+            layout.preferredHeight = 48f;
+            layout.minWidth = 48f;
+            layout.minHeight = 48f;
+
+            var bgGo = new GameObject("BG", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            bgGo.transform.SetParent(go.transform, false);
+            var bgRect = bgGo.GetComponent<RectTransform>();
+            StretchRect(bgRect);
         }
 
         private static void StretchRect(RectTransform rect)
@@ -674,6 +916,19 @@ namespace ProjectZ.UI
 
             var sprite = Resources.Load<Sprite>("Art/UI/TypeIcons/" + visualId);
             IconCache[visualId] = sprite;
+            return sprite;
+        }
+
+        private static Sprite LoadStatBadgeSprite(SpellEffectKind kind)
+        {
+            var spriteName = kind == SpellEffectKind.Heal ? "icon_hp" : "icon_shield";
+            if (StatBadgeCache.TryGetValue(spriteName, out var cachedSprite))
+            {
+                return cachedSprite;
+            }
+
+            var sprite = Resources.Load<Sprite>("Art/UI/SystemIcons/" + spriteName);
+            StatBadgeCache[spriteName] = sprite;
             return sprite;
         }
     }

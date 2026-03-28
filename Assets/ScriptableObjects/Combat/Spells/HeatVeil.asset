@@ -14,10 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ProjectZ.Combat.CombatSpellAsset
   spellId: heat_veil
   displayName: Heat Veil
-  effectType: 1
+  effectType: 2
   value: 2
   effectLines:
-  - kind: 2
+  - kind: 1
     amount: 2
     element: 3
   costs:

@@ -3,6 +3,7 @@ namespace ProjectZ.Combat
     public enum EnemyBiome
     {
         Zone1,
-        Zone2
+        Zone2,
+        Zone3
     }
 }

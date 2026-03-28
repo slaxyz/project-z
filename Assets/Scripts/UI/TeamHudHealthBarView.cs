@@ -6,9 +6,16 @@ using UnityEngine.UI;
 
 namespace ProjectZ.UI
 {
+    public enum CombatHudTarget
+    {
+        Team = 0,
+        Enemy = 1
+    }
+
     [DisallowMultipleComponent]
     public sealed class TeamHudHealthBarView : MonoBehaviour
     {
+        [SerializeField] private CombatHudTarget target = CombatHudTarget.Team;
         [SerializeField] private RectTransform hpBarRoot;
         [SerializeField] private RectTransform pointTemplate;
         [SerializeField] private float pointSpacing = -4f;
@@ -16,6 +23,7 @@ namespace ProjectZ.UI
         [SerializeField] private TMP_Text currentShadowText;
         [SerializeField] private TMP_Text maxMainText;
         [SerializeField] private TMP_Text maxShadowText;
+        [SerializeField] private GameObject shieldRoot;
 
         private readonly List<HpPointView> _points = new List<HpPointView>();
         private FightMockController _fight;
@@ -44,6 +52,14 @@ namespace ProjectZ.UI
         private void OnValidate()
         {
             AutoAssign();
+        }
+
+        public void SetTarget(CombatHudTarget hudTarget)
+        {
+            target = hudTarget;
+            ResetCachedState();
+            AutoAssign();
+            Sync();
         }
 
         private void AutoAssign()
@@ -81,6 +97,11 @@ namespace ProjectZ.UI
             {
                 maxShadowText = FindText("HP-full", "Label_Shadow");
             }
+
+            if (shieldRoot == null)
+            {
+                shieldRoot = FindChildGameObjectByName("Shield");
+            }
         }
 
         private TMP_Text FindText(string groupName, string textName)
@@ -110,8 +131,9 @@ namespace ProjectZ.UI
                 _fight = Object.FindFirstObjectByType<FightMockController>();
             }
 
-            if (_fight == null || !_fight.TryGetTeamHealthState(out var currentHp, out var maxHp, out var shieldHp))
+            if (_fight == null || !TryGetHealthState(out var currentHp, out var maxHp, out var shieldHp))
             {
+                ApplyShieldVisibility(false);
                 return;
             }
 
@@ -127,6 +149,7 @@ namespace ProjectZ.UI
             ApplyText(currentShadowText, currentHp.ToString());
             ApplyText(maxMainText, "/" + safeMaxHp);
             ApplyText(maxShadowText, "/" + safeMaxHp);
+            ApplyShieldVisibility(shieldHp > 0);
 
             EnsurePointViews(safeMaxHp);
             ApplyPointStates(currentHp, safeMaxHp, shieldHp);
@@ -134,6 +157,32 @@ namespace ProjectZ.UI
             _lastCurrentHp = currentHp;
             _lastMaxHp = safeMaxHp;
             _lastShieldHp = shieldHp;
+        }
+
+        private void ApplyShieldVisibility(bool isVisible)
+        {
+            if (shieldRoot != null && shieldRoot.activeSelf != isVisible)
+            {
+                shieldRoot.SetActive(isVisible);
+            }
+        }
+
+        private bool TryGetHealthState(out int currentHp, out int maxHp, out int shieldHp)
+        {
+            currentHp = 0;
+            maxHp = 0;
+            shieldHp = 0;
+
+            return target == CombatHudTarget.Enemy
+                ? _fight.TryGetEnemyHealthState(out currentHp, out maxHp, out shieldHp)
+                : _fight.TryGetTeamHealthState(out currentHp, out maxHp, out shieldHp);
+        }
+
+        private void ResetCachedState()
+        {
+            _lastCurrentHp = -1;
+            _lastMaxHp = -1;
+            _lastShieldHp = -1;
         }
 
         private static void ApplyText(TMP_Text target, string value)
@@ -253,6 +302,20 @@ namespace ProjectZ.UI
                 if (rects[i] != null && rects[i].name == targetName)
                 {
                     return rects[i];
+                }
+            }
+
+            return null;
+        }
+
+        private GameObject FindChildGameObjectByName(string targetName)
+        {
+            var transforms = GetComponentsInChildren<Transform>(true);
+            for (var i = 0; i < transforms.Length; i++)
+            {
+                if (transforms[i] != null && transforms[i].name == targetName)
+                {
+                    return transforms[i].gameObject;
                 }
             }
 

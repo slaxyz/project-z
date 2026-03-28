@@ -28,8 +28,6 @@ namespace ProjectZ.Combat
                 switch (kind)
                 {
                     case SpellEffectKind.Deal:
-                    case SpellEffectKind.Heal:
-                    case SpellEffectKind.Shield:
                     case SpellEffectKind.Increase:
                     case SpellEffectKind.Freeze:
                         return true;
@@ -40,8 +38,6 @@ namespace ProjectZ.Combat
         }
 
         public bool UsesFixedNeutralElement => kind == SpellEffectKind.Freeze;
-
-        public bool UsesPlusPrefix => kind == SpellEffectKind.Special;
 
         public bool UsesTrailingElement => kind == SpellEffectKind.Freeze;
 
@@ -72,7 +68,7 @@ namespace ProjectZ.Combat
 
         public string BuildAmountText()
         {
-            return UsesPlusPrefix ? "+(" + amount + ")" : "(" + amount + ")";
+            return "(" + amount + ")";
         }
 
         public string BuildDisplayText()

@@ -22,6 +22,7 @@ namespace ProjectZ.Combat
         public CardEffectType EffectType => effectType;
         public int Value => value;
         public IReadOnlyList<SpellEffectLineDefinition> EffectLines => effectLines;
+        public IReadOnlyList<ElementCostEntry> CostEntries => costs;
         public int CostEntriesCount => costs != null ? costs.Count : 0;
 
         public bool IsValidForEnemy()
@@ -57,6 +58,30 @@ namespace ProjectZ.Combat
                 new CardEffect(effectType, value));
         }
 
+        public IReadOnlyList<ElementType> BuildRuneCostSequence()
+        {
+            var runeSequence = new List<ElementType>();
+            if (costs == null)
+            {
+                return runeSequence;
+            }
+
+            foreach (var cost in costs)
+            {
+                if (cost == null || cost.amount <= 0)
+                {
+                    continue;
+                }
+
+                for (var i = 0; i < cost.amount; i++)
+                {
+                    runeSequence.Add(cost.element);
+                }
+            }
+
+            return runeSequence;
+        }
+
         public CardDefinition ToCardDefinition(string cardNameOverride = null)
         {
             var runtimeCost = new Dictionary<ElementType, int>();
@@ -76,7 +101,8 @@ namespace ProjectZ.Combat
             return new CardDefinition(
                 name,
                 new CardCost(runtimeCost),
-                new CardEffect(effectType, value));
+                new CardEffect(effectType, value),
+                spellId);
         }
     }
 }

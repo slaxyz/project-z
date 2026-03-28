@@ -15,6 +15,7 @@ namespace ProjectZ.Combat
         private const string DisableDebugUiMarkerName = "DISABLE_DEBUG_UI";
         private const int GemsPerTurn = 4;
         private const int MaxRerollsPerTurn = 2;
+        private const int CardsDrawnPerTurn = 4;
         private const int CombatLogMaxEntries = 8;
         private const int DefaultCombatsPerZone = 8;
         private static readonly ElementType[] AllElements = (ElementType[])System.Enum.GetValues(typeof(ElementType));
@@ -27,6 +28,7 @@ namespace ProjectZ.Combat
         private readonly List<string> _combatLog = new List<string>();
         private readonly HashSet<CardDefinition> _playedCardsThisTurn = new HashSet<CardDefinition>();
         private readonly HashSet<EnemyIntentDefinition> _enemyUsedIntentsThisTurn = new HashSet<EnemyIntentDefinition>();
+        private Dictionary<string, CombatSpellAsset> _spellIndexCache;
 
         private int _activeChampionIndex;
         private int _turn = 1;
@@ -112,6 +114,29 @@ namespace ProjectZ.Combat
 
             shieldHp = Mathf.Clamp(shieldHp, 0, maxHp);
             return maxHp > 0;
+        }
+
+        public bool TryGetEnemyHealthState(out int currentHp, out int maxHp, out int shieldHp)
+        {
+            currentHp = 0;
+            maxHp = 0;
+            shieldHp = 0;
+
+            if (_enemy == null)
+            {
+                return false;
+            }
+
+            currentHp = _enemy.CurrentHp;
+            maxHp = _enemy.MaxHp;
+            shieldHp = Mathf.Clamp(_enemy.Block, 0, maxHp);
+            return maxHp > 0;
+        }
+
+        public bool TryGetCurrentEnemyDefinition(out EnemyDefinition definition)
+        {
+            definition = _enemy != null ? _enemy.Definition : null;
+            return definition != null;
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -353,20 +378,20 @@ namespace ProjectZ.Combat
             for (var i = 0; i < sourceIds.Count; i++)
             {
                 var championId = sourceIds[i];
-                var hand = BuildRunHand(championId, i, manager, spellIndex);
+                var spellPool = BuildRunSpellPool(championId, i, manager, spellIndex);
                 var championAsset = ChampionCatalog.FindById(championId);
                 var baseHp = championAsset != null ? Mathf.Max(1, championAsset.BaseHp) : 40;
                 _champions.Add(new ChampionCombatState(
                     championId,
                     DisplayNameFor(championId),
                     baseHp,
-                    hand));
+                    spellPool));
             }
 
             _activeChampionIndex = 0;
         }
 
-        private static List<CardDefinition> BuildRunHand(
+        private static List<string> BuildRunSpellPool(
             string championId,
             int championIndex,
             GameFlowManager manager,
@@ -374,16 +399,22 @@ namespace ProjectZ.Combat
         {
             if (manager == null)
             {
-                return BuildMockHand(championIndex);
+                return BuildMockHand(championIndex)
+                    .Select(card => card.SpellId)
+                    .Where(id => !string.IsNullOrWhiteSpace(id))
+                    .ToList();
             }
 
             var loadout = manager.GetChampionSpellLoadout(championId);
             if (loadout == null || loadout.Count == 0)
             {
-                return BuildMockHand(championIndex);
+                return BuildMockHand(championIndex)
+                    .Select(card => card.SpellId)
+                    .Where(id => !string.IsNullOrWhiteSpace(id))
+                    .ToList();
             }
 
-            var hand = new List<CardDefinition>();
+            var spellPool = new List<string>();
             foreach (var spellId in loadout)
             {
                 if (string.IsNullOrWhiteSpace(spellId))
@@ -396,10 +427,15 @@ namespace ProjectZ.Combat
                     continue;
                 }
 
-                hand.Add(spellAsset.ToCardDefinition());
+                spellPool.Add(spellAsset.SpellId);
             }
 
-            return hand.Count > 0 ? hand : BuildMockHand(championIndex);
+            return spellPool.Count > 0
+                ? spellPool
+                : BuildMockHand(championIndex)
+                    .Select(card => card.SpellId)
+                    .Where(id => !string.IsNullOrWhiteSpace(id))
+                    .ToList();
         }
 
         private static string DisplayNameFor(string championId)
@@ -414,10 +450,10 @@ namespace ProjectZ.Combat
             {
                 return new List<CardDefinition>
                 {
-                    new CardDefinition("Bulwark Strike", Cost(ElementType.Ground, 2), new CardEffect(CardEffectType.Damage, 10)),
-                    new CardDefinition("Iron Guard", Cost(ElementType.Ground, 1, ElementType.Fire, 1), new CardEffect(CardEffectType.Shield, 9)),
-                    new CardDefinition("Shield Pulse", Cost(ElementType.Water, 1), new CardEffect(CardEffectType.Shield, 6)),
-                    new CardDefinition("Stand Fast", Cost(ElementType.Nature, 1), new CardEffect(CardEffectType.Heal, 6))
+                    new CardDefinition("Bulwark Strike", Cost(ElementType.Ground, 2), new CardEffect(CardEffectType.Damage, 10), "mock_bulwark_strike"),
+                    new CardDefinition("Iron Guard", Cost(ElementType.Ground, 1, ElementType.Fire, 1), new CardEffect(CardEffectType.Shield, 9), "mock_iron_guard"),
+                    new CardDefinition("Shield Pulse", Cost(ElementType.Water, 1), new CardEffect(CardEffectType.Shield, 6), "mock_shield_pulse"),
+                    new CardDefinition("Stand Fast", Cost(ElementType.Nature, 1), new CardEffect(CardEffectType.Heal, 6), "mock_stand_fast")
                 };
             }
 
@@ -425,19 +461,19 @@ namespace ProjectZ.Combat
             {
                 return new List<CardDefinition>
                 {
-                    new CardDefinition("Arc Bolt", Cost(ElementType.Mystic, 2), new CardEffect(CardEffectType.Damage, 12)),
-                    new CardDefinition("Frost Sigil", Cost(ElementType.Water, 2), new CardEffect(CardEffectType.Shield, 7)),
-                    new CardDefinition("Flame Vortex", Cost(ElementType.Fire, 1, ElementType.Mystic, 1), new CardEffect(CardEffectType.Damage, 14)),
-                    new CardDefinition("Mana Weave", Cost(ElementType.Water, 1, ElementType.Nature, 1), new CardEffect(CardEffectType.Heal, 8))
+                    new CardDefinition("Arc Bolt", Cost(ElementType.Mystic, 2), new CardEffect(CardEffectType.Damage, 12), "mock_arc_bolt"),
+                    new CardDefinition("Frost Sigil", Cost(ElementType.Water, 2), new CardEffect(CardEffectType.Shield, 7), "mock_frost_sigil"),
+                    new CardDefinition("Flame Vortex", Cost(ElementType.Fire, 1, ElementType.Mystic, 1), new CardEffect(CardEffectType.Damage, 14), "mock_flame_vortex"),
+                    new CardDefinition("Mana Weave", Cost(ElementType.Water, 1, ElementType.Nature, 1), new CardEffect(CardEffectType.Heal, 8), "mock_mana_weave")
                 };
             }
 
             return new List<CardDefinition>
             {
-                new CardDefinition("Piercing Shot", Cost(ElementType.Poison, 1, ElementType.Fire, 1), new CardEffect(CardEffectType.Damage, 11)),
-                new CardDefinition("Tidal Arrow", Cost(ElementType.Water, 2), new CardEffect(CardEffectType.Damage, 10)),
-                new CardDefinition("Hunter Mark", Cost(ElementType.Ground, 1), new CardEffect(CardEffectType.Shield, 5)),
-                new CardDefinition("Swift Volley", Cost(ElementType.Poison, 1, ElementType.Mystic, 1), new CardEffect(CardEffectType.Heal, 5))
+                new CardDefinition("Piercing Shot", Cost(ElementType.Poison, 1, ElementType.Fire, 1), new CardEffect(CardEffectType.Damage, 11), "mock_piercing_shot"),
+                new CardDefinition("Tidal Arrow", Cost(ElementType.Water, 2), new CardEffect(CardEffectType.Damage, 10), "mock_tidal_arrow"),
+                new CardDefinition("Hunter Mark", Cost(ElementType.Ground, 1), new CardEffect(CardEffectType.Shield, 5), "mock_hunter_mark"),
+                new CardDefinition("Swift Volley", Cost(ElementType.Poison, 1, ElementType.Mystic, 1), new CardEffect(CardEffectType.Heal, 5), "mock_swift_volley")
             };
         }
 
@@ -467,7 +503,72 @@ namespace ProjectZ.Combat
             EnsureGemSlots();
             RollAllGems();
             RollEnemyGems();
+            DrawHandsForTurn();
             _lastAction = "New turn started";
+        }
+
+        private void DrawHandsForTurn()
+        {
+            var spellIndex = GetSpellIndex();
+            foreach (var champion in _champions)
+            {
+                if (champion == null)
+                {
+                    continue;
+                }
+
+                champion.ReplaceHand(BuildHandForTurn(champion, spellIndex));
+            }
+        }
+
+        private List<CardDefinition> BuildHandForTurn(ChampionCombatState champion, IReadOnlyDictionary<string, CombatSpellAsset> spellIndex)
+        {
+            var hand = new List<CardDefinition>();
+            if (champion == null || champion.AvailableSpellIds == null || champion.AvailableSpellIds.Count == 0)
+            {
+                return hand;
+            }
+
+            var availablePool = champion.AvailableSpellIds
+                .Where(id => !string.IsNullOrWhiteSpace(id))
+                .ToList();
+
+            while (hand.Count < CardsDrawnPerTurn && availablePool.Count > 0)
+            {
+                var drawIndex = _rng.Next(0, availablePool.Count);
+                var spellId = availablePool[drawIndex];
+                availablePool.RemoveAt(drawIndex);
+
+                if (!spellIndex.TryGetValue(spellId, out var spellAsset) || spellAsset == null)
+                {
+                    continue;
+                }
+
+                hand.Add(spellAsset.ToCardDefinition());
+            }
+
+            return hand;
+        }
+
+        public bool TryGetChampionHandSpellIds(string championId, out List<string> spellIds)
+        {
+            spellIds = new List<string>();
+            if (string.IsNullOrWhiteSpace(championId))
+            {
+                return false;
+            }
+
+            var champion = _champions.FirstOrDefault(entry => entry != null && entry.Id == championId);
+            if (champion == null || champion.Hand == null)
+            {
+                return false;
+            }
+
+            spellIds.AddRange(champion.Hand
+                .Where(card => card != null && !string.IsNullOrWhiteSpace(card.SpellId))
+                .Select(card => card.SpellId));
+
+            return true;
         }
 
         private void RollAllGems()
@@ -683,19 +784,83 @@ namespace ProjectZ.Combat
             _lastAction = "Switched to " + _champions[index].DisplayName;
         }
 
-        private void PlayCard(CardDefinition card)
+        public bool TrySetActiveChampion(string championId)
+        {
+            if (_fightResolved || string.IsNullOrWhiteSpace(championId))
+            {
+                return false;
+            }
+
+            for (var i = 0; i < _champions.Count; i++)
+            {
+                var champion = _champions[i];
+                if (champion == null || !champion.IsAlive)
+                {
+                    continue;
+                }
+
+                if (!string.Equals(champion.Id, championId, System.StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                SwitchChampion(i);
+                return true;
+            }
+
+            return false;
+        }
+
+        public bool TryPlaySpellById(string spellId)
+        {
+            if (string.IsNullOrWhiteSpace(spellId))
+            {
+                return false;
+            }
+
+            if (_fightResolved || _champions.Count == 0)
+            {
+                return false;
+            }
+
+            var spell = FindSpellById(spellId);
+            if (spell == null)
+            {
+                _lastAction = "Unknown spell: " + spellId;
+                return false;
+            }
+
+            var active = GetActiveAliveChampion();
+            if (active == null)
+            {
+                _lastAction = "No active champion can cast " + spell.DisplayName;
+                return false;
+            }
+
+            var card = active.Hand.FirstOrDefault(handCard =>
+                handCard != null && string.Equals(handCard.SpellId, spell.SpellId, System.StringComparison.Ordinal));
+            if (card == null)
+            {
+                _lastAction = active.DisplayName + " does not have " + spell.DisplayName + " in hand";
+                return false;
+            }
+
+            return PlayCard(card, spellId);
+        }
+
+        private bool PlayCard(CardDefinition card, string spellId = null)
         {
             if (_fightResolved)
             {
                 _lastAction = "Cannot play cards: fight is already resolved";
-                return;
+                return false;
             }
 
             var active = _champions[_activeChampionIndex];
             if (!active.IsAlive)
             {
                 _lastAction = "Active champion is down";
-                return;
+                return false;
             }
 
             if (!CanPlay(card))
@@ -708,21 +873,79 @@ namespace ProjectZ.Combat
                 {
                     _lastAction = "Cannot play " + card.Name + " (missing gems)";
                 }
-                return;
+                return false;
             }
 
-            ApplyCardEffect(active, card);
+            ApplyCardEffect(active, card, ResolveSpellAsset(card, spellId));
             _playedCardsThisTurn.Add(card);
 
-            ConsumeGems(card.Cost);
+            ConsumePlayedSpell(active, card, spellId);
 
             if (TryResolveFight())
             {
-                return;
+                return true;
             }
+
+            return true;
         }
 
-        private void ApplyCardEffect(ChampionCombatState source, CardDefinition card)
+        private void ApplyCardEffect(ChampionCombatState source, CardDefinition card, CombatSpellAsset spell)
+        {
+            if (spell != null && spell.EffectLines != null && spell.EffectLines.Count > 0)
+            {
+                ApplySpellEffectLines(source, card, spell);
+                return;
+            }
+
+            ApplyCardEffectFallback(source, card);
+        }
+
+        private CombatSpellAsset ResolveSpellAsset(CardDefinition card, string spellId)
+        {
+            var resolvedSpellId = !string.IsNullOrWhiteSpace(spellId)
+                ? spellId
+                : card != null ? card.SpellId : null;
+
+            return FindSpellById(resolvedSpellId);
+        }
+
+        private void ApplySpellEffectLines(ChampionCombatState source, CardDefinition card, CombatSpellAsset spell)
+        {
+            var effectResults = new List<string>();
+            foreach (var line in spell.EffectLines)
+            {
+                if (line == null || line.amount <= 0)
+                {
+                    continue;
+                }
+
+                switch (line.kind)
+                {
+                    case SpellEffectKind.Deal:
+                        var dealt = DealDamageToEnemy(line.amount);
+                        effectResults.Add(dealt + " damage");
+                        break;
+                    case SpellEffectKind.Heal:
+                        var healed = source.Heal(line.amount);
+                        effectResults.Add(healed + " heal");
+                        break;
+                    case SpellEffectKind.Shield:
+                        source.AddBlock(line.amount);
+                        effectResults.Add(line.amount + " shield");
+                        break;
+                }
+            }
+
+            if (effectResults.Count == 0)
+            {
+                ApplyCardEffectFallback(source, card);
+                return;
+            }
+
+            _lastAction = source.DisplayName + " played " + card.Name + " and applied " + string.Join(", ", effectResults);
+        }
+
+        private void ApplyCardEffectFallback(ChampionCombatState source, CardDefinition card)
         {
             switch (card.Effect.Type)
             {
@@ -738,6 +961,19 @@ namespace ProjectZ.Combat
                     var healed = source.Heal(card.Effect.Amount);
                     _lastAction = source.DisplayName + " played " + card.Name + " and healed " + healed + " HP";
                     break;
+            }
+        }
+
+        private void ConsumePlayedSpell(ChampionCombatState active, CardDefinition card, string spellId)
+        {
+            if (active == null || card == null)
+            {
+                return;
+            }
+
+            if (active.Hand != null)
+            {
+                active.Hand.Remove(card);
             }
         }
 
@@ -1088,25 +1324,26 @@ namespace ProjectZ.Combat
 
             var manager = GameFlowManager.Instance;
             var zoneIndex = manager != null ? manager.CurrentRun.zoneIndex : 0;
-            return zoneIndex <= 0 ? EnemyBiome.Zone1 : EnemyBiome.Zone2;
+            return ResolveBiomeForRunZoneIndex(zoneIndex);
         }
 
         private int ResolveZoneCombatIndex(EnemyBiome biome)
         {
             var manager = GameFlowManager.Instance;
             var globalNodeIndex = manager != null ? manager.CurrentRun.boardNodeIndex : 0;
+            var currentRunZoneIndex = manager != null ? Mathf.Max(0, manager.CurrentRun.zoneIndex) : 0;
+            var previousZoneCombats = 0;
 
-            var zone1Combats = _spawnRules != null
-                ? _spawnRules.GetCombatsPerZone(EnemyBiome.Zone1, DefaultCombatsPerZone)
-                : DefaultCombatsPerZone;
-
-            if (biome == EnemyBiome.Zone1)
+            for (var i = 0; i < currentRunZoneIndex; i++)
             {
-                return globalNodeIndex < 0 ? 0 : globalNodeIndex;
+                var previousBiome = ResolveBiomeForRunZoneIndex(i);
+                previousZoneCombats += _spawnRules != null
+                    ? _spawnRules.GetCombatsPerZone(previousBiome, DefaultCombatsPerZone)
+                    : DefaultCombatsPerZone;
             }
 
-            var zone2Index = globalNodeIndex - zone1Combats;
-            return zone2Index < 0 ? 0 : zone2Index;
+            var localCombatIndex = globalNodeIndex - previousZoneCombats;
+            return localCombatIndex < 0 ? 0 : localCombatIndex;
         }
 
         private bool IsBossFight(EnemyBiome biome, int zoneCombatIndex)
@@ -1148,7 +1385,17 @@ namespace ProjectZ.Combat
             }
 
             Debug.LogWarning("No valid spawn tier rule for biome " + biome + " at zone index " + zoneCombatIndex + ". Using fallback tier.");
-            return biome == EnemyBiome.Zone1 ? EnemyTier.Minion : EnemyTier.Champion;
+            switch (biome)
+            {
+                case EnemyBiome.Zone1:
+                    return EnemyTier.Minion;
+                case EnemyBiome.Zone2:
+                    return EnemyTier.Elite;
+                case EnemyBiome.Zone3:
+                    return EnemyTier.Champion;
+                default:
+                    return EnemyTier.Minion;
+            }
         }
 
         private EnemyTier RollTierByWeights(List<EnemyTierWeightEntry> weights)
@@ -1195,7 +1442,34 @@ namespace ProjectZ.Combat
                 return;
             }
 
+            if (_debugBiomeOverride.Value == EnemyBiome.Zone2)
+            {
+                _debugBiomeOverride = EnemyBiome.Zone3;
+                return;
+            }
+
             _debugBiomeOverride = null;
+        }
+
+        private EnemyBiome ResolveBiomeForRunZoneIndex(int runZoneIndex)
+        {
+            var registry = RuntimeAssetRegistryAsset.Load();
+            var runLoopConfig = registry != null ? registry.RunLoopConfig : null;
+            var zoneId = runLoopConfig != null
+                ? runLoopConfig.GetZoneIdForRunIndex(runZoneIndex, runZoneIndex + 1)
+                : runZoneIndex + 1;
+
+            switch (zoneId)
+            {
+                case 1:
+                    return EnemyBiome.Zone1;
+                case 2:
+                    return EnemyBiome.Zone2;
+                case 3:
+                    return EnemyBiome.Zone3;
+                default:
+                    return EnemyBiome.Zone1;
+            }
         }
 
         private void CycleTierOverride()
@@ -1254,6 +1528,32 @@ namespace ProjectZ.Combat
             }
 
             _debugEnemyIdOverride = ids[index + 1];
+        }
+
+        private Dictionary<string, CombatSpellAsset> GetSpellIndex()
+        {
+            if (_spellIndexCache != null)
+            {
+                return _spellIndexCache;
+            }
+
+            var registry = RuntimeAssetRegistryAsset.Load();
+            var library = registry != null ? registry.SpellLibrary : null;
+            _spellIndexCache = library != null
+                ? library.BuildIndexById()
+                : new Dictionary<string, CombatSpellAsset>();
+            return _spellIndexCache;
+        }
+
+        private CombatSpellAsset FindSpellById(string spellId)
+        {
+            if (string.IsNullOrWhiteSpace(spellId))
+            {
+                return null;
+            }
+
+            var index = GetSpellIndex();
+            return index.TryGetValue(spellId, out var spell) ? spell : null;
         }
 
         public string DebugBiomeOverrideLabel()
@@ -1392,7 +1692,7 @@ namespace ProjectZ.Combat
                 GUILayout.EndHorizontal();
 
                 GUILayout.Space(10f);
-                GUILayout.Label("Gem Pool (used gems become inactive until reroll/new turn)");
+                GUILayout.Label("Gem Pool (gems stay available; only spells are consumed)");
                 GUILayout.Label(string.Join(" | ", _gems.Select(FormatGemSlot)));
                 GUILayout.Label("Available: " + FormatGemCounts(CountAvailableGems()));
                 GUILayout.Label("Unavailable: " + FormatGemCounts(CountUnavailableGems()));

@@ -15,9 +15,11 @@ MonoBehaviour:
   enemies:
   - enemyId: glass_shifter
     displayName: Silica Mirage
-    maxHp: 45
+    maxHp: 18
     biome: 0
     tier: 0
+    typeDefinition: {fileID: 11400000, guid: 5cdd169318a575648bf2b2556b206660, type: 2}
+    artIndex: 1
     intents:
     - spellId: refracted_ray
       intentLabelOverride: 
@@ -25,11 +27,69 @@ MonoBehaviour:
       intentLabelOverride: 
     - spellId: blinding_glare
       intentLabelOverride: 
+  - enemyId: static_skink
+    displayName: Bolt Runner
+    maxHp: 24
+    biome: 0
+    tier: 1
+    typeDefinition: {fileID: 11400000, guid: 4699670a6a48edd46b74d5295613bed8, type: 2}
+    artIndex: 2
+    intents:
+    - spellId: static_discharge
+      intentLabelOverride: 
+    - spellId: overload
+      intentLabelOverride: 
+    - spellId: sand_bolt
+      intentLabelOverride: 
+  - enemyId: ember_crawler
+    displayName: Ash Strider
+    maxHp: 30
+    biome: 0
+    tier: 2
+    typeDefinition: {fileID: 11400000, guid: 4554b0ab2c8a29a44bf787114745010f, type: 2}
+    artIndex: 3
+    intents:
+    - spellId: searing_blood_jet
+      intentLabelOverride: 
+    - spellId: sand_bolt
+      intentLabelOverride: 
+    - spellId: heat_veil
+      intentLabelOverride: 
+  - enemyId: prism_colossus
+    displayName: Prism Colossus
+    maxHp: 45
+    biome: 0
+    tier: 3
+    typeDefinition: {fileID: 11400000, guid: 5cdd169318a575648bf2b2556b206660, type: 2}
+    artIndex: 3
+    intents:
+    - spellId: refracted_ray
+      intentLabelOverride: 
+    - spellId: solar_intake
+      intentLabelOverride: 
+    - spellId: spike_eruption
+      intentLabelOverride: 
+  - enemyId: dune_raider
+    displayName: Dune Raider
+    maxHp: 40
+    biome: 1
+    tier: 0
+    typeDefinition: {fileID: 11400000, guid: af5071e687758154d9a0aa8a5605ef0b, type: 2}
+    artIndex: 1
+    intents:
+    - spellId: sand_bolt
+      intentLabelOverride: 
+    - spellId: gritty_embrace
+      intentLabelOverride: 
+    - spellId: overload
+      intentLabelOverride: 
   - enemyId: quicksand_naga
     displayName: Siltis the Buried
-    maxHp: 80
+    maxHp: 50
     biome: 1
-    tier: 2
+    tier: 1
+    typeDefinition: {fileID: 11400000, guid: af5071e687758154d9a0aa8a5605ef0b, type: 2}
+    artIndex: 2
     intents:
     - spellId: gritty_embrace
       intentLabelOverride: 
@@ -37,11 +97,27 @@ MonoBehaviour:
       intentLabelOverride: 
     - spellId: sandstorm_burst
       intentLabelOverride: 
+  - enemyId: cinder_vulture
+    displayName: Cinder Vulture
+    maxHp: 62
+    biome: 1
+    tier: 2
+    typeDefinition: {fileID: 11400000, guid: 4554b0ab2c8a29a44bf787114745010f, type: 2}
+    artIndex: 3
+    intents:
+    - spellId: searing_blood_jet
+      intentLabelOverride: 
+    - spellId: sandstorm_burst
+      intentLabelOverride: 
+    - spellId: blinding_glare
+      intentLabelOverride: 
   - enemyId: solar_moloch
     displayName: Magma Scout
-    maxHp: 120
+    maxHp: 78
     biome: 1
     tier: 3
+    typeDefinition: {fileID: 11400000, guid: 4554b0ab2c8a29a44bf787114745010f, type: 2}
+    artIndex: 3
     intents:
     - spellId: searing_blood_jet
       intentLabelOverride: 
@@ -49,15 +125,59 @@ MonoBehaviour:
       intentLabelOverride: 
     - spellId: spike_eruption
       intentLabelOverride: 
-  - enemyId: static_skink
-    displayName: Bolt Runner
-    maxHp: 35
-    biome: 0
+  - enemyId: tide_revenant
+    displayName: Tide Revenant
+    maxHp: 68
+    biome: 2
+    tier: 0
+    typeDefinition: {fileID: 11400000, guid: 8672429ada98c294fb986864846a6c6f, type: 2}
+    artIndex: 1
+    intents:
+    - spellId: heat_veil
+      intentLabelOverride: 
+    - spellId: quicksand_sink
+      intentLabelOverride: 
+    - spellId: blinding_glare
+      intentLabelOverride: 
+  - enemyId: venom_oracle
+    displayName: Venom Oracle
+    maxHp: 82
+    biome: 2
     tier: 1
+    typeDefinition: {fileID: 11400000, guid: 4699670a6a48edd46b74d5295613bed8, type: 2}
+    artIndex: 2
     intents:
     - spellId: static_discharge
       intentLabelOverride: 
     - spellId: overload
       intentLabelOverride: 
-    - spellId: sand_bolt
+    - spellId: sandstorm_burst
+      intentLabelOverride: 
+  - enemyId: rift_howler
+    displayName: Rift Howler
+    maxHp: 98
+    biome: 2
+    tier: 2
+    typeDefinition: {fileID: 11400000, guid: 5cdd169318a575648bf2b2556b206660, type: 2}
+    artIndex: 3
+    intents:
+    - spellId: refracted_ray
+      intentLabelOverride: 
+    - spellId: solar_intake
+      intentLabelOverride: 
+    - spellId: spike_eruption
+      intentLabelOverride: 
+  - enemyId: abyss_tyrant
+    displayName: Abyss Tyrant
+    maxHp: 120
+    biome: 2
+    tier: 3
+    typeDefinition: {fileID: 11400000, guid: 8672429ada98c294fb986864846a6c6f, type: 2}
+    artIndex: 3
+    intents:
+    - spellId: spike_eruption
+      intentLabelOverride: 
+    - spellId: solar_intake
+      intentLabelOverride: 
+    - spellId: quicksand_sink
       intentLabelOverride: 

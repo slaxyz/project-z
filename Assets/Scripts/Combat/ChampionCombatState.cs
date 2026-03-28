@@ -4,13 +4,14 @@ namespace ProjectZ.Combat
 {
     public class ChampionCombatState
     {
-        public ChampionCombatState(string id, string displayName, int maxHp, List<CardDefinition> hand)
+        public ChampionCombatState(string id, string displayName, int maxHp, List<string> availableSpellIds, List<CardDefinition> hand = null)
         {
             Id = id;
             DisplayName = displayName;
             MaxHp = maxHp;
             CurrentHp = maxHp;
-            Hand = hand;
+            AvailableSpellIds = availableSpellIds ?? new List<string>();
+            Hand = hand ?? new List<CardDefinition>();
         }
 
         public string Id { get; }
@@ -18,6 +19,7 @@ namespace ProjectZ.Combat
         public int MaxHp { get; }
         public int CurrentHp { get; private set; }
         public int Block { get; private set; }
+        public List<string> AvailableSpellIds { get; }
         public List<CardDefinition> Hand { get; }
 
         public bool IsAlive => CurrentHp > 0;
@@ -83,5 +85,17 @@ namespace ProjectZ.Combat
         {
             Block = 0;
         }
+
+        public void ReplaceHand(List<CardDefinition> hand)
+        {
+            Hand.Clear();
+            if (hand == null)
+            {
+                return;
+            }
+
+            Hand.AddRange(hand);
+        }
+
     }
 }

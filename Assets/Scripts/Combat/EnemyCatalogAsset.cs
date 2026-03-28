@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using ProjectZ.Run;
 using UnityEngine;
 
 namespace ProjectZ.Combat
@@ -27,6 +28,8 @@ namespace ProjectZ.Combat
         [SerializeField] private int maxHp = 40;
         [SerializeField] private EnemyBiome biome = EnemyBiome.Zone1;
         [SerializeField] private EnemyTier tier = EnemyTier.Minion;
+        [SerializeField] private HeroTypeDefinitionAsset typeDefinition;
+        [SerializeField] private int artIndex = 1;
         [SerializeField] private List<EnemyIntentAssetEntry> intents = new List<EnemyIntentAssetEntry>();
 
         public bool IsValid()
@@ -58,7 +61,9 @@ namespace ProjectZ.Combat
                 maxHp,
                 biome,
                 tier,
-                runtimeIntents);
+                runtimeIntents,
+                typeDefinition,
+                artIndex);
         }
     }
 
