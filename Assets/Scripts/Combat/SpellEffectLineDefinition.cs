@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 
 namespace ProjectZ.Combat
 {
@@ -19,6 +20,7 @@ namespace ProjectZ.Combat
     {
         public SpellEffectKind kind = SpellEffectKind.Deal;
         public int amount = 1;
+        public int duration = 2;
         public ElementType element = ElementType.Fire;
 
         public bool UsesElement
@@ -68,6 +70,11 @@ namespace ProjectZ.Combat
 
         public string BuildAmountText()
         {
+            if (kind == SpellEffectKind.Burn)
+            {
+                return "(" + Mathf.Max(2, duration) + ")";
+            }
+
             return "(" + amount + ")";
         }
 

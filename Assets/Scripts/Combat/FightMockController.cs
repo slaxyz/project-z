@@ -305,6 +305,100 @@ namespace ProjectZ.Combat
             {
                 _availableEnemies.AddRange(BuildFallbackEnemyCatalog());
             }
+
+            NormalizeEnemyDefinitions(spellIndex);
+        }
+
+        private void NormalizeEnemyDefinitions(IReadOnlyDictionary<string, CombatSpellAsset> spellIndex)
+        {
+            for (var i = 0; i < _availableEnemies.Count; i++)
+            {
+                var enemy = _availableEnemies[i];
+                if (enemy == null || enemy.Intents == null || enemy.Intents.Count == 0)
+                {
+                    continue;
+                }
+
+                var primaryElement = enemy.PrimaryElement;
+                var normalized = new List<EnemyIntentDefinition>();
+                var seenSpellIds = new HashSet<string>();
+
+                foreach (var intent in enemy.Intents)
+                {
+                    if (intent == null || intent.Cost == null)
+                    {
+                        continue;
+                    }
+
+                    if (!intent.Cost.TryGetPrimaryElement(out var intentElement) || intentElement != primaryElement)
+                    {
+                        continue;
+                    }
+
+                    normalized.Add(intent);
+                    if (!string.IsNullOrWhiteSpace(intent.SpellId))
+                    {
+                        seenSpellIds.Add(intent.SpellId);
+                    }
+                }
+
+                if (normalized.Count < 4 && spellIndex != null)
+                {
+                    var matchingSpells = spellIndex.Values
+                        .Where(spell => spell != null && spell.IsValidForEnemy() && spell.TryGetPrimaryElement(out var spellElement) && spellElement == primaryElement)
+                        .OrderBy(spell => spell.CostEntries != null ? spell.CostEntries.Where(entry => entry != null && entry.amount > 0).Sum(entry => entry.amount) : int.MaxValue)
+                        .ThenBy(spell => spell.DisplayName)
+                        .ToList();
+
+                    foreach (var spell in matchingSpells)
+                    {
+                        if (normalized.Count >= 4)
+                        {
+                            break;
+                        }
+
+                        if (spell == null || seenSpellIds.Contains(spell.SpellId))
+                        {
+                            continue;
+                        }
+
+                        normalized.Add(spell.ToEnemyIntentDefinition());
+                        seenSpellIds.Add(spell.SpellId);
+                    }
+                }
+
+                if (normalized.Count < 4)
+                {
+                    foreach (var intent in enemy.Intents)
+                    {
+                        if (normalized.Count >= 4)
+                        {
+                            break;
+                        }
+
+                        if (intent == null)
+                        {
+                            continue;
+                        }
+
+                        normalized.Add(intent);
+                    }
+                }
+
+                if (normalized.Count == 0)
+                {
+                    continue;
+                }
+
+                var fallbackIntent = normalized[0];
+                while (normalized.Count < 4)
+                {
+                    normalized.Add(fallbackIntent);
+                }
+
+                enemy.Intents.Clear();
+                enemy.Intents.AddRange(normalized.Take(4));
+            }
         }
 
         private static List<EnemyDefinition> BuildFallbackEnemyCatalog()
@@ -385,6 +479,7 @@ namespace ProjectZ.Combat
                     championId,
                     DisplayNameFor(championId),
                     baseHp,
+                    championAsset != null ? championAsset.Element : ElementType.Fire,
                     spellPool));
             }
 
@@ -501,8 +596,8 @@ namespace ProjectZ.Combat
                 champion.ResetBlock();
             }
             EnsureGemSlots();
-            RollAllGems();
-            RollEnemyGems();
+            RollAllGems(GetPlayerPrimaryElement());
+            RollEnemyGems(GetEnemyPrimaryElement());
             DrawHandsForTurn();
             _lastAction = "New turn started";
         }
@@ -571,13 +666,29 @@ namespace ProjectZ.Combat
             return true;
         }
 
-        private void RollAllGems()
+        private void RollAllGems(ElementType primaryElement)
         {
             EnsureGemSlots();
 
-            foreach (var gem in _gems)
+            var elements = new List<ElementType>
             {
-                gem.ResetForTurn(GetRandomElement());
+                primaryElement,
+                primaryElement,
+                GetRandomElement(primaryElement),
+                GetRandomElement(primaryElement)
+            };
+
+            for (var i = elements.Count - 1; i > 0; i--)
+            {
+                var swapIndex = _rng.Next(0, i + 1);
+                var temp = elements[i];
+                elements[i] = elements[swapIndex];
+                elements[swapIndex] = temp;
+            }
+
+            for (var i = 0; i < _gems.Count && i < elements.Count; i++)
+            {
+                _gems[i].ResetForTurn(elements[i]);
             }
         }
 
@@ -624,12 +735,29 @@ namespace ProjectZ.Combat
             return result;
         }
 
-        private void RollEnemyGems()
+        private void RollEnemyGems(ElementType primaryElement)
         {
             _enemyGems.Clear();
-            for (var i = 0; i < GemsPerTurn; i++)
+
+            var elements = new List<ElementType>
             {
-                _enemyGems.Add(new GemSlot(GetRandomElement()));
+                primaryElement,
+                primaryElement,
+                GetRandomElement(),
+                GetRandomElement()
+            };
+
+            for (var i = elements.Count - 1; i > 0; i--)
+            {
+                var swapIndex = _rng.Next(0, i + 1);
+                var temp = elements[i];
+                elements[i] = elements[swapIndex];
+                elements[swapIndex] = temp;
+            }
+
+            for (var i = 0; i < elements.Count; i++)
+            {
+                _enemyGems.Add(new GemSlot(elements[i]));
             }
         }
 
@@ -663,6 +791,7 @@ namespace ProjectZ.Combat
             }
 
             _rerollsRemaining--;
+            var primaryElement = GetPlayerPrimaryElement();
             foreach (var gem in _gems)
             {
                 if (gem.IsLocked)
@@ -670,7 +799,7 @@ namespace ProjectZ.Combat
                     continue;
                 }
 
-                gem.Reroll(GetRandomElement());
+                gem.Reroll(GetRandomElement(primaryElement));
             }
 
             _lastAction = "Rerolled unlocked runes";
@@ -877,6 +1006,7 @@ namespace ProjectZ.Combat
             }
 
             ApplyCardEffect(active, card, ResolveSpellAsset(card, spellId));
+            ConsumeGems(card.Cost);
             _playedCardsThisTurn.Add(card);
 
             ConsumePlayedSpell(active, card, spellId);
@@ -891,13 +1021,14 @@ namespace ProjectZ.Combat
 
         private void ApplyCardEffect(ChampionCombatState source, CardDefinition card, CombatSpellAsset spell)
         {
+            var spellElement = ResolveSpellElement(spell);
             if (spell != null && spell.EffectLines != null && spell.EffectLines.Count > 0)
             {
-                ApplySpellEffectLines(source, card, spell);
+                ApplySpellEffectLines(source, card, spell, spellElement);
                 return;
             }
 
-            ApplyCardEffectFallback(source, card);
+            ApplyCardEffectFallback(source, card, spellElement);
         }
 
         private CombatSpellAsset ResolveSpellAsset(CardDefinition card, string spellId)
@@ -909,9 +1040,10 @@ namespace ProjectZ.Combat
             return FindSpellById(resolvedSpellId);
         }
 
-        private void ApplySpellEffectLines(ChampionCombatState source, CardDefinition card, CombatSpellAsset spell)
+        private void ApplySpellEffectLines(ChampionCombatState source, CardDefinition card, CombatSpellAsset spell, ElementType? spellElement)
         {
             var effectResults = new List<string>();
+            var rawDamage = 0;
             foreach (var line in spell.EffectLines)
             {
                 if (line == null || line.amount <= 0)
@@ -922,8 +1054,7 @@ namespace ProjectZ.Combat
                 switch (line.kind)
                 {
                     case SpellEffectKind.Deal:
-                        var dealt = DealDamageToEnemy(line.amount);
-                        effectResults.Add(dealt + " damage");
+                        rawDamage += line.amount;
                         break;
                     case SpellEffectKind.Heal:
                         var healed = source.Heal(line.amount);
@@ -933,24 +1064,37 @@ namespace ProjectZ.Combat
                         source.AddBlock(line.amount);
                         effectResults.Add(line.amount + " shield");
                         break;
+                    case SpellEffectKind.Burn:
+                        if (_enemy != null)
+                        {
+                            var appliedBurn = _enemy.AddBurn(line.amount, line.duration);
+                            effectResults.Add(appliedBurn + " burn");
+                        }
+                        break;
                 }
+            }
+
+            if (rawDamage > 0)
+            {
+                var dealt = DealDamageToEnemy(rawDamage, spellElement);
+                effectResults.Insert(0, dealt + " damage");
             }
 
             if (effectResults.Count == 0)
             {
-                ApplyCardEffectFallback(source, card);
+                ApplyCardEffectFallback(source, card, spellElement);
                 return;
             }
 
             _lastAction = source.DisplayName + " played " + card.Name + " and applied " + string.Join(", ", effectResults);
         }
 
-        private void ApplyCardEffectFallback(ChampionCombatState source, CardDefinition card)
+        private void ApplyCardEffectFallback(ChampionCombatState source, CardDefinition card, ElementType? spellElement)
         {
             switch (card.Effect.Type)
             {
                 case CardEffectType.Damage:
-                    var dealt = DealDamageToEnemy(card.Effect.Amount);
+                    var dealt = DealDamageToEnemy(card.Effect.Amount, spellElement);
                     _lastAction = source.DisplayName + " played " + card.Name + " and dealt " + dealt + " damage";
                     break;
                 case CardEffectType.Shield:
@@ -977,14 +1121,14 @@ namespace ProjectZ.Combat
             }
         }
 
-        private int DealDamageToEnemy(int rawDamage)
+        private int DealDamageToEnemy(int rawDamage, ElementType? sourceElement = null)
         {
             if (_enemy == null)
             {
                 return 0;
             }
 
-            return _enemy.TakeDamage(rawDamage);
+            return _enemy.TakeDamage(rawDamage, sourceElement);
         }
 
         private void ConsumeGems(CardCost cost)
@@ -1000,7 +1144,7 @@ namespace ProjectZ.Combat
                         continue;
                     }
 
-                    gem.IsAvailable = false;
+                    gem.Reload(GetRandomElement(GetPlayerPrimaryElement()));
                     toConsume--;
                 }
             }
@@ -1019,7 +1163,7 @@ namespace ProjectZ.Combat
                         continue;
                     }
 
-                    gem.IsAvailable = false;
+                    gem.Reload(GetRandomElement(GetEnemyPrimaryElement()));
                     toConsume--;
                 }
             }
@@ -1032,6 +1176,7 @@ namespace ProjectZ.Combat
                 return;
             }
 
+            _enemy.BeginTurn();
             _enemy.ResetBlock();
             var actions = new List<string>();
             var maxActions = _enemy.Definition.Intents.Count;
@@ -1048,7 +1193,7 @@ namespace ProjectZ.Combat
                     if (_enemyRerollsRemaining > 0)
                     {
                         _enemyRerollsRemaining--;
-                        RollEnemyGems();
+                        RollEnemyGems(GetEnemyPrimaryElement());
                         actions.Add(_enemy.Definition.DisplayName + " rerolls gems (" + _enemyRerollsRemaining + " left)");
                         continue;
                     }
@@ -1545,6 +1690,37 @@ namespace ProjectZ.Combat
             return _spellIndexCache;
         }
 
+        private ElementType GetPlayerPrimaryElement()
+        {
+            var active = GetActiveAliveChampion();
+            return active != null ? active.Element : ElementType.Fire;
+        }
+
+        private ElementType GetEnemyPrimaryElement()
+        {
+            if (_enemy != null && _enemy.Definition != null)
+            {
+                return _enemy.Definition.PrimaryElement;
+            }
+
+            return ElementType.Fire;
+        }
+
+        private static ElementType? ResolveSpellElement(CombatSpellAsset spell)
+        {
+            if (spell == null)
+            {
+                return null;
+            }
+
+            return spell.TryGetPrimaryElement(out var element) ? element : (ElementType?)null;
+        }
+
+        private ElementType GetRandomElement(ElementType preferredElement)
+        {
+            return _rng.NextDouble() < 0.10d ? preferredElement : GetRandomElement();
+        }
+
         private CombatSpellAsset FindSpellById(string spellId)
         {
             if (string.IsNullOrWhiteSpace(spellId))
@@ -1823,6 +1999,12 @@ namespace ProjectZ.Combat
                     return;
                 }
 
+                Element = element;
+                IsAvailable = true;
+            }
+
+            public void Reload(ElementType element)
+            {
                 Element = element;
                 IsAvailable = true;
             }

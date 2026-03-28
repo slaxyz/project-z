@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4f8abe6fbed1576499142cb486cf6078, type: 3}
+  m_Name: AstralStitch
+  m_EditorClassIdentifier: Assembly-CSharp::ProjectZ.Combat.CombatSpellAsset
+  spellId: astral_stitch
+  displayName: Astral Stitch
+  effectType: 2
+  value: 4
+  effectLines:
+  - kind: 1
+    amount: 4
+    duration: 2
+    element: 3
+  costs:
+  - element: 3
+    amount: 1
+  isEnemyUsable: 1
+  tags: []

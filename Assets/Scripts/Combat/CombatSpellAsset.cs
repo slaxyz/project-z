@@ -25,6 +25,37 @@ namespace ProjectZ.Combat
         public IReadOnlyList<ElementCostEntry> CostEntries => costs;
         public int CostEntriesCount => costs != null ? costs.Count : 0;
 
+        public bool TryGetPrimaryElement(out ElementType element)
+        {
+            element = default;
+            if (costs == null || costs.Count == 0)
+            {
+                return false;
+            }
+
+            var firstCost = costs.Where(cost => cost != null && cost.amount > 0).FirstOrDefault();
+            if (firstCost == null)
+            {
+                return false;
+            }
+
+            foreach (var cost in costs)
+            {
+                if (cost == null || cost.amount <= 0)
+                {
+                    continue;
+                }
+
+                if (cost.element != firstCost.element)
+                {
+                    return false;
+                }
+            }
+
+            element = firstCost.element;
+            return true;
+        }
+
         public bool IsValidForEnemy()
         {
             return !string.IsNullOrWhiteSpace(spellId)
@@ -55,7 +86,8 @@ namespace ProjectZ.Combat
             return new EnemyIntentDefinition(
                 label,
                 new CardCost(runtimeCost),
-                new CardEffect(effectType, value));
+                new CardEffect(effectType, value),
+                spellId);
         }
 
         public IReadOnlyList<ElementType> BuildRuneCostSequence()

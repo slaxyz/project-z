@@ -1094,9 +1094,11 @@ namespace ProjectZ.Core
                 return new List<string>();
             }
 
-            return GetSpellIndex().Keys
-                .Where(id => DoesSpellMatchElement(id, championElement.Value))
-                .OrderBy(id => id)
+            return GetSpellIndex().Values
+                .Where(spell => spell != null && DoesSpellMatchElement(spell.SpellId, championElement.Value))
+                .OrderBy(spell => spell.CostEntries != null ? spell.CostEntries.Where(entry => entry != null && entry.amount > 0).Sum(entry => entry.amount) : int.MaxValue)
+                .ThenBy(spell => spell.DisplayName)
+                .Select(spell => spell.SpellId)
                 .ToList();
         }
 

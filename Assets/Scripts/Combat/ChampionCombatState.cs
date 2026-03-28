@@ -4,11 +4,12 @@ namespace ProjectZ.Combat
 {
     public class ChampionCombatState
     {
-        public ChampionCombatState(string id, string displayName, int maxHp, List<string> availableSpellIds, List<CardDefinition> hand = null)
+        public ChampionCombatState(string id, string displayName, int maxHp, ElementType element, List<string> availableSpellIds, List<CardDefinition> hand = null)
         {
             Id = id;
             DisplayName = displayName;
             MaxHp = maxHp;
+            Element = element;
             CurrentHp = maxHp;
             AvailableSpellIds = availableSpellIds ?? new List<string>();
             Hand = hand ?? new List<CardDefinition>();
@@ -17,6 +18,7 @@ namespace ProjectZ.Combat
         public string Id { get; }
         public string DisplayName { get; }
         public int MaxHp { get; }
+        public ElementType Element { get; }
         public int CurrentHp { get; private set; }
         public int Block { get; private set; }
         public List<string> AvailableSpellIds { get; }
