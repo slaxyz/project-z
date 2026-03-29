@@ -22,6 +22,9 @@ namespace ProjectZ.Core
         public bool LastFightWasVictory { get; private set; }
         public bool LastFightWasBoss { get; private set; }
         public int LastFightCoinsReward { get; private set; }
+        public string LastFightEnemyId { get; private set; } = string.Empty;
+        public string LastFightEnemyDisplayName { get; private set; } = string.Empty;
+        public int SpellRewardRefreshesRemaining => Mathf.Max(0, _pendingSpellRewardRefreshesRemaining);
 
         [SerializeField] private float minLoadingDuration = 0.7f;
         [SerializeField] private int fallbackZoneCount = 2;
@@ -33,6 +36,7 @@ namespace ProjectZ.Core
         private RunLoopConfigAsset _runLoopConfig;
         private readonly List<string> _pendingSpellRewardOffers = new List<string>();
         private readonly List<string> _currentShopOffers = new List<string>();
+        private const int DefaultSpellRewardRefreshes = 1;
         private const int MaxRunSpells = 4;
         private const int TilesPerZone = 8;
         private const int ShopTileIndex = TilesPerZone - 2;
@@ -41,7 +45,9 @@ namespace ProjectZ.Core
         private string _pendingReplacementTargetChampionId;
         private bool _pendingReplacementFromShop;
         private int _pendingReplacementShopCost;
+        private int _pendingSpellRewardRefreshesRemaining;
         private Dictionary<string, CombatSpellAsset> _spellIndexCache;
+        private Dictionary<string, EnemyDefinition> _enemyIndexCache;
         private readonly System.Random _rewardRng = new System.Random();
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
@@ -129,7 +135,15 @@ namespace ProjectZ.Core
                     EnsureController<FightMockController>("FightMockController");
                     break;
                 case GameFlowState.Result:
-                    EnsureController<ResultSceneController>("ResultSceneController");
+                    if (SceneManager.GetActiveScene().name == GameScenes.Result)
+                    {
+                        EnsureController<ResultSceneController>("ResultSceneController");
+                    }
+                    else
+                    {
+                        EnsureController<FightEndSceneController>("FightEndSceneController");
+                        EnsureController<EnemyFightPanelView>("EnemyFightPanelView");
+                    }
                     break;
             }
         }
@@ -168,11 +182,11 @@ namespace ProjectZ.Core
                 Debug.Log("Active run detected from Home. Going directly to run.");
                 if (HasLastFightResult)
                 {
-                    LoadScene(GameScenes.Result);
+                    LoadScene(GameScenes.FightEnd);
                     return;
                 }
 
-                EnterBoardViaZoneAnimation();
+                LoadScene(GameScenes.Board);
                 return;
             }
 
@@ -190,7 +204,7 @@ namespace ProjectZ.Core
             if (CurrentRun.isActive && CurrentRun.HasValidTeam())
             {
                 Debug.Log("Run already active. Continuing from saved progression.");
-                EnterBoardViaZoneAnimation();
+                LoadScene(GameScenes.Board);
                 return;
             }
 
@@ -204,12 +218,15 @@ namespace ProjectZ.Core
             CurrentRun.Reset();
             CurrentRun.SetTeam(teamSnapshot);
             CurrentRun.branchChoice = -1;
-            EnsureChampionSpellLoadoutsInitialized();
+            MetaProgression.lifetimeRunCount = Mathf.Max(0, MetaProgression.lifetimeRunCount) + 1;
+            InitializeRunInventory();
             CurrentRun.isActive = true;
             HasLastFightResult = false;
             LastFightWasVictory = false;
             LastFightWasBoss = false;
             LastFightCoinsReward = 0;
+            LastFightEnemyId = string.Empty;
+            LastFightEnemyDisplayName = string.Empty;
             _isBoardTileValidated = false;
             _isNextFightBoss = false;
             _pendingAdvanceAfterBossCelebration = false;
@@ -270,6 +287,8 @@ namespace ProjectZ.Core
             LastFightWasVictory = false;
             LastFightWasBoss = false;
             LastFightCoinsReward = 0;
+            LastFightEnemyId = string.Empty;
+            LastFightEnemyDisplayName = string.Empty;
             _isBoardTileValidated = false;
             _isNextFightBoss = false;
             _pendingAdvanceAfterBossCelebration = false;
@@ -550,6 +569,7 @@ namespace ProjectZ.Core
             _pendingReplacementTargetChampionId = null;
             _pendingReplacementFromShop = true;
             _pendingReplacementShopCost = cost;
+            AddSpellToRunInventory(spellId);
             message = "Choose a champion.";
             PersistRunProgress();
             return true;
@@ -579,6 +599,15 @@ namespace ProjectZ.Core
             LastFightWasVictory = victory;
             LastFightWasBoss = _isNextFightBoss;
             LastFightCoinsReward = 0;
+            LastFightEnemyId = string.Empty;
+            LastFightEnemyDisplayName = string.Empty;
+
+            var fight = FindFirstObjectByType<FightMockController>();
+            if (fight != null && fight.TryGetCurrentEnemyDefinition(out var enemy) && enemy != null)
+            {
+                LastFightEnemyId = enemy.Id;
+                LastFightEnemyDisplayName = enemy.DisplayName;
+            }
 
             if (victory)
             {
@@ -606,7 +635,7 @@ namespace ProjectZ.Core
             }
 
             PersistRunProgress();
-            LoadScene(GameScenes.Result);
+            LoadScene(GameScenes.FightEnd);
         }
 
         public void NextBoardNode()
@@ -637,11 +666,11 @@ namespace ProjectZ.Core
             AdvanceBoardProgress(true);
         }
 
-        public void EndRun(int pointsEarned)
+        public void EndRun(int pointsEarned, string nextScene = null)
         {
             if (!CanEndRun())
             {
-                Debug.LogWarning("EndRun blocked: only available on Result screen after a fight result.");
+                Debug.LogWarning("EndRun blocked: only available on FightEnd screen after a fight result.");
                 return;
             }
 
@@ -661,6 +690,8 @@ namespace ProjectZ.Core
             LastFightWasVictory = false;
             LastFightWasBoss = false;
             LastFightCoinsReward = 0;
+            LastFightEnemyId = string.Empty;
+            LastFightEnemyDisplayName = string.Empty;
             _isBoardTileValidated = false;
             _isNextFightBoss = false;
             _pendingAdvanceAfterBossCelebration = false;
@@ -670,7 +701,7 @@ namespace ProjectZ.Core
             MetaProgression.ClearRunProgress();
             SaveMeta();
             Debug.Log("Run ended. Reward added: " + totalReward + " coins.");
-            LoadScene(GameScenes.Home);
+            LoadScene(string.IsNullOrWhiteSpace(nextScene) ? GameScenes.Home : nextScene);
         }
 
         public IReadOnlyList<string> GetPendingSpellRewardOffers()
@@ -683,9 +714,53 @@ namespace ProjectZ.Core
             return _pendingSpellRewardOffers.Count > 0;
         }
 
-        public IReadOnlyList<string> GetRunDeckSpellIds()
+        public bool CanRefreshSpellRewardOffers()
+        {
+            return CurrentRun != null
+                && CurrentRun.isActive
+                && CurrentState == GameFlowState.Result
+                && LastFightWasVictory
+                && HasPendingSpellRewardChoice()
+                && !IsWaitingSpellReplacementChoice()
+                && SpellRewardRefreshesRemaining > 0;
+        }
+
+        public void AddSpellRewardRefreshes(int amount)
+        {
+            if (amount <= 0)
+            {
+                return;
+            }
+
+            _pendingSpellRewardRefreshesRemaining = Mathf.Max(0, _pendingSpellRewardRefreshesRemaining) + amount;
+            PersistRunProgress();
+        }
+
+        public IReadOnlyList<string> GetRunInventorySpellIds()
         {
             return CurrentRun.deckCardIds;
+        }
+
+        public IReadOnlyList<string> GetRunDeckSpellIds()
+        {
+            return GetRunInventorySpellIds();
+        }
+
+        public bool IsSpellInRunInventory(string spellId)
+        {
+            return !string.IsNullOrWhiteSpace(spellId) && CurrentRun.deckCardIds.Contains(spellId);
+        }
+
+        public bool AddSpellToRunInventory(string spellId)
+        {
+            if (!CurrentRun.isActive || string.IsNullOrWhiteSpace(spellId) || CurrentRun.deckCardIds.Contains(spellId))
+            {
+                return false;
+            }
+
+            CurrentRun.deckCardIds.Add(spellId);
+            PersistRunProgress();
+            return true;
         }
 
         public IReadOnlyList<string> GetSelectedChampionIdsForRun()
@@ -712,6 +787,28 @@ namespace ProjectZ.Core
             }
 
             return champion.DisplayName;
+        }
+
+        public string GetSpellDisplayName(string spellId)
+        {
+            var spell = FindSpellById(spellId);
+            if (spell == null || string.IsNullOrWhiteSpace(spell.DisplayName))
+            {
+                return string.IsNullOrWhiteSpace(spellId) ? "Unknown" : spellId;
+            }
+
+            return spell.DisplayName;
+        }
+
+        public bool TryGetSpellAsset(string spellId, out CombatSpellAsset spell)
+        {
+            spell = FindSpellById(spellId);
+            return spell != null;
+        }
+
+        public bool TryGetSpellPrimaryElement(string spellId, out ElementType spellElement)
+        {
+            return TryGetSpellElement(spellId, out spellElement);
         }
 
         public bool IsWaitingSpellReplacementChoice()
@@ -743,6 +840,16 @@ namespace ProjectZ.Core
         public bool HasLastRunSummary()
         {
             return MetaProgression.hasLastRunSummary;
+        }
+
+        public int GetLifetimeRunCount()
+        {
+            return Mathf.Max(0, MetaProgression.lifetimeRunCount);
+        }
+
+        public string GetLifetimeRunLabel()
+        {
+            return "Run #" + Mathf.Max(1, GetLifetimeRunCount());
         }
 
         public string GetLastRunSummaryLabel()
@@ -792,12 +899,10 @@ namespace ProjectZ.Core
                 return false;
             }
 
-            _pendingReplacementIncomingSpellId = spellId;
-            _pendingReplacementTargetChampionId = null;
-            _pendingReplacementFromShop = false;
-            _pendingReplacementShopCost = 0;
+            AddSpellToRunInventory(spellId);
             _pendingSpellRewardOffers.Clear();
-            message = "Choose a champion.";
+            ClearPendingReplacement();
+            message = "Spell added to run inventory.";
             PersistRunProgress();
             return true;
         }
@@ -807,6 +912,19 @@ namespace ProjectZ.Core
             _pendingSpellRewardOffers.Clear();
             ClearPendingReplacement();
             PersistRunProgress();
+        }
+
+        public bool RefreshSpellRewardOffers()
+        {
+            if (!CanRefreshSpellRewardOffers())
+            {
+                return false;
+            }
+
+            _pendingSpellRewardRefreshesRemaining = Mathf.Max(0, _pendingSpellRewardRefreshesRemaining - 1);
+            RerollSpellRewardOffers();
+            PersistRunProgress();
+            return true;
         }
 
         public bool TryReplaceRunSpell(string spellToReplaceId, out string message)
@@ -859,7 +977,7 @@ namespace ProjectZ.Core
 
             championSpells.Remove(spellToReplaceId);
             championSpells.Add(_pendingReplacementIncomingSpellId);
-            RebuildGlobalDeckFromChampionLoadouts();
+            EnsureRunInventoryContainsChampionLoadouts();
 
             if (_pendingReplacementFromShop)
             {
@@ -936,11 +1054,18 @@ namespace ProjectZ.Core
 
         private void BuildSpellRewardOffers()
         {
+            _pendingSpellRewardRefreshesRemaining = DefaultSpellRewardRefreshes;
+            RerollSpellRewardOffers();
+        }
+
+        private void RerollSpellRewardOffers()
+        {
             _pendingSpellRewardOffers.Clear();
             ClearPendingReplacement();
-            var candidates = BuildAvailableRunSpellIds();
+            var candidates = BuildAvailableVictoryRewardSpellIds();
             if (candidates.Count == 0)
             {
+                _pendingSpellRewardRefreshesRemaining = 0;
                 return;
             }
 
@@ -951,6 +1076,22 @@ namespace ProjectZ.Core
                 _pendingSpellRewardOffers.Add(candidates[index]);
                 candidates.RemoveAt(index);
             }
+
+            if (_pendingSpellRewardOffers.Count == 0)
+            {
+                _pendingSpellRewardRefreshesRemaining = 0;
+            }
+        }
+
+        private List<string> BuildAvailableVictoryRewardSpellIds()
+        {
+            return GetSpellIndex()
+                .Values
+                .Where(spell => spell != null && spell.IsValidForEnemy())
+                .OrderBy(spell => spell.DisplayName)
+                .Select(spell => spell.SpellId)
+                .Distinct()
+                .ToList();
         }
 
         private void EnsureCurrentShopOffers()
@@ -1025,7 +1166,7 @@ namespace ProjectZ.Core
                 loadout.AddRange(nextLoadout);
             }
 
-            RebuildGlobalDeckFromChampionLoadouts();
+            EnsureRunInventoryContainsChampionLoadouts();
         }
 
         private List<string> BuildLegacyDefaultSpellLoadout()
@@ -1188,9 +1329,13 @@ namespace ProjectZ.Core
             return true;
         }
 
-        private void RebuildGlobalDeckFromChampionLoadouts()
+        public void InitializeRunInventory()
         {
-            CurrentRun.deckCardIds.Clear();
+            EnsureChampionSpellLoadoutsInitialized();
+        }
+
+        private void EnsureRunInventoryContainsChampionLoadouts()
+        {
             foreach (var loadout in CurrentRun.championSpellLoadouts)
             {
                 if (loadout == null || loadout.spellIds == null)
@@ -1236,6 +1381,42 @@ namespace ProjectZ.Core
             return index.TryGetValue(spellId, out var spell) ? spell : null;
         }
 
+        private Dictionary<string, EnemyDefinition> GetEnemyIndex()
+        {
+            if (_enemyIndexCache != null)
+            {
+                return _enemyIndexCache;
+            }
+
+            var registry = RuntimeAssetRegistryAsset.Load();
+            var catalog = registry != null ? registry.EnemyCatalog : null;
+            if (catalog == null)
+            {
+                _enemyIndexCache = new Dictionary<string, EnemyDefinition>();
+                return _enemyIndexCache;
+            }
+
+            var spellIndex = GetSpellIndex();
+            var enemies = catalog.BuildRuntimeDefinitions(spellIndex);
+            _enemyIndexCache = enemies
+                .Where(enemy => enemy != null && !string.IsNullOrWhiteSpace(enemy.Id))
+                .GroupBy(enemy => enemy.Id)
+                .ToDictionary(group => group.Key, group => group.First());
+            return _enemyIndexCache;
+        }
+
+        private bool TryGetEnemyDefinitionById(string enemyId, out EnemyDefinition enemy)
+        {
+            enemy = null;
+            if (string.IsNullOrWhiteSpace(enemyId))
+            {
+                return false;
+            }
+
+            var index = GetEnemyIndex();
+            return index.TryGetValue(enemyId, out enemy) && enemy != null;
+        }
+
         private void ClearPendingReplacement()
         {
             _pendingReplacementIncomingSpellId = null;
@@ -1257,6 +1438,8 @@ namespace ProjectZ.Core
             LastFightWasBoss = false;
             HasLastFightResult = false;
             LastFightCoinsReward = 0;
+            LastFightEnemyId = string.Empty;
+            LastFightEnemyDisplayName = string.Empty;
             _pendingSpellRewardOffers.Clear();
             _currentShopOffers.Clear();
             ClearPendingReplacement();
@@ -1279,37 +1462,40 @@ namespace ProjectZ.Core
 
                 PersistRunProgress();
                 Debug.Log("Zone cleared. Moving to Zone " + GetCurrentZoneNumber() + ".");
-                EnterBoardViaZoneAnimation();
+                LoadScene(GameScenes.Board);
                 return;
             }
 
             PersistRunProgress();
             Debug.Log("Moving to Zone " + GetCurrentZoneNumber() + ", Tile " + (GetActiveTileIndex() + 1) + ".");
-            EnterBoardViaZoneAnimation();
+            LoadScene(GameScenes.Board);
         }
 
         private void PersistRunProgress()
         {
             if (CurrentRun != null && CurrentRun.isActive)
             {
-                MetaProgression.SetRunProgress(
-                    CurrentRun.zoneIndex,
-                    CurrentRun.tileIndex,
-                    CurrentRun.branchChoice,
-                    CurrentRun.boardNodeIndex,
-                    CurrentRun.coinsGained,
-                    CurrentRun.selectedChampionIds,
-                    CurrentRun.deckCardIds,
-                    CurrentRun.championSpellLoadouts,
-                    HasLastFightResult,
-                    LastFightWasVictory,
-                    LastFightWasBoss,
-                    LastFightCoinsReward,
-                    _pendingSpellRewardOffers,
-                    _currentShopOffers,
-                    _pendingReplacementIncomingSpellId,
-                    _pendingReplacementTargetChampionId,
-                    _pendingReplacementFromShop,
+            MetaProgression.SetRunProgress(
+                CurrentRun.zoneIndex,
+                CurrentRun.tileIndex,
+                CurrentRun.branchChoice,
+                CurrentRun.boardNodeIndex,
+                CurrentRun.coinsGained,
+                CurrentRun.selectedChampionIds,
+                CurrentRun.deckCardIds,
+                CurrentRun.championSpellLoadouts,
+                HasLastFightResult,
+                LastFightWasVictory,
+                LastFightWasBoss,
+                LastFightCoinsReward,
+                LastFightEnemyId,
+                LastFightEnemyDisplayName,
+                _pendingSpellRewardOffers,
+                _pendingSpellRewardRefreshesRemaining,
+                _currentShopOffers,
+                _pendingReplacementIncomingSpellId,
+                _pendingReplacementTargetChampionId,
+                _pendingReplacementFromShop,
                     _pendingReplacementShopCost);
             }
             else
@@ -1347,13 +1533,16 @@ namespace ProjectZ.Core
                     })
                     .ToList()
                 : new List<ChampionSpellLoadout>();
-            EnsureChampionSpellLoadoutsInitialized();
+            InitializeRunInventory();
             HasLastFightResult = MetaProgression.runHasLastFightResult;
             LastFightWasVictory = MetaProgression.runLastFightWasVictory;
             LastFightWasBoss = MetaProgression.runLastFightWasBoss;
             LastFightCoinsReward = Mathf.Max(0, MetaProgression.runLastFightCoinsReward);
+            LastFightEnemyId = MetaProgression.runLastFightEnemyId ?? string.Empty;
+            LastFightEnemyDisplayName = MetaProgression.runLastFightEnemyDisplayName ?? string.Empty;
             _pendingSpellRewardOffers.Clear();
             _pendingSpellRewardOffers.AddRange(MetaProgression.runPendingSpellRewardOffers.Where(id => !string.IsNullOrWhiteSpace(id)));
+            _pendingSpellRewardRefreshesRemaining = Mathf.Max(0, MetaProgression.runPendingSpellRewardRefreshesRemaining);
             _currentShopOffers.Clear();
             _currentShopOffers.AddRange(MetaProgression.runShopOffers.Where(id => !string.IsNullOrWhiteSpace(id)));
             _pendingReplacementIncomingSpellId = MetaProgression.runPendingReplacementIncomingSpellId;
@@ -1416,6 +1605,11 @@ namespace ProjectZ.Core
             return CurrentRun.isActive && CurrentState == GameFlowState.Result && HasLastFightResult;
         }
 
+        public bool TryGetLastFightEnemyDefinition(out EnemyDefinition enemy)
+        {
+            return TryGetEnemyDefinitionById(LastFightEnemyId, out enemy);
+        }
+
         private System.Collections.IEnumerator LoadNextSceneAfterLoading()
         {
             var op = SceneManager.LoadSceneAsync(NextSceneAfterLoading);
@@ -1468,6 +1662,7 @@ namespace ProjectZ.Core
                     return GameFlowState.Board;
                 case GameScenes.Fight:
                     return GameFlowState.Fight;
+                case GameScenes.FightEnd:
                 case GameScenes.Result:
                     return GameFlowState.Result;
                 default:

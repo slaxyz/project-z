@@ -18,6 +18,9 @@ namespace ProjectZ.UI
         [SerializeField] private CombatSpellAsset spell;
         [SerializeField] private List<SpellEffectLineDefinition> previewLines = new List<SpellEffectLineDefinition>();
 
+        [Header("Badges")]
+        [SerializeField] private GameObject newSpellRoot;
+
         [Header("Layout")]
         [SerializeField] private RectTransform linesRoot;
         [SerializeField] private float lineSpacing = 8f;
@@ -43,11 +46,21 @@ namespace ProjectZ.UI
 
         private void Awake()
         {
+            CacheNewSpellRoot();
+            EnsureNewSpellLabelText();
+            SetNewSpellVisible(false);
             EnsureRoot();
         }
 
         private void OnValidate()
         {
+            CacheNewSpellRoot();
+            EnsureNewSpellLabelText();
+            if (newSpellRoot != null)
+            {
+                newSpellRoot.SetActive(false);
+            }
+
             if (!Application.isPlaying)
             {
                 RefreshView();
@@ -57,7 +70,21 @@ namespace ProjectZ.UI
         public void SetSpell(CombatSpellAsset spellAsset)
         {
             spell = spellAsset;
+            if (spellAsset == null)
+            {
+                SetNewSpellVisible(false);
+            }
+
             RefreshView();
+        }
+
+        public void SetNewSpellVisible(bool isVisible)
+        {
+            CacheNewSpellRoot();
+            if (newSpellRoot != null)
+            {
+                newSpellRoot.SetActive(isVisible);
+            }
         }
 
         public void SetPreviewLines(List<SpellEffectLineDefinition> lines)
@@ -160,6 +187,56 @@ namespace ProjectZ.UI
             linesRoot = rootGo.GetComponent<RectTransform>();
             SetupRootLayout(linesRoot);
             return linesRoot;
+        }
+
+        private void CacheNewSpellRoot()
+        {
+            if (newSpellRoot != null)
+            {
+                return;
+            }
+
+            var badgeRoot = FindNewSpellRootInParents();
+            if (badgeRoot != null)
+            {
+                newSpellRoot = badgeRoot.gameObject;
+            }
+        }
+
+        private void EnsureNewSpellLabelText()
+        {
+            if (newSpellRoot == null)
+            {
+                return;
+            }
+
+            var texts = newSpellRoot.GetComponentsInChildren<TMP_Text>(true);
+            for (var i = 0; i < texts.Length; i++)
+            {
+                var text = texts[i];
+                if (text != null && text.gameObject.name == "NewSpell_Name")
+                {
+                    text.text = "NEW SPELL";
+                    break;
+                }
+            }
+        }
+
+        private Transform FindNewSpellRootInParents()
+        {
+            var current = transform;
+            while (current != null)
+            {
+                var badgeRoot = current.Find("NewSpell");
+                if (badgeRoot != null)
+                {
+                    return badgeRoot;
+                }
+
+                current = current.parent;
+            }
+
+            return null;
         }
 
         private void RefreshRuneCosts()

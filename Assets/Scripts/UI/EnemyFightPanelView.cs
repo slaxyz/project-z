@@ -2,6 +2,7 @@ using ProjectZ.Combat;
 using ProjectZ.Core;
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace ProjectZ.UI
@@ -18,6 +19,7 @@ namespace ProjectZ.UI
         [SerializeField] private TMP_Text enemyNameShadowText;
 
         private FightMockController _fight;
+        private GameFlowManager _manager;
         private TeamHudHealthBarView _enemyHealthBarView;
         private string _lastEnemySignature;
 
@@ -50,26 +52,38 @@ namespace ProjectZ.UI
             if (rightEnemyPanelRoot == null)
             {
                 rightEnemyPanelRoot = GameObject.Find("RightEnemyPanel")?.GetComponent<RectTransform>();
+                if (rightEnemyPanelRoot == null)
+                {
+                    rightEnemyPanelRoot = GameObject.Find("EnemyPanel")?.GetComponent<RectTransform>();
+                }
             }
 
             if (enemyHudRoot == null)
             {
                 enemyHudRoot = GameObject.Find("EnemyHUD_Right")?.GetComponent<RectTransform>();
+                if (enemyHudRoot == null)
+                {
+                    enemyHudRoot = GameObject.Find("EnemyPanel")?.GetComponent<RectTransform>();
+                }
             }
+
+            var searchRoot = rightEnemyPanelRoot != null ? rightEnemyPanelRoot : enemyHudRoot;
 
             if (zoneBackgroundImage == null)
             {
-                zoneBackgroundImage = FindDeepChild(rightEnemyPanelRoot, "zone_BG")?.GetComponent<Image>();
+                zoneBackgroundImage = FindDeepChild(searchRoot, "zone_BG")?.GetComponent<Image>();
             }
 
             if (splashImage == null)
             {
-                splashImage = FindDeepChild(rightEnemyPanelRoot, "monster_splash")?.GetComponent<Image>();
+                splashImage = FindDeepChild(searchRoot, "monster_splash")?.GetComponent<Image>();
             }
 
             if (typeBadgeView == null)
             {
-                var badgeRoot = FindDeepChild(rightEnemyPanelRoot, "ElementBadge");
+                var badgeRoot = FindDeepChild(searchRoot, "TypeBadge")
+                    ?? FindDeepChild(searchRoot, "ElementBadge")
+                    ?? FindDeepChild(searchRoot, "Badge");
                 if (badgeRoot != null)
                 {
                     typeBadgeView = badgeRoot.GetComponent<TypeBadgeView>();
@@ -83,11 +97,19 @@ namespace ProjectZ.UI
             if (!IsUnderRoot(enemyNameMainText, enemyHudRoot))
             {
                 enemyNameMainText = FindLabel(enemyHudRoot, "Nickname", "Label_Main");
+                if (enemyNameMainText == null && enemyHudRoot != null)
+                {
+                    enemyNameMainText = FindTextByName(enemyHudRoot, "Label_Main");
+                }
             }
 
             if (!IsUnderRoot(enemyNameShadowText, enemyHudRoot))
             {
                 enemyNameShadowText = FindLabel(enemyHudRoot, "Nickname", "Label_Shadow");
+                if (enemyNameShadowText == null && enemyHudRoot != null)
+                {
+                    enemyNameShadowText = FindTextByName(enemyHudRoot, "Label_Shadow");
+                }
             }
         }
 
@@ -114,8 +136,33 @@ namespace ProjectZ.UI
                 _fight = FindFirstObjectByType<FightMockController>();
             }
 
-            if (_fight == null || !_fight.TryGetCurrentEnemyDefinition(out var enemy))
+            var hasEnemy = false;
+            EnemyDefinition enemy = null;
+
+            if (_fight != null)
             {
+                hasEnemy = _fight.TryGetCurrentEnemyDefinition(out enemy);
+            }
+            else
+            {
+                if (_manager == null)
+                {
+                    _manager = GameFlowManager.Instance;
+                }
+
+                if (_manager != null)
+                {
+                    hasEnemy = _manager.TryGetLastFightEnemyDefinition(out enemy);
+                }
+            }
+
+            if (!hasEnemy || enemy == null)
+            {
+                if (SceneManager.GetActiveScene().name == GameScenes.FightEnd)
+                {
+                    return;
+                }
+
                 ClearVisuals();
                 return;
             }
@@ -200,6 +247,25 @@ namespace ProjectZ.UI
                 if (labels[i] != null && labels[i].name == labelName)
                 {
                     return labels[i];
+                }
+            }
+
+            return null;
+        }
+
+        private static TMP_Text FindTextByName(RectTransform root, string targetName)
+        {
+            if (root == null)
+            {
+                return null;
+            }
+
+            var texts = root.GetComponentsInChildren<TMP_Text>(true);
+            for (var i = 0; i < texts.Length; i++)
+            {
+                if (texts[i] != null && texts[i].name == targetName)
+                {
+                    return texts[i];
                 }
             }
 

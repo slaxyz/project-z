@@ -43,6 +43,7 @@ namespace ProjectZ.Combat
         private EnemyBiome? _debugBiomeOverride;
         private EnemyTier? _debugTierOverride;
         private string _debugEnemyIdOverride;
+        private bool _showDebugPanel = true;
 
         public bool IsFightResolved => _fightResolved;
         public int RerollsRemaining => _rerollsRemaining;
@@ -198,6 +199,7 @@ namespace ProjectZ.Combat
         {
             TrackCombatLog();
             HandleDebugOverrideHotkeys();
+            HandleDebugPanelToggle();
         }
 
         private void HandleDebugOverrideHotkeys()
@@ -218,6 +220,14 @@ namespace ProjectZ.Combat
             {
                 CycleEnemyOverride();
                 _lastAction = "Enemy override: " + (string.IsNullOrEmpty(_debugEnemyIdOverride) ? "Auto" : _debugEnemyIdOverride);
+            }
+        }
+
+        private void HandleDebugPanelToggle()
+        {
+            if (IsDebugPanelTogglePressed())
+            {
+                _showDebugPanel = !_showDebugPanel;
             }
         }
 
@@ -245,6 +255,15 @@ namespace ProjectZ.Combat
             return Keyboard.current != null && Keyboard.current.f8Key.wasPressedThisFrame;
 #else
             return Input.GetKeyDown(KeyCode.F8);
+#endif
+        }
+
+        private static bool IsDebugPanelTogglePressed()
+        {
+#if ENABLE_INPUT_SYSTEM
+            return Keyboard.current != null && Keyboard.current.f2Key.wasPressedThisFrame;
+#else
+            return Input.GetKeyDown(KeyCode.F2);
 #endif
         }
 
@@ -1810,6 +1829,17 @@ namespace ProjectZ.Combat
             TryResolveFight();
         }
 
+        public void DebugDefeatNow()
+        {
+            if (_fightResolved)
+            {
+                return;
+            }
+
+            _lastAction = "Debug OS: team defeated";
+            ResolveFight(false);
+        }
+
         public void RequestEndTurn()
         {
             EndTurn();
@@ -1818,6 +1848,11 @@ namespace ProjectZ.Combat
         private void OnGUI()
         {
             if (GameObject.Find(DisableDebugUiMarkerName) != null)
+            {
+                return;
+            }
+
+            if (!_showDebugPanel)
             {
                 return;
             }
@@ -1916,6 +1951,15 @@ namespace ProjectZ.Combat
                 if (GUILayout.Button("OS Enemy (Debug)", GUILayout.Height(34f)))
                 {
                     DebugOneShotEnemyNow();
+                }
+                GUI.enabled = true;
+                GUILayout.EndHorizontal();
+
+                GUILayout.BeginHorizontal();
+                GUI.enabled = !_fightResolved;
+                if (GUILayout.Button("Defeat Team (Debug)", GUILayout.Height(34f)))
+                {
+                    DebugDefeatNow();
                 }
                 GUI.enabled = true;
                 GUILayout.EndHorizontal();

@@ -80,7 +80,7 @@ namespace ProjectZ.Run
                 GUILayout.Label("Team Size: " + manager.CurrentRun.selectedChampionIds.Count + " / 3");
                 GUILayout.Label("Coins won this fight: +" + manager.LastFightCoinsReward);
                 GUILayout.Label("Coins won this run: " + manager.CurrentRun.coinsGained);
-                GUILayout.Label("Run Spells: " + manager.CurrentRun.deckCardIds.Count);
+                GUILayout.Label("Run Inventory: " + manager.GetRunInventorySpellIds().Count);
 
                 GUILayout.Space(14f);
                 GUILayout.Label("Actions");

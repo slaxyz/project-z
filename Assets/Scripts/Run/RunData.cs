@@ -14,6 +14,7 @@ namespace ProjectZ.Run
     public class RunData
     {
         public List<string> selectedChampionIds = new List<string>();
+        // Run inventory: all spells currently owned/available during this run.
         public List<string> deckCardIds = new List<string>();
         public List<ChampionSpellLoadout> championSpellLoadouts = new List<ChampionSpellLoadout>();
         public int boardNodeIndex;

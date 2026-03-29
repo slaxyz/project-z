@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using ProjectZ.Run;
+using UnityEngine;
 
 namespace ProjectZ.Meta
 {
@@ -23,13 +24,17 @@ namespace ProjectZ.Meta
         public bool runLastFightWasVictory;
         public bool runLastFightWasBoss;
         public int runLastFightCoinsReward;
+        public string runLastFightEnemyId;
+        public string runLastFightEnemyDisplayName;
         public List<string> runPendingSpellRewardOffers = new List<string>();
+        public int runPendingSpellRewardRefreshesRemaining;
         public List<string> runShopOffers = new List<string>();
         public string runPendingReplacementIncomingSpellId;
         public string runPendingReplacementChampionId;
         public bool runPendingReplacementFromShop;
         public int runPendingReplacementShopCost;
         public bool hasLastRunSummary;
+        public int lifetimeRunCount;
         public int lastRunCoinsEarned;
         public int lastRunWins;
         public int lastRunLosses;
@@ -124,7 +129,10 @@ namespace ProjectZ.Meta
             bool lastFightWasVictory,
             bool lastFightWasBoss,
             int lastFightCoinsReward,
+            string lastFightEnemyId,
+            string lastFightEnemyDisplayName,
             IEnumerable<string> pendingSpellRewardOffers,
+            int pendingSpellRewardRefreshesRemaining,
             IEnumerable<string> shopOffers,
             string pendingReplacementIncomingSpellId,
             string pendingReplacementChampionId,
@@ -159,9 +167,16 @@ namespace ProjectZ.Meta
             runLastFightWasVictory = lastFightWasVictory;
             runLastFightWasBoss = lastFightWasBoss;
             runLastFightCoinsReward = lastFightCoinsReward;
+            runLastFightEnemyId = string.IsNullOrWhiteSpace(lastFightEnemyId)
+                ? string.Empty
+                : lastFightEnemyId;
+            runLastFightEnemyDisplayName = string.IsNullOrWhiteSpace(lastFightEnemyDisplayName)
+                ? string.Empty
+                : lastFightEnemyDisplayName;
             runPendingSpellRewardOffers = pendingSpellRewardOffers != null
                 ? pendingSpellRewardOffers.Where(id => !string.IsNullOrWhiteSpace(id)).Distinct().ToList()
                 : new List<string>();
+            runPendingSpellRewardRefreshesRemaining = Mathf.Max(0, pendingSpellRewardRefreshesRemaining);
             runShopOffers = shopOffers != null
                 ? shopOffers.Where(id => !string.IsNullOrWhiteSpace(id)).Distinct().ToList()
                 : new List<string>();
@@ -186,7 +201,10 @@ namespace ProjectZ.Meta
             runLastFightWasVictory = false;
             runLastFightWasBoss = false;
             runLastFightCoinsReward = 0;
+            runLastFightEnemyId = null;
+            runLastFightEnemyDisplayName = null;
             runPendingSpellRewardOffers = new List<string>();
+            runPendingSpellRewardRefreshesRemaining = 0;
             runShopOffers = new List<string>();
             runPendingReplacementIncomingSpellId = null;
             runPendingReplacementChampionId = null;

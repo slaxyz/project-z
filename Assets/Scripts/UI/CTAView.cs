@@ -1,4 +1,5 @@
 using System.Collections;
+using UnityEngine.Serialization;
 using UnityEngine;
 using UnityEngine.UI;
 using ProjectZ.Combat;
@@ -8,10 +9,26 @@ namespace ProjectZ.UI
     [DisallowMultipleComponent]
     public sealed class CTAView : MonoBehaviour
     {
-        [SerializeField] private bool previewDisabled;
+        public enum CTAVisualMode
+        {
+            Interactable = 0,
+            Manual = 1,
+        }
+
+        public enum CTAState
+        {
+            Default = 0,
+            Grey = 1,
+        }
+
+        [FormerlySerializedAs("previewState")]
+        [SerializeField] private CTAState ctaState = CTAState.Default;
+        [SerializeField] private CTAVisualMode visualMode = CTAVisualMode.Interactable;
+        [SerializeField, HideInInspector] private bool previewDisabled;
         [SerializeField] private GameObject ctaShadow;
         [SerializeField] private RectTransform ctaVisual;
         [SerializeField] private Image ctaRadial;
+        [SerializeField] private GameObject ctaRadialGrey;
         [SerializeField] private Sprite activeRadialSprite;
         [SerializeField] private Color activeRadialColor = Color.white;
         [SerializeField] private Color disabledRadialColor = new(171f / 255f, 171f / 255f, 171f / 255f, 1f);
@@ -62,6 +79,11 @@ namespace ProjectZ.UI
 
         private void Update()
         {
+            if (visualMode != CTAVisualMode.Interactable)
+            {
+                return;
+            }
+
             if (_button == null)
             {
                 CacheButton();
@@ -92,7 +114,20 @@ namespace ProjectZ.UI
         public void SetInteractable(bool isInteractable)
         {
             previewDisabled = !isInteractable;
-            ApplyState(!isInteractable);
+            if (_button == null)
+            {
+                CacheButton();
+            }
+
+            if (_button != null)
+            {
+                _button.interactable = isInteractable;
+            }
+
+            if (visualMode == CTAVisualMode.Interactable)
+            {
+                ApplyState(!isInteractable);
+            }
         }
 
         private void CacheButton()
@@ -209,6 +244,15 @@ namespace ProjectZ.UI
                     ctaRadial = radial.GetComponent<Image>();
                 }
             }
+
+            if (ctaRadialGrey == null)
+            {
+                var radialGrey = transform.Find("CTA Visual/CTA_Radial_Grey");
+                if (radialGrey != null)
+                {
+                    ctaRadialGrey = radialGrey.gameObject;
+                }
+            }
         }
 
         private void CacheVisual()
@@ -243,7 +287,17 @@ namespace ProjectZ.UI
 
         private bool ResolveDisabledState()
         {
-            return _button != null ? !_button.interactable : previewDisabled;
+            if (visualMode == CTAVisualMode.Manual)
+            {
+                return ctaState == CTAState.Grey;
+            }
+
+            if (_button != null)
+            {
+                return !_button.interactable;
+            }
+
+            return previewDisabled;
         }
 
         private void ApplyCurrentState()
@@ -255,11 +309,17 @@ namespace ProjectZ.UI
         {
             if (ctaShadow != null)
             {
-                ctaShadow.SetActive(!disabled);
+                ctaShadow.SetActive(true);
+            }
+
+            if (ctaRadialGrey != null)
+            {
+                ctaRadialGrey.SetActive(disabled);
             }
 
             if (ctaRadial != null)
             {
+                ctaRadial.gameObject.SetActive(!disabled);
                 if (disabled)
                 {
                     ctaRadial.sprite = null;

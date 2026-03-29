@@ -10,6 +10,7 @@ namespace ProjectZ.Core
         private const string StepsDoneTemplateName = "Steps_Done";
         private const string StepsNextTemplateName = "Steps_Next";
         private const string StepsOtherTemplateName = "Steps_Other";
+        private const string StepsFailTemplateName = "Steps_Fail";
         private const string LinkTemplateName = "Steps";
         private const string IconChildName = "Icon";
         private const string RuntimePrefix = "Runtime_PathPreview_";
@@ -27,6 +28,7 @@ namespace ProjectZ.Core
         private Transform _stepsDoneTemplate;
         private Transform _stepsNextTemplate;
         private Transform _stepsOtherTemplate;
+        private Transform _stepsFailTemplate;
         private Transform _linkTemplate;
 
         private void Start()
@@ -71,6 +73,7 @@ namespace ProjectZ.Core
             _stepsDoneTemplate = FindTemplate(StepsDoneTemplateName);
             _stepsNextTemplate = FindTemplate(StepsNextTemplateName);
             _stepsOtherTemplate = FindTemplate(StepsOtherTemplateName);
+            _stepsFailTemplate = FindTemplate(StepsFailTemplateName);
             _linkTemplate = FindTemplate(LinkTemplateName);
         }
 
@@ -121,11 +124,16 @@ namespace ProjectZ.Core
             _stepsDoneTemplate.gameObject.SetActive(isVisible);
             _stepsNextTemplate.gameObject.SetActive(isVisible);
             _stepsOtherTemplate.gameObject.SetActive(isVisible);
+            if (_stepsFailTemplate != null)
+            {
+                _stepsFailTemplate.gameObject.SetActive(isVisible);
+            }
             _linkTemplate.gameObject.SetActive(isVisible);
         }
 
         private void BuildRuntimeFeed(List<BoardTileType> previewSteps, int activeIndex)
         {
+            var showFailStep = ShouldShowFailStep();
             for (var stepIndex = 0; stepIndex < previewSteps.Count; stepIndex++)
             {
                 if (stepIndex < activeIndex)
@@ -136,7 +144,14 @@ namespace ProjectZ.Core
 
                 if (stepIndex == activeIndex)
                 {
-                    CreateRuntimeStep(_stepsNextTemplate, "Next", stepIndex, previewSteps[stepIndex], shouldApplyTypeIcon: true, shouldForceDoneIcon: false);
+                    if (showFailStep && _stepsFailTemplate != null)
+                    {
+                        CreateRuntimeStep(_stepsFailTemplate, "Fail", stepIndex, previewSteps[stepIndex], shouldApplyTypeIcon: false, shouldForceDoneIcon: false);
+                    }
+                    else
+                    {
+                        CreateRuntimeStep(_stepsNextTemplate, "Next", stepIndex, previewSteps[stepIndex], shouldApplyTypeIcon: true, shouldForceDoneIcon: false);
+                    }
                 }
                 else
                 {
@@ -148,6 +163,31 @@ namespace ProjectZ.Core
                     CreateRuntimeLink(stepIndex);
                 }
             }
+        }
+
+        private bool ShouldShowFailStep()
+        {
+            var manager = GameFlowManager.Instance;
+            return manager != null
+                && manager.HasLastFightResult
+                && !manager.LastFightWasVictory
+                && IsUnderLoseScreen();
+        }
+
+        private bool IsUnderLoseScreen()
+        {
+            var current = transform.parent;
+            while (current != null)
+            {
+                if (current.name == "LoseScreen")
+                {
+                    return true;
+                }
+
+                current = current.parent;
+            }
+
+            return false;
         }
 
         private void CreateRuntimeStep(
