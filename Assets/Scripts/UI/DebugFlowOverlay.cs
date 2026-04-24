@@ -8,6 +8,7 @@ using UnityEngine.InputSystem;
 
 namespace ProjectZ.UI
 {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
     public class DebugFlowOverlay : MonoBehaviour
     {
         private const string DisableMarkerName = "DISABLE_DEBUG_UI";
@@ -92,6 +93,7 @@ namespace ProjectZ.UI
                 if (GUILayout.Button("Collection")) manager.GoToCollection();
                 if (GUILayout.Button("Team Select")) manager.GoToTeamSelect();
                 if (GUILayout.Button("Open Board")) manager.OpenBoard();
+                if (GUILayout.Button("Open Shop")) manager.DebugOpenShop();
                 if (GUILayout.Button("Start Fight")) manager.StartFight();
 
                 GUILayout.Space(10f);
@@ -216,4 +218,5 @@ namespace ProjectZ.UI
             }
         }
     }
+#endif
 }

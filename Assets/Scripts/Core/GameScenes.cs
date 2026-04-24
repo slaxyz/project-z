@@ -9,6 +9,7 @@ namespace ProjectZ.Core
         public const string ZoneAnimation = "ZoneAnimationScene";
         public const string BossCelebration = "BossCelebrationScene";
         public const string Board = "BoardScene";
+        public const string Shop = "ShopScene";
         public const string Fight = "FightScene";
         public const string FightEnd = "FightEnd";
         public const string Result = "ResultScene"; // Legacy fallback.

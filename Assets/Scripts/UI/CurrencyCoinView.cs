@@ -49,7 +49,7 @@ namespace ProjectZ.UI
                 return;
             }
 
-            var coins = manager.GetPlayerCoins();
+            var coins = ResolveDisplayedCoins(manager);
             if (coins == _lastShownValue)
             {
                 return;
@@ -57,6 +57,22 @@ namespace ProjectZ.UI
 
             _lastShownValue = coins;
             coinValueText.text = coins.ToString();
+        }
+
+        private static int ResolveDisplayedCoins(GameFlowManager manager)
+        {
+            if (manager == null)
+            {
+                return 0;
+            }
+
+            // During an active run (including Shop), display run coins so purchases are visible.
+            if (manager.CurrentRun != null && manager.CurrentRun.isActive)
+            {
+                return Mathf.Max(0, manager.CurrentRun.coinsGained);
+            }
+
+            return Mathf.Max(0, manager.GetPlayerCoins());
         }
 
         private void EnsureReferences()

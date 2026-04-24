@@ -8,6 +8,28 @@ namespace ProjectZ.Combat
     {
         [SerializeField] private List<CombatSpellAsset> spells = new List<CombatSpellAsset>();
 
+        public IReadOnlyList<CombatSpellAsset> Spells => spells;
+
+        public bool TryGetSpellById(string spellId, out CombatSpellAsset spell)
+        {
+            spell = null;
+            if (string.IsNullOrWhiteSpace(spellId))
+            {
+                return false;
+            }
+
+            foreach (var candidate in spells)
+            {
+                if (candidate != null && candidate.SpellId == spellId)
+                {
+                    spell = candidate;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         public void ValidateUniqueIds()
         {
             var seen = new HashSet<string>();

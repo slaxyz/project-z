@@ -9,6 +9,7 @@ namespace ProjectZ.Core
         ZoneAnimation,
         BossCelebration,
         Board,
+        Shop,
         Fight,
         Result
     }

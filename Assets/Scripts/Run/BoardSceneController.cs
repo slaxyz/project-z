@@ -8,7 +8,6 @@ namespace ProjectZ.Run
     public class BoardSceneController : MonoBehaviour
     {
         private bool _showConfirmPopup;
-        private string _shopFeedback;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void EnsureInstanceOnBoardScene()
@@ -31,7 +30,6 @@ namespace ProjectZ.Run
         private void OnEnable()
         {
             _showConfirmPopup = false;
-            _shopFeedback = string.Empty;
         }
 
         private void OnGUI()
@@ -182,65 +180,20 @@ namespace ProjectZ.Run
             }
             else if (tileType == BoardTileType.Shop)
             {
-                GUILayout.Label("Shop - choose 1 spell");
-                GUILayout.Label("Run coins: " + manager.CurrentRun.coinsGained);
-                GUILayout.Space(6f);
-
-                foreach (var spellId in manager.GetCurrentShopOffers())
-                {
-                    var price = manager.GetSpellPrice(spellId);
-                    if (GUILayout.Button("Buy: " + spellId + " (" + price + ")", GUILayout.Height(34f)))
-                    {
-                        manager.TrySelectShopSpell(spellId, out _shopFeedback);
-                    }
-                }
-
-                if (manager.IsWaitingSpellReplacementChoice() && manager.IsPendingReplacementFromShop())
-                {
-                    GUILayout.Space(10f);
-                    if (string.IsNullOrWhiteSpace(manager.GetPendingReplacementChampionId()))
-                    {
-                        GUILayout.Label("Choose champion for: " + manager.GetPendingIncomingSpellId());
-                        foreach (var championId in manager.GetSelectedChampionIdsForRun())
-                        {
-                            var championName = manager.GetChampionDisplayName(championId);
-                            if (GUILayout.Button("Champion: " + championName, GUILayout.Height(32f)))
-                            {
-                                manager.TrySelectReplacementChampion(championId, out _shopFeedback);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        var selectedChampion = manager.GetPendingReplacementChampionId();
-                        GUILayout.Label("Replace on " + manager.GetChampionDisplayName(selectedChampion) + " with: " + manager.GetPendingIncomingSpellId());
-                        foreach (var existing in manager.GetChampionSpellLoadout(selectedChampion))
-                        {
-                            if (GUILayout.Button("Replace " + existing, GUILayout.Height(32f)))
-                            {
-                                manager.TryReplaceRunSpell(existing, out _shopFeedback);
-                                _showConfirmPopup = false;
-                            }
-                        }
-
-                        if (GUILayout.Button("Choose Another Champion", GUILayout.Height(32f)))
-                        {
-                            manager.CancelPendingReplacementChampion();
-                        }
-                    }
-                }
-
-                GUILayout.Space(10f);
-                if (!string.IsNullOrWhiteSpace(_shopFeedback))
-                {
-                    GUILayout.Label(_shopFeedback);
-                }
-
-                if (GUILayout.Button("Skip Shop", GUILayout.Height(34f)))
+                GUILayout.Label("Enter shop now?");
+                GUILayout.Label("Buy or skip will happen inside the Shop scene.");
+                GUILayout.BeginHorizontal();
+                if (GUILayout.Button("Cancel", GUILayout.Height(36f)))
                 {
                     _showConfirmPopup = false;
-                    manager.SkipShop();
                 }
+
+                if (GUILayout.Button("Validate", GUILayout.Height(36f)))
+                {
+                    _showConfirmPopup = false;
+                    manager.EnterShopFromBoard();
+                }
+                GUILayout.EndHorizontal();
             }
             else if (tileType == BoardTileType.BranchChoice)
             {

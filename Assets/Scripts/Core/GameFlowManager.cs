@@ -38,6 +38,7 @@ namespace ProjectZ.Core
         private readonly List<string> _currentShopOffers = new List<string>();
         private const int DefaultSpellRewardRefreshes = 1;
         private const int MaxRunSpells = 4;
+        private const int ShopOfferCount = 6;
         private const int TilesPerZone = 8;
         private const int ShopTileIndex = TilesPerZone - 2;
         private const int BossTileIndex = TilesPerZone - 1;
@@ -49,6 +50,7 @@ namespace ProjectZ.Core
         private Dictionary<string, CombatSpellAsset> _spellIndexCache;
         private Dictionary<string, EnemyDefinition> _enemyIndexCache;
         private readonly System.Random _rewardRng = new System.Random();
+        private readonly HashSet<string> _shopPurchasedSpellIds = new HashSet<string>();
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void EnsureInstance()
@@ -130,6 +132,9 @@ namespace ProjectZ.Core
                     break;
                 case GameFlowState.Board:
                     EnsureController<BoardSceneController>("BoardSceneController");
+                    break;
+                case GameFlowState.Shop:
+                    EnsureController<ShopSceneController>("ShopSceneController");
                     break;
                 case GameFlowState.Fight:
                     EnsureController<FightMockController>("FightMockController");
@@ -232,6 +237,7 @@ namespace ProjectZ.Core
             _pendingAdvanceAfterBossCelebration = false;
             _pendingSpellRewardOffers.Clear();
             _currentShopOffers.Clear();
+            _shopPurchasedSpellIds.Clear();
             ClearPendingReplacement();
             PersistRunProgress();
             Debug.Log("Run started: Zone 1, Tile 1.");
@@ -294,11 +300,13 @@ namespace ProjectZ.Core
             _pendingAdvanceAfterBossCelebration = false;
             _pendingSpellRewardOffers.Clear();
             _currentShopOffers.Clear();
+            _shopPurchasedSpellIds.Clear();
             ClearPendingReplacement();
             MetaProgression.ClearRunProgress();
 
             MetaProgression.EnsureCollections();
             MetaProgression.progressionPoints = 0;
+            MetaProgression.unlockedSpellIds.Clear();
             MetaProgression.unlockedChampionIds.Clear();
             MetaProgression.EnsureDefaultUnlockedChampions(ChampionCatalog.GetDefaultUnlockedChampionIds(3));
 
@@ -314,6 +322,40 @@ namespace ProjectZ.Core
 
             MetaProgression.progressionPoints += amount;
             SaveMeta();
+        }
+
+        public void DebugOpenShop()
+        {
+            var team = CurrentRun.HasValidTeam()
+                ? CurrentRun.selectedChampionIds.ToList()
+                : ChampionCatalog.GetDefaultUnlockedChampionIds(3).ToList();
+
+            CurrentRun.Reset();
+            CurrentRun.SetTeam(team);
+            CurrentRun.isActive = true;
+            CurrentRun.zoneIndex = 0;
+            CurrentRun.tileIndex = ShopTileIndex;
+            CurrentRun.branchChoice = 0;
+            CurrentRun.coinsGained = Mathf.Max(CurrentRun.coinsGained, 100);
+
+            InitializeRunInventory();
+            HasLastFightResult = false;
+            LastFightWasVictory = false;
+            LastFightWasBoss = false;
+            LastFightCoinsReward = 0;
+            LastFightEnemyId = string.Empty;
+            LastFightEnemyDisplayName = string.Empty;
+            _isBoardTileValidated = false;
+            _isNextFightBoss = false;
+            _pendingAdvanceAfterBossCelebration = false;
+            _pendingSpellRewardOffers.Clear();
+            _currentShopOffers.Clear();
+            _shopPurchasedSpellIds.Clear();
+            ClearPendingReplacement();
+            EnsureCurrentShopOffers();
+            PersistRunProgress();
+
+            LoadScene(GameScenes.Shop);
         }
 
         public string GetDefaultSelectedChampionIdForCollection()
@@ -488,6 +530,25 @@ namespace ProjectZ.Core
             LoadScene(GameScenes.Board);
         }
 
+        public void EnterShopFromBoard()
+        {
+            if (!CurrentRun.isActive || CurrentState != GameFlowState.Board || GetCurrentTileType() != BoardTileType.Shop)
+            {
+                Debug.LogWarning("EnterShop blocked: must validate the active Shop tile from Board.");
+                return;
+            }
+
+            if (!TryValidateCurrentBoardTile(BoardTileType.Shop))
+            {
+                return;
+            }
+
+            EnsureCurrentShopOffers();
+            _isBoardTileValidated = false;
+            PersistRunProgress();
+            LoadScene(GameScenes.Shop);
+        }
+
         public bool ResolveCurrentNonCombatTile(BoardTileType tileType)
         {
             if (!CurrentRun.isActive || CurrentState != GameFlowState.Board)
@@ -537,6 +598,12 @@ namespace ProjectZ.Core
 
         public void SkipShop()
         {
+            if (!CurrentRun.isActive || CurrentState != GameFlowState.Shop || GetCurrentTileType() != BoardTileType.Shop)
+            {
+                Debug.LogWarning("SkipShop blocked: shop can only be skipped from ShopScene.");
+                return;
+            }
+
             _currentShopOffers.Clear();
             ClearPendingReplacement();
             PersistRunProgress();
@@ -545,7 +612,7 @@ namespace ProjectZ.Core
 
         public bool TrySelectShopSpell(string spellId, out string message)
         {
-            if (!CurrentRun.isActive || CurrentState != GameFlowState.Board || GetCurrentTileType() != BoardTileType.Shop)
+            if (!CurrentRun.isActive || CurrentState != GameFlowState.Shop || GetCurrentTileType() != BoardTileType.Shop)
             {
                 message = "Shop unavailable.";
                 return false;
@@ -565,12 +632,18 @@ namespace ProjectZ.Core
                 return false;
             }
 
-            _pendingReplacementIncomingSpellId = spellId;
-            _pendingReplacementTargetChampionId = null;
-            _pendingReplacementFromShop = true;
-            _pendingReplacementShopCost = cost;
+            if (IsSpellUnlocked(spellId))
+            {
+                message = "Already bought.";
+                return false;
+            }
+
+            CurrentRun.coinsGained -= cost;
+            MetaProgression.UnlockSpell(spellId);
             AddSpellToRunInventory(spellId);
-            message = "Choose a champion.";
+            _shopPurchasedSpellIds.Add(spellId);
+            ClearPendingReplacement();
+            message = "Spell bought.";
             PersistRunProgress();
             return true;
         }
@@ -674,6 +747,11 @@ namespace ProjectZ.Core
                 return;
             }
 
+            CompleteRun(pointsEarned, nextScene);
+        }
+
+        private void CompleteRun(int pointsEarned, string nextScene = null)
+        {
             MetaProgression.SetLastRunSummary(
                 Mathf.Max(0, CurrentRun.coinsGained),
                 Mathf.Max(0, CurrentRun.wins),
@@ -697,6 +775,7 @@ namespace ProjectZ.Core
             _pendingAdvanceAfterBossCelebration = false;
             _pendingSpellRewardOffers.Clear();
             _currentShopOffers.Clear();
+            _shopPurchasedSpellIds.Clear();
             ClearPendingReplacement();
             MetaProgression.ClearRunProgress();
             SaveMeta();
@@ -749,6 +828,22 @@ namespace ProjectZ.Core
         public bool IsSpellInRunInventory(string spellId)
         {
             return !string.IsNullOrWhiteSpace(spellId) && CurrentRun.deckCardIds.Contains(spellId);
+        }
+
+        public bool IsSpellUnlocked(string spellId)
+        {
+            if (string.IsNullOrWhiteSpace(spellId))
+            {
+                return false;
+            }
+
+            MetaProgression.EnsureCollections();
+            return MetaProgression.unlockedSpellIds.Contains(spellId);
+        }
+
+        public bool WasSpellBoughtFromShop(string spellId)
+        {
+            return !string.IsNullOrWhiteSpace(spellId) && _shopPurchasedSpellIds.Contains(spellId);
         }
 
         public bool AddSpellToRunInventory(string spellId)
@@ -1069,7 +1164,7 @@ namespace ProjectZ.Core
                 return;
             }
 
-            var picks = Mathf.Min(3, candidates.Count);
+            var picks = Mathf.Min(ShopOfferCount, candidates.Count);
             for (var i = 0; i < picks; i++)
             {
                 var index = _rewardRng.Next(0, candidates.Count);
@@ -1096,7 +1191,18 @@ namespace ProjectZ.Core
 
         private void EnsureCurrentShopOffers()
         {
-            if (_currentShopOffers.Count > 0)
+            var spellIndex = GetSpellIndex();
+            _currentShopOffers.RemoveAll(id => string.IsNullOrWhiteSpace(id) || !spellIndex.ContainsKey(id) || (IsSpellUnlocked(id) && !WasSpellBoughtFromShop(id)));
+
+            for (var i = _currentShopOffers.Count - 1; i >= 0; i--)
+            {
+                if (_currentShopOffers.IndexOf(_currentShopOffers[i]) != i)
+                {
+                    _currentShopOffers.RemoveAt(i);
+                }
+            }
+
+            if (_currentShopOffers.Count >= ShopOfferCount)
             {
                 return;
             }
@@ -1107,7 +1213,8 @@ namespace ProjectZ.Core
                 return;
             }
 
-            var picks = Mathf.Min(3, candidates.Count);
+            candidates.RemoveAll(id => _currentShopOffers.Contains(id));
+            var picks = Mathf.Min(ShopOfferCount - _currentShopOffers.Count, candidates.Count);
             for (var i = 0; i < picks; i++)
             {
                 var index = _rewardRng.Next(0, candidates.Count);
@@ -1127,7 +1234,7 @@ namespace ProjectZ.Core
                 .ToHashSet();
 
             return index.Keys
-                .Where(id => !CurrentRun.deckCardIds.Contains(id))
+                .Where(id => !IsSpellUnlocked(id))
                 .Where(id => selectedElements.Count == 0 || selectedElements.Any(element => DoesSpellMatchElement(id, element)))
                 .OrderBy(id => id)
                 .ToList();
@@ -1283,7 +1390,7 @@ namespace ProjectZ.Core
             }
 
             var champion = ChampionCatalog.FindById(championId);
-            return champion != null ? champion.Element : null;
+            return champion != null ? champion.Element : (ElementType?)null;
         }
 
         private bool DoesSpellMatchChampionElement(string championId, string spellId)
@@ -1446,23 +1553,23 @@ namespace ProjectZ.Core
 
             if (CurrentRun.tileIndex >= GetTilesForCurrentZone())
             {
-                CurrentRun.zoneIndex++;
-                CurrentRun.tileIndex = 0;
-                CurrentRun.branchChoice = -1;
-
                 var zoneCount = _runLoopConfig != null
                     ? _runLoopConfig.GetZoneCount(fallbackZoneCount)
                     : Mathf.Max(1, fallbackZoneCount);
-                if (CurrentRun.zoneIndex >= zoneCount)
+                if (CurrentRun.zoneIndex + 1 >= zoneCount)
                 {
                     Debug.Log("Run complete after Zone " + zoneCount + ".");
-                    EndRun(0);
+                    CurrentRun.tileIndex = GetTilesForCurrentZone() - 1;
+                    CompleteRun(0);
                     return;
                 }
 
+                CurrentRun.zoneIndex++;
+                CurrentRun.tileIndex = 0;
+                CurrentRun.branchChoice = -1;
                 PersistRunProgress();
                 Debug.Log("Zone cleared. Moving to Zone " + GetCurrentZoneNumber() + ".");
-                LoadScene(GameScenes.Board);
+                EnterBoardViaZoneAnimation();
                 return;
             }
 
@@ -1660,6 +1767,8 @@ namespace ProjectZ.Core
                     return GameFlowState.BossCelebration;
                 case GameScenes.Board:
                     return GameFlowState.Board;
+                case GameScenes.Shop:
+                    return GameFlowState.Shop;
                 case GameScenes.Fight:
                     return GameFlowState.Fight;
                 case GameScenes.FightEnd:
